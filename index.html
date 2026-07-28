@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proto Process — Applications internes — v1.1 — 25/07/2026</title>
+<title>Proto Process — Applications internes — v1.2 — 28/07/2026</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
 :root{
@@ -140,7 +140,7 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
     <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Applications</span></span>
   </div>
   <div class="spacer"></div>
-  <span class="hdr-note" id="hdr-version">v1.1 — 25/07/2026</span>
+  <span class="hdr-note" id="hdr-version">v1.2 — 28/07/2026</span>
 </header>
 
 <div class="wrap">
@@ -192,7 +192,7 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
     <div class="pole-hd">
       <i class="ti ti-settings-automation" aria-hidden="true"></i>
       <h2>Méthodes &amp; Production</h2>
-      <span class="count">2 applications</span>
+      <span class="count">3 applications</span>
     </div>
     <div class="grid">
       <a class="app" href="methodes-production/aoi-converter/">
@@ -203,6 +203,11 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
       <a class="app" href="methodes-production/methodes/">
         <div class="app-top"><img class="app-ico" src="icons/mycenter-prep.png" alt=""><span class="app-name">MYCenter Prep</span></div>
         <div class="app-desc">Automatisation BOM + centroïdes pour l'import MYCenter (MY200 / MY700).</div>
+        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
+      </a>
+      <a class="app" href="https://protoprocess.github.io/expert-generator/">
+        <div class="app-top"><img class="app-ico" src="icons/mycenter-prep.png" alt="" onerror="this.style.display='none'"><span class="app-name">Expert Generator</span></div>
+        <div class="app-desc">Génération du fichier EXPERT pour programme machine SMT à partir de la BOM PP.</div>
         <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
       </a>
     </div>
@@ -230,8 +235,8 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
 <script>
 /* ---------- version ---------- */
 // Convention : X = nouvelle fonctionnalite, Y = correctif / reglage.
-const APP_VERSION = "1.1";
-const APP_DATE = "25/07/2026";
+const APP_VERSION = "1.2";
+const APP_DATE = "28/07/2026";
 document.title = `Proto Process — Applications internes — v${APP_VERSION} — ${APP_DATE}`;
 document.getElementById('hdr-version').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 </script>
