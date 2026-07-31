@@ -1,6 +1,6 @@
 # Charte graphique Proto Process — référence pour applis internes
 
-**v1.1 — 31/07/2026**
+**v1.2 — 31/07/2026**
 
 Basée sur `appro-v2.html`, reprise sur `bom-sourcing.html`. À copier-coller en base de toute nouvelle appli interne (HTML/CSS/JS autonome, sans framework).
 
@@ -160,9 +160,56 @@ Elle alimente le titre de l'onglet du navigateur **et** le badge visible dans l'
 
 ---
 
+## 7. Pictogrammes des applis
+
+**La banque officielle est dans `icons/banque/` du dépôt `protoprocess.github.io`.** Elle contient 16 pictogrammes distincts, dont 5 déjà en service. **Ne jamais en fabriquer un nouveau : en choisir un dans la banque.**
+
+Pour voir les 16 d'un coup sans les ouvrir un par un : `icons/banque/PLANCHE-PICTOS.png`, une planche contact où chaque vignette porte son nom de fichier.
+
+**Caractéristiques de la série** — un picto qui s'en écarte détonnera dans le menu :
+
+| | |
+|---|---|
+| Format | PNG 100×100, RGBA, fond transparent |
+| Palette | jaune `#f0d830`, orange `#f0a800`, turquoise `#60a8a8` |
+| Densité | 11 à 24 % de surface opaque — tracé fin, l'objet respire |
+| Poids | 2,4 à 4,7 Ko |
+
+Le picto retenu est **copié** dans `icons/<nom-appli>.png` ; la banque n'est jamais référencée directement depuis `index.html`.
+
+**Correspondances en service** (établies par empreinte, pas au jugé) :
+
+| Appli | Picto de la banque |
+|---|---|
+| `bom-sourcing` | `PICTOS-PROTO-PROCESS-02` |
+| `devis-client` | `PICTOS-PROTO-PROCESS-04` |
+| `mycenter-prep` | `PICTOS-PROTO-PROCESS-05` |
+| `aoi-converter` | `PICTOS-PROTO-PROCESS-09` |
+| `po-odoo` | `PICTOS-PROTO-PROCESS-11` |
+| `appro-v2` | `PICTOS-PROTO-PROCESS-16` |
+
+⚠ `icons/menu-odoo.png` et `icons/menu-odoo-v2.png` sont **hors série** : 140×140, avec du noir. Ne pas les utiliser comme icône d'appli.
+
+⚠ Même piège que pour le logo : **le fichier d'abord, le `src` ensuite.** Une carte du menu qui pointe vers une icône absente affiche une image cassée, sans `onerror` pour la masquer.
+
+---
+
+## 8. Publier une appli — la liste qui ne se devine pas
+
+Pousser le HTML ne suffit pas : sans les trois gestes suivants, l'appli existe mais reste introuvable.
+
+1. **Le code** dans `<dépôt de pôle>/<nom-appli>/index.html` — `commercial`, `achats` ou `methodes-production`.
+2. **Le pictogramme** dans `protoprocess.github.io/icons/<nom-appli>.png`, choisi dans la banque (§7).
+3. **La carte dans le sommaire** : `protoprocess.github.io/index.html`, pôle correspondant — et **incrémenter le compteur `<span class="count">N applications</span>` du pôle**, qui ne se met pas à jour tout seul.
+
+Le point 3 est celui qu'on oublie. Une appli poussée sans sa carte n'est accessible que par URL directe, et personne ne la trouve.
+
+---
+
 ## Journal des révisions
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.2 | 31/07/2026 | Ajout du **§7 (pictogrammes)** : la banque officielle rejoint le dépôt dans `icons/banque/` avec une planche contact, parce qu'elle n'était référencée nulle part — faute de quoi une icône avait été fabriquée à la main, hors style. Ajout du **§8 (publier une appli)** : l'oubli de la carte dans le sommaire avait rendu `po-odoo` invisible malgré un déploiement correct. |
 | v1.1 | 31/07/2026 | **§1 réécrit** : le picto est mutualisé dans `<dépôt>/shared/`, plus dupliqué dans chaque dossier d'appli. La charte décrivait une convention que 3 applis sur 4 n'appliquaient plus. Ajout de l'avertissement sur le picto racine de `protoprocess.github.io`, du coût caché de `onerror`, et de l'ordre impératif de migration. Ajout du §6 (versionnage). Charte déplacée de Drive vers GitHub, à côté du code qu'elle décrit. |
 | v1.0 | 25/07/2026 | Version initiale, extraite de `appro-v2.html`. |
