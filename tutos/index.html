@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Proto Process / Tutos</title>
+<link rel="icon" type="image/png" href="../icons/picto-pp.png" onerror="">
+<style>
+/* Charte sombre du portail — memes jetons que le sommaire */
+:root{
+  --bg:#0a0c12; --surface:#1a2030; --surface2:#161b27;
+  --border:#262e42; --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
+  --accent:#F07B1F; --info:#5BC4D8; --info-txt:#8fd8e6;
+  --radius:8px;
+  --mono:"SF Mono","Cascadia Code",Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px}
+header{background:#0f1117;height:52px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid #14181f}
+header img{width:26px;height:26px;object-fit:contain}
+.logo{font-size:13px;font-weight:600}
+.logo .s{color:#444;margin:0 4px}.logo .o{color:var(--accent)}
+header a.retour{margin-left:auto;color:var(--text2);font-size:12.5px;text-decoration:none}
+header a.retour:hover{color:var(--text)}
+.wrap{max-width:900px;margin:0 auto;padding:28px 18px 70px}
+h1{font-size:19px;font-weight:600;margin:0 0 5px}
+.sous{font-size:13px;color:var(--text2);margin:0 0 22px}
+.filtres{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.filtres .lab{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+.chip{background:var(--surface2);border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:12px;color:var(--text2);cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.chip.metier.on{background:var(--info);border-color:var(--info);color:#06252b}
+.tutos{margin-top:18px}
+a.tuto{display:block;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px 17px;margin-bottom:11px;text-decoration:none;color:var(--text)}
+a.tuto:hover{border-color:var(--accent)}
+.tuto-titre{font-size:14.5px;font-weight:600;margin-bottom:3px}
+.tuto-desc{font-size:12.5px;color:var(--text2);line-height:1.5}
+.tuto-tags{margin-top:8px;display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:10.5px;border-radius:999px;padding:2px 9px}
+.tag.appli{background:#2a1c0d;color:var(--accent)}
+.tag.metier{background:#0d2830;color:var(--info-txt)}
+.tag.format{background:var(--surface2);color:var(--text3)}
+.vide{color:var(--text3);font-size:13px;padding:20px 0}
+</style>
+</head>
+<body>
+<header>
+  <img src="../icons/picto-pp.png" alt="" onerror="this.style.display='none'">
+  <span class="logo">PROTO PROCESS<span class="s">/</span><span class="o">Tutos</span></span>
+  <a class="retour" href="../">&larr; Retour aux applications</a>
+</header>
+
+<div class="wrap">
+  <h1>Tutos &amp; guides</h1>
+  <p class="sous">Les modes d'emploi des applications internes, filtrables par appli ou par m&eacute;tier.
+  Un guide manque&nbsp;? Demandez-le &mdash; il sera ajout&eacute; ici.</p>
+
+  <div class="filtres" id="f-applis"><span class="lab">Appli</span></div>
+  <div class="filtres" id="f-metiers"><span class="lab">M&eacute;tier</span></div>
+
+  <div class="tutos" id="liste"></div>
+</div>
+
+<script>
+/* ============================================================= CATALOGUE ====
+   Un tuto = un objet. Pour en ajouter un : une ligne ici + le fichier a cote.
+   Les filtres se construisent tout seuls a partir du catalogue.            */
+const TUTOS = [
+  {
+    titre: "FabStory \u2014 prise en main",
+    desc: "L'histoire de chaque carte, du devis \u00e0 l'exp\u00e9dition : statut Odoo en direct, fil par m\u00e9tier, questions client, indices et r\u00e8gles. Les 4 gestes du quotidien.",
+    href: "fabstory.html",
+    appli: "FabStory",
+    metiers: ["Tous"],
+    formats: [{ label: "PDF imprimable", href: "pdf/FabStory-annonce.pdf" }]
+  }
+];
+
+const el = id => document.getElementById(id);
+let fAppli = '', fMetier = '';
+
+function uniques(cle){
+  const s = new Set();
+  TUTOS.forEach(t => (cle === 'appli' ? [t.appli] : t.metiers).forEach(v => s.add(v)));
+  return [...s].sort((a, b) => a.localeCompare(b, 'fr'));
+}
+function rendreFiltres(){
+  const fa = el('f-applis'), fm = el('f-metiers');
+  fa.querySelectorAll('.chip').forEach(x => x.remove());
+  fm.querySelectorAll('.chip').forEach(x => x.remove());
+  const mk = (parent, val, actif, metier, action) => {
+    const b = document.createElement('button');
+    b.className = 'chip' + (metier ? ' metier' : '') + (actif ? ' on' : '');
+    b.textContent = val || 'Toutes';
+    b.onclick = action;
+    parent.appendChild(b);
+  };
+  mk(fa, 'Toutes', fAppli === '', false, () => { fAppli = ''; rendre(); });
+  uniques('appli').forEach(a => mk(fa, a, fAppli === a, false, () => { fAppli = (fAppli === a ? '' : a); rendre(); }));
+  mk(fm, 'Tous', fMetier === '', true, () => { fMetier = ''; rendre(); });
+  uniques('metiers').forEach(m => mk(fm, m, fMetier === m, true, () => { fMetier = (fMetier === m ? '' : m); rendre(); }));
+}
+function rendre(){
+  rendreFiltres();
+  const liste = el('liste');
+  const visibles = TUTOS.filter(t =>
+    (!fAppli || t.appli === fAppli) &&
+    (!fMetier || t.metiers.includes(fMetier) || t.metiers.includes('Tous')));
+  liste.innerHTML = visibles.length ? visibles.map(t =>
+    '<a class="tuto" href="' + t.href + '">' +
+    '<div class="tuto-titre">' + t.titre + '</div>' +
+    '<div class="tuto-desc">' + t.desc + '</div>' +
+    '<div class="tuto-tags">' +
+    '<span class="tag appli">' + t.appli + '</span>' +
+    t.metiers.map(m => '<span class="tag metier">' + m + '</span>').join('') +
+    (t.formats || []).map(f => '<span class="tag format">' + f.label + '</span>').join('') +
+    '</div></a>').join('')
+  : '<div class="vide">Aucun tuto ne correspond \u00e0 ce filtre.</div>';
+}
+rendre();
+</script>
+</body>
+</html>
