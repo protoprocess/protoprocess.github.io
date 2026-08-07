@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuto — FabStory</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--border:#dde3ec;--text:#1c2430;--text2:#5b6b80;--text3:#8b98ab;
+--accent:#F8952D;--accent-f:#d97a15;--info:#5BC4D8;--info-txt:#1B7A8F;--info-bg:#EAF7FA;
+--red:#A32D2D;--red-bg:#FCEBEB;--radius:8px;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+--mono:"SF Mono","Cascadia Code",Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.6}
+header{background:#0f1117;height:52px;display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0}
+.logo{font-size:13px;font-weight:600;color:#fff}
+.logo .s{color:#444;margin:0 4px}.logo .o{color:var(--accent)}
+header a{margin-left:auto;color:#94a3b8;font-size:12.5px;text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:30px 18px 80px}
+h1{font-size:24px;margin:0 0 6px}
+h1 .fs{color:var(--accent-f)}
+.sous{color:var(--text2);margin:0 0 20px}
+.url{background:#fff;border:1.5px solid var(--accent);border-radius:var(--radius);padding:12px;text-align:center;
+font-family:var(--mono);font-size:14px;color:var(--accent-f);font-weight:700;margin-bottom:6px}
+.hint{font-size:12.5px;color:var(--text3);text-align:center;margin:0 0 26px}
+h2{font-size:16px;color:var(--info-txt);margin:28px 0 10px}
+.carte{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 17px;margin-bottom:10px}
+.geste{display:flex;gap:13px;align-items:flex-start}
+.num{flex:none;width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;font-weight:700;
+display:flex;align-items:center;justify-content:center}
+.num.b{background:var(--info-txt)}
+.geste b{display:block;margin-bottom:2px}
+.geste p{margin:0;color:var(--text2);font-size:13.5px}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+td{padding:9px 13px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:600;width:34%}
+.chip{display:inline-block;font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px}
+.chip.c{background:var(--info-bg);color:var(--info-txt)}
+.chip.i{background:#eef1f5;color:var(--text3)}
+.pdf{display:inline-block;margin-top:20px;background:var(--accent);color:#fff;border-radius:6px;
+padding:9px 16px;text-decoration:none;font-size:13px;font-weight:500}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">PROTO PROCESS<span class="s">/</span><span class="o">Tutos</span></span>
+  <a href="./">&larr; Tous les tutos</a>
+</header>
+<div class="wrap">
+  <h1>Prise en main de <span class="fs">FabStory</span></h1>
+  <p class="sous">Chaque carte raconte son histoire, du devis &agrave; l'exp&eacute;dition &mdash; au m&ecirc;me endroit,
+  pour tout le monde. FabStory remplace la fiche de vie&nbsp;: m&ecirc;mes donn&eacute;es, rien n'est perdu.</p>
+
+  <div class="url">protoprocess.github.io &rarr; p&ocirc;le Commercial &rarr; FabStory</div>
+  <p class="hint">M&ecirc;me code d'acc&egrave;s que les autres applis. L'ancienne adresse redirige automatiquement.</p>
+
+  <h2>Ce que vous y trouvez</h2>
+  <table>
+    <tr><td>Le statut en direct</td><td>Devis &rarr; Pr&eacute;paration &rarr; Fabrication &rarr; Exp&eacute;di&eacute;e,
+      calcul&eacute; automatiquement depuis Odoo (commandes + t&acirc;ches d'atelier). Personne ne le met &agrave; jour &agrave; la main.</td></tr>
+    <tr><td>Le fil de la carte</td><td>Notes, questions et r&eacute;ponses dans l'ordre, rep&egrave;re et composant en t&ecirc;te.
+      Filtres par nature et par m&eacute;tier.</td></tr>
+    <tr><td>Les questions en attente</td><td>Toujours visibles en haut &agrave; droite tant qu'elles ne sont pas r&eacute;solues
+      &mdash; un clic pour r&eacute;pondre.</td></tr>
+    <tr><td>L'indice et la BOM</td><td>L'indice courant et le lien &laquo;&nbsp;Voir la BOM&nbsp;&raquo; (Luminovo), dans l'en-t&ecirc;te de la carte.</td></tr>
+    <tr><td>Le droit &agrave; l'erreur</td><td>Modifier ou retirer une note est possible &mdash; rien n'est jamais effac&eacute;,
+      l'historique reste.</td></tr>
+    <tr><td>Les r&egrave;gles client</td><td>Une information importante peut devenir une r&egrave;gle du client,
+      visible sur toutes ses cartes.</td></tr>
+  </table>
+
+  <h2>Les 4 gestes du quotidien</h2>
+  <div class="carte"><div class="geste"><div class="num">1</div><div>
+    <b>Noter quelque chose sur une carte</b>
+    <p>Choisissez la carte, le m&eacute;tier, &eacute;crivez &mdash; les amorces font gagner du temps.
+    Renseignez le rep&egrave;re et le composant (d&eacute;j&agrave; d&eacute;pli&eacute;s). Choisissez la nature&nbsp;:
+    <b>Information</b>, <b>&Agrave; traiter</b> ou <b>Question client</b>.</p>
+  </div></div></div>
+  <div class="carte"><div class="geste"><div class="num">2</div><div>
+    <b>R&eacute;pondre &agrave; une question en attente</b>
+    <p>Cliquez la question dans la zone rouge en haut &agrave; droite &mdash; le d&eacute;tail s'ouvre dessous.
+    Pour une question client, pr&eacute;cisez la port&eacute;e&nbsp;: <b>Cette commande</b>, <b>Cette carte</b> ou <b>Ce client</b>.</p>
+  </div></div></div>
+  <div class="carte"><div class="geste"><div class="num">3</div><div>
+    <b>G&eacute;rer une entr&eacute;e du fil</b>
+    <p>Un clic sur une entr&eacute;e ouvre le volet de droite&nbsp;: modifier le texte, la nature, la visibilit&eacute; client,
+    le m&eacute;tier et les destinataires, joindre une photo, promouvoir en r&egrave;gle client, ou retirer.</p>
+  </div></div></div>
+  <div class="carte"><div class="geste"><div class="num b">4</div><div>
+    <b>Poser un indice ou cr&eacute;er une carte</b>
+    <p>Le <b>+</b> &agrave; c&ocirc;t&eacute; de l'indice enregistre un passage d'indice, dat&eacute; et visible du client.
+    Le bouton <b>+ Nouvelle carte</b> cr&eacute;e une carte&nbsp;: la cl&eacute; CLIxxx-REF se calcule toute seule.</p>
+  </div></div></div>
+
+  <h2>Deux rep&egrave;res visuels</h2>
+  <div class="carte">
+    <span class="chip c">&#9673; Client</span> visible du client &mdash; soignez la formulation.&nbsp;&nbsp;&nbsp;
+    <span class="chip i">&#8856; Interne</span> ne sort jamais de l'atelier.
+  </div>
+
+  <p><b>Un doute, une id&eacute;e, un truc qui cloche&nbsp;?</b> Dites-le &mdash; l'appli &eacute;volue chaque semaine avec vos retours.</p>
+  <a class="pdf" href="pdf/FabStory-annonce.pdf">T&eacute;l&eacute;charger la version PDF</a>
+</div>
+</body>
+</html>
