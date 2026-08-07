@@ -66,14 +66,35 @@ a.tuto:hover{border-color:var(--accent)}
 /* ============================================================= CATALOGUE ====
    Un tuto = un objet. Pour en ajouter un : une ligne ici + le fichier a cote.
    Les filtres se construisent tout seuls a partir du catalogue.            */
+/* Champ version = LA VERSION DE L APPLI que le tuto documente (convention
+   07/08/2026) : si l appli avance et pas le tuto, l ecart se voit ici.     */
 const TUTOS = [
   {
     titre: "FabStory \u2014 prise en main",
     desc: "L'histoire de chaque carte, du devis \u00e0 l'exp\u00e9dition : statut Odoo en direct, fil par m\u00e9tier, questions client, indices et r\u00e8gles. Les 4 gestes du quotidien.",
     href: "fabstory.html",
     appli: "FabStory",
+    version: "appli v1.3", maj: "07/08/2026",
     metiers: ["Tous"],
     formats: [{ label: "PDF imprimable", href: "pdf/FabStory-annonce.pdf" }]
+  },
+  {
+    titre: "Devis client \u2014 analyser un dossier, du mail au devis",
+    desc: "Pour d\u00e9couvrir le poste : le vocabulaire maison (BOM, MPN, IPN, rattachement\u2026), le d\u00e9roul\u00e9 en 7 \u00e9tapes, les r\u00e8gles de la maison et les d\u00e9pannages. Trois encadr\u00e9s m\u00e9tier restent \u00e0 compl\u00e9ter.",
+    href: "pdf/PP_mode_operatoire_devis_client.pdf",
+    appli: "Devis client",
+    version: "brouillon \u2014 sections \u00e0 compl\u00e9ter", maj: "06/08/2026",
+    metiers: ["DEVIS", "BOM"],
+    formats: []
+  },
+  {
+    titre: "Que se passe-t-il quand une commande client arrive ?",
+    desc: "Le parcours d'une affaire : la confirmation du devis d\u00e9clenche tout (lignes du Planning, fichier appro, projet Odoo), nouveau produit ou refab, ce qui reste manuel et pourquoi, et les gestes d'arr\u00eat d'urgence.",
+    href: "pdf/PP_parcours_commande_client.pdf",
+    appli: "Odoo & Planning",
+    version: "chaine v1", maj: "06/08/2026",
+    metiers: ["DEVIS", "METHODES", "APPRO"],
+    formats: []
   }
 ];
 
@@ -113,6 +134,7 @@ function rendre(){
     '<div class="tuto-desc">' + t.desc + '</div>' +
     '<div class="tuto-tags">' +
     '<span class="tag appli">' + t.appli + '</span>' +
+    (t.version ? '<span class="tag format">' + t.version + (t.maj ? ' \u00b7 ' + t.maj : '') + '</span>' : '') +
     t.metiers.map(m => '<span class="tag metier">' + m + '</span>').join('') +
     (t.formats || []).map(f => '<span class="tag format">' + f.label + '</span>').join('') +
     '</div></a>').join('')
