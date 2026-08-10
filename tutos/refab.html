@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tuto — Refab v1.0</title>
+<style>
+:root{--bg:#f6f7f9;--surface:#fff;--border:#dde3ec;--text:#1c2430;--text2:#5b6b80;--text3:#8b98ab;
+--accent:#F8952D;--accent-f:#d97a15;--info:#5BC4D8;--info-txt:#1B7A8F;--info-bg:#EAF7FA;
+--green:#3B6D11;--green-bg:#EAF3DE;--amber:#854F0B;--amber-bg:#FAEEDA;
+--red:#A32D2D;--red-bg:#FCEBEB;--radius:8px;
+--sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+--mono:"SF Mono","Cascadia Code",Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14.5px;line-height:1.6}
+header{background:#0f1117;height:52px;display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0}
+.logo{font-size:13px;font-weight:600;color:#fff}
+.logo .s{color:#444;margin:0 4px}.logo .o{color:var(--accent)}
+header .ver{color:#64748b;font-size:11.5px;font-family:var(--mono);margin-left:10px}
+header a{margin-left:auto;color:#94a3b8;font-size:12.5px;text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:30px 18px 80px}
+h1{font-size:24px;margin:0 0 6px}
+h1 .fs{color:var(--accent-f)}
+.sous{color:var(--text2);margin:0 0 22px}
+h2{font-size:16px;color:var(--info-txt);margin:28px 0 10px}
+.carte{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px 17px;margin-bottom:10px}
+.geste{display:flex;gap:13px;align-items:flex-start}
+.num{flex:none;width:28px;height:28px;border-radius:7px;background:var(--accent);color:#fff;font-weight:700;
+display:flex;align-items:center;justify-content:center}
+.num.auto{background:var(--green)}
+.num.b{background:var(--info-txt)}
+.geste b{display:block;margin-bottom:2px}
+.geste p{margin:0;color:var(--text2);font-size:13.5px}
+.tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 9px;
+letter-spacing:.04em;text-transform:uppercase;vertical-align:2px;margin-left:7px}
+.tag.a{background:var(--green-bg);color:var(--green)}
+.tag.m{background:var(--amber-bg);color:var(--amber)}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+td{padding:9px 13px;border-bottom:1px solid var(--border);font-size:13.5px;vertical-align:top}
+tr:last-child td{border-bottom:none}
+td:first-child{font-weight:600;width:36%}
+.enc{border-radius:var(--radius);padding:12px 16px;font-size:13.5px;margin:10px 0}
+.enc.warn{background:var(--amber-bg);color:var(--amber);border:1px solid #eeddba}
+.enc.err{background:var(--red-bg);color:var(--red);border:1px solid #f2cccc}
+.enc b{display:block;margin-bottom:2px}
+code{font-family:var(--mono);font-size:12.5px;background:#eef1f5;border-radius:4px;padding:1px 6px;color:var(--text)}
+.foot{margin-top:34px;font-size:11.5px;color:var(--text3);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">PROTO PROCESS<span class="s">/</span><span class="o">Tutos</span></span>
+  <span class="ver" id="ver"></span>
+  <a href="./">&larr; Tous les tutos</a>
+</header>
+<div class="wrap">
+  <h1>Refab &mdash; <span class="fs">le pense-b&ecirc;te</span></h1>
+  <p class="sous">Une commande arrive pour une carte d&eacute;j&agrave; fabriqu&eacute;e, m&ecirc;me r&eacute;f&eacute;rence,
+  m&ecirc;me indice. Tout part de l'appli <b>Commande</b> &mdash; elle diagnostique, vous validez, la cha&icirc;ne ex&eacute;cute.</p>
+
+  <div class="enc warn"><b>D'abord, une v&eacute;rification.</b>
+  M&ecirc;me r&eacute;f&eacute;rence <i>et</i> m&ecirc;me indice&nbsp;? Si l'indice change, ce n'est plus une refab&nbsp;:
+  c'est un nouveau produit, avec frais initiaux <code>PP-0001</code> &mdash; parcours
+  &laquo;&nbsp;commande client&nbsp;&raquo; classique via Devis Client.</div>
+
+  <h2>Le parcours</h2>
+
+  <div class="carte"><div class="geste"><div class="num">1</div><div>
+    <b>Appli Commande &rarr; saisir le produit <span class="tag m">vous</span></b>
+    <p>Portail &rarr; <b>Commande</b>. Tapez la r&eacute;f&eacute;rence, la cl&eacute; ou le libell&eacute; de la carte
+    (ou le n&deg; de SO si un devis existe d&eacute;j&agrave;). Le <b>diagnostic des 5 pi&egrave;ces</b> s'affiche&nbsp;:
+    commande, article, carte FabStory, liens, projet &mdash; chacune avec son verdict.</p>
+  </div></div></div>
+
+  <div class="carte"><div class="geste"><div class="num">2</div><div>
+    <b>Combler ce qui manque, un clic par pi&egrave;ce <span class="tag m">vous</span></b>
+    <p>Chaque manque a son bouton&nbsp;: <b>cr&eacute;er la carte</b> (formulaire pr&eacute;-rempli &mdash;
+    v&eacute;rifiez la r&eacute;f famille et l'indice, c'est votre arbitrage), <b>cr&eacute;er l'article</b>
+    (nom &eacute;ditable, liens pos&eacute;s d'office), <b>relier</b>, <b>renommer ou cr&eacute;er le projet</b>.
+    Rien ne s'&eacute;crit sans votre clic, les doublons sont refus&eacute;s avec motif.</p>
+  </div></div></div>
+
+  <div class="carte"><div class="geste"><div class="num">3</div><div>
+    <b>Cr&eacute;er le devis refab &mdash; les cadences <span class="tag m">vous</span></b>
+    <p>Le bloc &laquo;&nbsp;Devis refab&nbsp;&raquo; appara&icirc;t quand carte et article sont en place&nbsp;:
+    une ligne par cadence (date, quantit&eacute;, prix), <b>jamais de <code>PP-0001</code></b> &mdash; c'est
+    pr&eacute;cis&eacute;ment son absence qui dit &laquo;&nbsp;refab&nbsp;&raquo; &agrave; la cha&icirc;ne. Le devis
+    na&icirc;t <b>brouillon</b> dans Odoo&nbsp;: v&eacute;rifiez-le, envoyez-le au client.</p>
+  </div></div></div>
+
+  <div class="carte"><div class="geste"><div class="num">4</div><div>
+    <b>&Agrave; la commande&nbsp;: confirmer dans Odoo <span class="tag m">vous</span></b>
+    <p>C'est le seul geste qui d&eacute;clenche tout. La confirmation se fait <b>sur le SO dans Odoo</b>,
+    jamais ailleurs. Si des lignes ont &eacute;t&eacute; pos&eacute;es &agrave; la main au Planning pour ce SO,
+    <b>supprimez-les avant</b>&nbsp;: l'anti-doublon refuserait d'&eacute;crire.</p>
+  </div></div></div>
+
+  <div class="carte"><div class="geste"><div class="num auto">5</div><div>
+    <b>Dans la minute, sans intervention <span class="tag a">automatique</span></b>
+    <p>&bull;&nbsp;Les <b>lignes du Planning</b> &mdash; une par cadence, colonne M = <code>Refab</code>.<br>
+    &bull;&nbsp;Colonne A &rarr; le <b>projet Odoo</b> (retrouv&eacute; par son nom, r&eacute;utilis&eacute; jamais dupliqu&eacute;),
+    colonne F &rarr; la <b>carte FabStory</b>, colonne E &rarr; Luminovo, colonne I &rarr; le fichier appro
+    (retrouv&eacute; s'il existe d&eacute;j&agrave;).<br>
+    &bull;&nbsp;Le <b>statut FabStory</b> de la carte suit Odoo, personne ne le touche.</p>
+  </div></div></div>
+
+  <div class="carte"><div class="geste"><div class="num b">6</div><div>
+    <b>Cocher les op&eacute;rations de fabrication <span class="tag m">m&eacute;thodes</span></b>
+    <p>Sur le projet, cocher les op&eacute;rations cr&eacute;e une t&acirc;che par op&eacute;ration.
+    R&eacute;ordonner se fait en <b>vue liste</b> par glisser-d&eacute;poser. D&eacute;cocher n'efface pas la t&acirc;che.</p>
+  </div></div></div>
+
+  <h2>Ce qui reste &agrave; vous, et pourquoi</h2>
+  <table>
+    <tr><td>La r&eacute;f famille et l'indice</td><td>Un indice peut &ecirc;tre une lettre, une date, un nombre &mdash; seul l'humain sait ce que le client a voulu dire.</td></tr>
+    <tr><td>Les prix et cadences du devis</td><td>D&eacute;cision commerciale &mdash; personne ne fixe vos prix &agrave; votre place.</td></tr>
+    <tr><td>La confirmation du SO</td><td>Elle lance la production&nbsp;: c'est un clic humain, dans Odoo, toujours.</td></tr>
+    <tr><td>Le choix des op&eacute;rations</td><td>Demande de conna&icirc;tre la carte.</td></tr>
+  </table>
+
+  <h2>Si quelque chose ne va pas</h2>
+  <div class="enc err"><b>Tout arr&ecirc;ter.</b>
+  Dans le fichier Apps Script du Planning, passer <code>MODE_SIMULATION = true</code>&nbsp;: la cha&icirc;ne continue
+  de tourner mais n'&eacute;crit plus rien. Pour couper &agrave; la source, le workflow n8n <code>T6zuhcS8UMkFNMCG</code>
+  d&eacute;sactive la r&egrave;gle Odoo. L'historique du workflow <code>TZccVSnC4W1iSPiF</code> garde le d&eacute;tail
+  de chaque commande trait&eacute;e, et chaque refus de l'appli Commande est motiv&eacute; &agrave; l'&eacute;cran.</div>
+
+  <p class="foot" id="foot"></p>
+</div>
+<script>
+const APP_VERSION = "1.0";
+const APP_DATE = "10/08/2026";
+document.title = "Tuto — Refab v" + APP_VERSION;
+document.getElementById('ver').textContent = "tuto v" + APP_VERSION;
+document.getElementById('foot').textContent = "Tuto refab v" + APP_VERSION + " — " + APP_DATE +
+  " — documente la chaîne Odoo→Planning v1 et FabStory v1.3";
+</script>
+</body>
+</html>
