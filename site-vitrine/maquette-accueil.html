@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquette Accueil — Proto Process</title>
+<link rel="icon" href="https://protoprocess.github.io/brand/picto-pp.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --encre: #171B21; --encre2: #21262E;
+  --gris: #5C6570; --gris-pale: #EEF1F4;
+  --orange: #F07B1F; --orange-f: #C4620F;
+  --bleu: #5BC4D8; --bleu-f: #2E8FA3; --bleu-pale: #E9F7FA;
+  --blanc: #FFFFFF; --trait: #D8DDE3;
+  --mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--encre); background: var(--blanc); line-height: 1.65; font-size: 17px; }
+.display { font-family: "Archivo", sans-serif; font-stretch: 122%; }
+.inner { max-width: 1200px; margin: 0 auto; padding: 0 clamp(20px, 5vw, 64px); }
+
+/* ---------- Repères de fabrication (signature) ---------- */
+.sec-mark { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; color: var(--orange);
+  display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.sec-mark::after { content: ""; flex: 0 0 60px; height: 1px; background: currentColor; opacity: .5; }
+.dark .sec-mark { color: var(--bleu); }
+.fid { position: absolute; width: 18px; height: 18px; opacity: .55; pointer-events: none; }
+.fid::before, .fid::after { content: ""; position: absolute; background: var(--orange); }
+.fid::before { left: 8px; top: 0; width: 2px; height: 18px; }
+.fid::after { left: 0; top: 8px; width: 18px; height: 2px; }
+.fid.b::before, .fid.b::after { background: var(--bleu); }
+
+/* ---------- Header ---------- */
+header { position: fixed; inset: 0 0 auto 0; z-index: 50; display: flex; align-items: center;
+  justify-content: space-between; padding: 14px clamp(20px, 4vw, 48px);
+  background: rgba(255,255,255,.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid transparent; transition: border-color .25s, box-shadow .25s; }
+header.scrolled { border-color: var(--trait); box-shadow: 0 2px 18px rgba(23,27,33,.06); }
+.logo { display: flex; align-items: center; gap: 11px; text-decoration: none; color: var(--encre); }
+.logo img { height: 34px; }
+.logo-txt { font-family: "Archivo", sans-serif; font-stretch: 118%; font-weight: 700; font-size: 16px; letter-spacing: .04em; }
+.logo-txt .sep { color: var(--orange); font-weight: 400; margin: 0 2px; }
+nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 30px); }
+nav a.nlink { text-decoration: none; color: var(--gris); font-size: 14.5px; font-weight: 500; transition: color .15s; }
+nav a.nlink:hover { color: var(--encre); }
+.btn { display: inline-block; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 15px;
+  text-decoration: none; transition: background .15s, transform .15s; }
+.btn-p { background: var(--orange); color: #fff; }
+.btn-p:hover { background: var(--orange-f); transform: translateY(-1px); }
+.btn-ghost-b { border: 1.5px solid var(--bleu); color: #fff; }
+.btn-ghost-b:hover { background: var(--bleu); color: var(--encre); }
+@media (max-width: 760px) { nav a.nlink { display: none; } }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; min-height: 92vh; display: flex; flex-direction: column; justify-content: center;
+  padding: 120px clamp(20px, 5vw, 64px) 60px; max-width: 1200px; margin: 0 auto; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; background: var(--bleu-pale); color: var(--bleu-f);
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; padding: 7px 15px; border-radius: 20px;
+  margin-bottom: 26px; width: fit-content; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--bleu); }
+.hero h1 { font-family: "Archivo", sans-serif; font-stretch: 124%; font-weight: 850;
+  font-size: clamp(40px, 7.2vw, 92px); line-height: .98; letter-spacing: .002em; text-transform: uppercase; }
+.hero h1 .a { color: var(--orange); }
+.cote { display: flex; align-items: center; gap: 10px; margin: 30px 0 20px; color: var(--bleu-f);
+  font-family: var(--mono); font-size: 12.5px; letter-spacing: .14em; text-transform: uppercase; }
+.cote::before { content: ""; width: 44px; height: 1px; background: var(--bleu); opacity: .6; }
+.cote::after { content: ""; flex: 0 0 180px; height: 1px; background: var(--bleu); opacity: .6; }
+.hero .pitch { max-width: 58ch; color: var(--gris); font-size: clamp(16px, 1.6vw, 19px); }
+.hero .pitch strong { color: var(--encre); }
+.hero .ctas { display: flex; align-items: center; gap: 22px; margin-top: 38px; flex-wrap: wrap; }
+.hero .ctas .quiet { color: var(--bleu-f); font-weight: 600; text-decoration: none; font-size: 15px; }
+.hero .ctas .quiet:hover { text-decoration: underline; }
+.scroll-hint { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .2em; color: var(--gris); }
+.scroll-hint::after { content: ""; display: block; width: 1px; height: 34px; background: var(--gris);
+  margin: 8px auto 0; animation: drip 1.8s ease-in-out infinite; }
+@keyframes drip { 0% { transform: scaleY(0); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: top; }
+  56% { transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+
+/* ---------- Bandeau preuves ---------- */
+.proofs { background: var(--encre); color: #E7EBEF; }
+.proofs .inner { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: clamp(20px, 3vw, 40px); padding-top: 54px; padding-bottom: 54px; }
+.proof .num { font-family: "Archivo", sans-serif; font-stretch: 120%; font-weight: 800;
+  font-size: clamp(34px, 3.6vw, 48px); line-height: 1; color: #fff; }
+.proof .num .u { color: var(--orange); }
+.proof .lbl { font-size: 14px; color: #98A2AE; margin-top: 8px; max-width: 26ch; }
+
+/* ---------- Vidéo ---------- */
+.video-sec { padding: clamp(60px, 8vw, 100px) 0; }
+.video-box { position: relative; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: var(--encre); }
+.video-box iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+/* ---------- Sections génériques ---------- */
+section.block { position: relative; padding: clamp(70px, 9vw, 120px) 0; }
+section.block.dark { background: var(--encre); color: #E7EBEF; }
+h2 { font-family: "Archivo", sans-serif; font-stretch: 120%; font-weight: 800;
+  font-size: clamp(28px, 3.6vw, 44px); text-transform: uppercase; line-height: 1.08; max-width: 20ch; }
+.dark h2 { color: #fff; }
+.lede { color: var(--gris); max-width: 56ch; margin-top: 16px; font-size: 17.5px; }
+.dark .lede { color: #98A2AE; }
+
+/* ---------- Services ---------- */
+.svc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px;
+  background: var(--trait); border: 1px solid var(--trait); border-radius: 12px; overflow: hidden; margin-top: 48px; }
+.svc { background: var(--blanc); padding: 30px 28px; transition: background .2s; }
+.svc:hover { background: var(--gris-pale); }
+.svc img { height: 52px; width: auto; display: block; margin-bottom: 10px; }
+.delai img { height: 40px; margin-bottom: 12px; opacity: .9; }
+.svc .n { font-family: var(--mono); font-size: 12.5px; color: var(--orange); letter-spacing: .14em; }
+.svc h3 { font-size: 18.5px; font-weight: 700; margin: 10px 0 8px; line-height: 1.3; }
+.svc p { color: var(--gris); font-size: 15.5px; }
+
+/* ---------- Photos plein écran étiquetées ---------- */
+.photo-band { position: relative; height: clamp(320px, 52vw, 560px); overflow: hidden; }
+.photo-band img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-tag { position: absolute; left: clamp(20px, 5vw, 64px); bottom: 24px; background: rgba(23,27,33,.82);
+  color: #fff; font-family: var(--mono); font-size: 12px; letter-spacing: .16em; padding: 9px 16px;
+  border-left: 3px solid var(--orange); backdrop-filter: blur(4px); }
+
+/* ---------- Délais ---------- */
+.delais-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; margin-top: 46px; }
+.delai { background: var(--encre2); border: 1px solid #2E3542; border-radius: 12px; padding: 30px 28px; }
+.delai .t { font-family: var(--mono); font-size: 12.5px; letter-spacing: .16em; color: var(--bleu); text-transform: uppercase; }
+.delai .v { font-family: "Archivo", sans-serif; font-stretch: 120%; font-weight: 800; font-size: 40px; color: #fff; margin-top: 10px; }
+.delai .v small { font-size: 17px; font-weight: 600; color: #98A2AE; }
+.disclaimer { margin-top: 26px; color: #7A8490; font-size: 14px; max-width: 62ch; }
+
+/* ---------- Suivi FabStory ---------- */
+.suivi-wrap { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: clamp(30px, 5vw, 70px);
+  align-items: center; margin-top: 10px; }
+.mock-portal { border: 1px solid var(--trait); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 60px -24px rgba(23,27,33,.25); background: #fff; }
+.mock-bar { display: flex; align-items: center; gap: 6px; background: var(--gris-pale); padding: 10px 14px; }
+.mock-bar i { width: 10px; height: 10px; border-radius: 50%; background: var(--trait); }
+.mock-bar span { font-family: var(--mono); font-size: 11px; color: var(--gris); margin-left: 8px; }
+.mock-body { padding: 22px; }
+.mock-row { margin-bottom: 18px; }
+.mock-row .l { display: flex; justify-content: space-between; font-size: 13.5px; margin-bottom: 7px; }
+.mock-row .l b { font-weight: 600; }
+.mock-row .l em { font-style: normal; font-family: var(--mono); font-size: 11.5px; color: var(--gris); }
+.bar { height: 8px; border-radius: 4px; background: var(--gris-pale); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: var(--orange); width: 0; transition: width 1.2s cubic-bezier(.2,.7,.2,1); }
+.bar i.done { background: #86c564; }
+.mock-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px;
+  background: var(--bleu-pale); color: var(--bleu-f); margin-top: 4px; }
+
+/* ---------- Moyens teaser ---------- */
+.moyens-list { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+.chip { font-family: var(--mono); font-size: 13px; letter-spacing: .06em; padding: 10px 18px;
+  border: 1px solid #2E3542; border-radius: 24px; color: #C7CEd6; }
+.chip b { color: var(--bleu); font-weight: 600; }
+
+/* ---------- CTA final ---------- */
+.final { text-align: left; }
+.final .coords { margin-top: 30px; color: var(--gris); font-size: 15.5px; line-height: 2; }
+.final .coords b { color: var(--encre); }
+
+/* ---------- Footer ---------- */
+footer { background: var(--encre); color: #7A8490; font-size: 13px; padding: 22px clamp(20px, 5vw, 64px);
+  border-top: 1px solid #2A313A; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Reveal on scroll ---------- */
+.rv { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+.rv.on { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; }
+  .scroll-hint::after { animation: none; } .bar i { transition: none; } }
+</style>
+</head>
+<body>
+
+<header id="hdr">
+  <a class="logo" href="#top">
+    <img src="https://protoprocess.github.io/brand/picto-pp.png" alt="">
+    <span class="logo-txt">PROTO<span class="sep">|</span>PROCESS</span>
+  </a>
+  <nav>
+    <a class="nlink" href="#services" title="Maquette — page Services à venir">Services</a>
+    <a class="nlink" href="#moyens" title="Maquette — page Moyens à venir">Moyens</a>
+    <a class="nlink" href="#delais" title="Maquette — page Qualité à venir">Qualité</a>
+    <a class="nlink" href="#suivi" title="Maquette — page Suivi à venir">Suivi en ligne</a>
+    <a class="btn btn-p" href="#cta">Demander un devis</a>
+  </nav>
+</header>
+
+<div class="hero" id="top">
+  <span class="fid" style="top:110px; left:clamp(4px,1.5vw,20px)"></span>
+  <span class="fid b" style="bottom:70px; right:clamp(4px,1.5vw,20px)"></span>
+  <span class="eyebrow">PROTOTYPES &amp; PETITES SÉRIES — DÉLAIS COURTS</span>
+  <h1 class="display">Électronique <span class="a">prototypes</span><br>et petites séries</h1>
+  <div class="cote">Fiable · Rapide · Collaboratif</div>
+  <p class="pitch"><strong>Assemblage de cartes électroniques en délais courts — CMS, BGA, µBGA — certifié ISO 9001 et IPC-A-610.</strong> Prestataire technique et partenaire sous-traitant depuis 2008, Proto Process réalise vos cartes et ensembles électroniques : prototypage, industrialisation, assemblage et intégration PCB &amp; PCBA.</p>
+  <div class="ctas">
+    <a class="btn btn-p" href="#cta">Demander un devis</a>
+    <a class="quiet" href="#suivi">Suivre ma fabrication →</a>
+  </div>
+  <div class="scroll-hint">DÉFILER</div>
+</div>
+
+<div class="proofs">
+  <div class="inner">
+    <div class="proof rv"><div class="num"><span data-count="2008">0</span></div><div class="lbl">Année de création — 18 ans de métier</div></div>
+    <div class="proof rv"><div class="num"><span data-count="12">0</span> <span class="u">pers.</span></div><div class="lbl">Une équipe à taille humaine, un interlocuteur qui connaît votre dossier</div></div>
+    <div class="proof rv"><div class="num" style="font-size:clamp(22px,2.4vw,30px); padding-top:8px">ISO 9001<br>IPC-A-610</div><div class="lbl">La qualité certifiée, pas déclarée</div></div>
+    <div class="proof rv"><div class="num"><span data-count="5">0</span>–<span data-count="10">0</span> <span class="u">jours</span></div><div class="lbl">Délai type d'un projet rush</div></div>
+  </div>
+</div>
+
+<div class="video-sec">
+  <div class="inner rv">
+    <div class="video-box">
+      <iframe src="https://www.youtube-nocookie.com/embed/mVhxtfgp3js" title="Proto Process — présentation" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>
+  </div>
+</div>
+
+<section class="block" id="services" style="padding-top:0">
+  <div class="inner">
+    <div class="sec-mark rv">SEC.01 — SERVICES</div>
+    <h2 class="display rv">De la nomenclature au produit fini</h2>
+    <p class="lede rv">Un projet électronique ne s'arrête pas à la pose de composants. Nous prenons en charge la chaîne complète :</p>
+    <div class="svc-grid">
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-10.png" alt="" loading="lazy"><div class="n">01</div><h3>Circuits imprimés / PCB</h3><p>Réalisation et approvisionnement de vos circuits auprès de fabricants partenaires qualifiés.</p></div>
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-09.png" alt="" loading="lazy"><div class="n">02</div><h3>Approvisionnement composants</h3><p>Nous achetons, contrôlons et gérons vos composants — y compris les références sensibles à l'humidité (MSD).</p></div>
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-06.png" alt="" loading="lazy"><div class="n">03</div><h3>Éléments mécaniques</h3><p>Achat et réalisation des pièces mécaniques de vos ensembles.</p></div>
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-05.png" alt="" loading="lazy"><div class="n">04</div><h3>Assemblage / câblage de cartes</h3><p>Ligne CMS complète, montage BGA et µBGA, câblage et montages de précision.</p></div>
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-16.png" alt="" loading="lazy"><div class="n">05</div><h3>Industrialisation / intégration</h3><p>Du prototype validé à la petite série reproductible, jusqu'à l'intégration complète de vos produits.</p></div>
+      <div class="svc rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-03.png" alt="" loading="lazy"><div class="n">06</div><h3>Contrôle / tests</h3><p>AOI 3D sur chaque carte, inspection Rayon X des soudures invisibles, programmation et tests fonctionnels.</p></div>
+    </div>
+  </div>
+</section>
+
+<div class="photo-band">
+  <img src="https://protoprocess.github.io/site-vitrine/images/atelier-reelles/s3.jpg" alt="Atelier Proto Process" loading="lazy">
+  <div class="photo-tag">ATELIER — MAXILLY-SUR-LÉMAN</div>
+</div>
+
+<section class="block dark" id="delais">
+  <span class="fid b" style="top:34px; right:clamp(8px,2vw,30px)"></span>
+  <div class="inner">
+    <div class="sec-mark rv">SEC.02 — DÉLAIS</div>
+    <h2 class="display rv">Nos délais types</h2>
+    <p class="lede rv">Chaque produit, chaque projet a ses spécificités — un délai précis ne peut être confirmé qu'après étude du projet. Pour un projet standard :</p>
+    <div class="delais-grid">
+      <div class="delai rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-13.png" alt="" loading="lazy"><div class="t">Rush</div><div class="v">5–10 <small>jours</small></div></div>
+      <div class="delai rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-15.png" alt="" loading="lazy"><div class="t">Prototype standard</div><div class="v">15–20 <small>jours</small></div></div>
+      <div class="delai rv"><img src="https://protoprocess.github.io/brand/pictos-web/picto-web-08.png" alt="" loading="lazy"><div class="t">Petite série standard</div><div class="v">20–30 <small>jours</small></div></div>
+    </div>
+    <p class="disclaimer rv">Délais indicatifs constatés, hors aléas d'approvisionnement composants — confirmés avec votre devis.</p>
+  </div>
+</section>
+
+<section class="block" id="suivi">
+  <div class="inner">
+    <div class="sec-mark rv">SEC.03 — SUIVI EN LIGNE</div>
+    <div class="suivi-wrap">
+      <div>
+        <h2 class="display rv">Votre fabrication, en direct</h2>
+        <p class="lede rv">Vous n'avez pas à nous appeler pour savoir où en est votre carte. Votre espace client vous montre l'avancement en temps réel : réception des composants, assemblage, contrôles, expédition.</p>
+        <p class="rv" style="margin-top:26px"><a class="btn btn-p" href="#" title="Maquette — page à venir">Découvrir le suivi en ligne</a></p>
+      </div>
+      <div class="mock-portal rv" id="portalMock">
+        <div class="mock-bar"><i></i><i></i><i></i><span>proto-process.com/my/fabrication</span></div>
+        <div class="mock-body">
+          <div class="mock-row"><div class="l"><b>Réception composants</b><em>TERMINÉ</em></div><div class="bar"><i class="done" data-w="100%"></i></div></div>
+          <div class="mock-row"><div class="l"><b>Assemblage CMS</b><em>EN COURS</em></div><div class="bar"><i data-w="72%"></i></div></div>
+          <div class="mock-row"><div class="l"><b>Contrôle AOI + RX</b><em>À VENIR</em></div><div class="bar"><i data-w="6%"></i></div></div>
+          <div class="mock-row"><div class="l"><b>Expédition</b><em>PRÉVUE 28/08</em></div><div class="bar"><i data-w="0%"></i></div></div>
+          <span class="mock-badge">Votre carte : SO2608-123 · 25 pcs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="photo-band">
+  <img src="https://protoprocess.github.io/site-vitrine/images/atelier-reelles/blog2.jpg" alt="Ligne CMS Proto Process" loading="lazy">
+  <div class="photo-tag">LIGNE CMS — POSE AUTOMATIQUE</div>
+</div>
+
+<section class="block dark" id="moyens">
+  <div class="inner">
+    <div class="sec-mark rv">SEC.04 — MOYENS</div>
+    <h2 class="display rv">Un parc machine pensé pour les petits volumes</h2>
+    <p class="lede rv">Notre ligne est spécifiquement construite pour les prototypes et les petites séries — pas une ligne de grande série qu'on bride.</p>
+    <div class="moyens-list">
+      <span class="chip rv"><b>Jet printing</b> sans outillage</span>
+      <span class="chip rv"><b>SPI</b> contrôle d'encrémage</span>
+      <span class="chip rv"><b>Pose auto</b> CMS · BGA · µBGA</span>
+      <span class="chip rv"><b>Refusion</b> phase vapeur</span>
+      <span class="chip rv"><b>AOI 3D</b> chaque carte</span>
+      <span class="chip rv"><b>Rayon X</b> soudures invisibles</span>
+      <span class="chip rv"><b>MSD</b> étuves &amp; armoires sèches</span>
+    </div>
+    <p class="rv" style="margin-top:34px"><a class="btn btn-ghost-b" href="#" title="Maquette — page à venir">Visiter nos moyens</a></p>
+  </div>
+</section>
+
+<section class="block final" id="cta">
+  <span class="fid" style="top:36px; left:clamp(8px,2vw,30px)"></span>
+  <div class="inner">
+    <div class="sec-mark rv">SEC.05 — CONTACT</div>
+    <h2 class="display rv">Parlons de votre projet</h2>
+    <p class="lede rv">Envoyez-nous votre nomenclature et votre besoin — nous revenons vers vous rapidement avec une proposition claire.</p>
+    <p class="rv" style="margin-top:30px"><a class="btn btn-p" href="#" title="Maquette — le formulaire Odoo → CRM prendra cette place">Demander un devis</a></p>
+    <p class="coords rv"><b>contact@proto-process.fr</b> · +33 4 50 92 19 54<br>321 chemin des Houches, 74500 Maxilly-sur-Léman</p>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 Proto Process — Tous droits réservés · MAQUETTE de travail, non publiée</span>
+  <span id="ver"></span>
+</footer>
+
+<script>
+const APP_VERSION = "1.2";
+const APP_DATE = "24/08/2026";
+document.getElementById("ver").textContent = "Maquette Accueil v" + APP_VERSION + " — " + APP_DATE;
+
+// Header : ombre au scroll
+const hdr = document.getElementById("hdr");
+addEventListener("scroll", () => hdr.classList.toggle("scrolled", scrollY > 10), { passive: true });
+
+// Révélation au défilement
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add("on"); io.unobserve(e.target); }
+}), { threshold: .18 });
+document.querySelectorAll(".rv").forEach(el => io.observe(el));
+
+// Compteurs animés
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ioNum = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  ioNum.unobserve(e.target);
+  const end = +e.target.dataset.count;
+  if (reduced) { e.target.textContent = end; return; }
+  const t0 = performance.now(), dur = 1100;
+  (function tick(t) {
+    const p = Math.min((t - t0) / dur, 1);
+    e.target.textContent = Math.round(end * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(tick);
+  })(t0);
+}), { threshold: .6 });
+document.querySelectorAll("[data-count]").forEach(el => ioNum.observe(el));
+
+// Barres du portail mock
+const ioBar = new IntersectionObserver(es => es.forEach(e => {
+  if (!e.isIntersecting) return;
+  ioBar.unobserve(e.target);
+  e.target.querySelectorAll(".bar i").forEach((b, i) =>
+    setTimeout(() => b.style.width = b.dataset.w, 250 + i * 220));
+}), { threshold: .4 });
+ioBar.observe(document.getElementById("portalMock"));
+</script>
+</body>
+</html>
