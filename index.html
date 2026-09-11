@@ -181,7 +181,7 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
     <div class="pole-hd">
       <i class="ti ti-shopping-cart" aria-hidden="true"></i>
       <h2>Achats</h2>
-      <span class="count">3 applications</span>
+      <span class="count">4 applications</span>
     </div>
     <div class="grid">
       <a class="app" href="achats/bom-sourcing/">
@@ -197,6 +197,11 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
       <a class="app" href="achats/po-odoo/">
         <div class="app-top"><img class="app-ico" src="icons/po-odoo.png" alt=""><span class="app-name">PO Odoo</span></div>
         <div class="app-desc">Lecture d'un devis fournisseur, vérification à l'écran et création de la commande dans Odoo.</div>
+        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
+      </a>
+      <a class="app" href="achats/appro/">
+        <div class="app-top"><img class="app-ico" src="icons/analyse-achats.png" alt="" onerror="this.style.display='none'"><span class="app-name">Analyse Achats</span></div>
+        <div class="app-desc">Tableau de bord des analyses achat Luminovo par commande : prix vs devis, stock critique, PCB, lignes à consulter.</div>
         <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
       </a>
     </div>
@@ -264,8 +269,8 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
 <script>
 /* ---------- version ---------- */
 // Convention : X = nouvelle fonctionnalite, Y = correctif / reglage.
-const APP_VERSION = "1.5";
-const APP_DATE = "03/09/2026";
+const APP_VERSION = "1.6";
+const APP_DATE = "11/09/2026";
 document.title = `Proto Process — Applications internes — v${APP_VERSION} — ${APP_DATE}`;
 document.getElementById('hdr-version').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 </script>
