@@ -68,12 +68,13 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
     <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="../commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
     <a class="tile" data-appli="appro" href="../achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">bom-sourcing</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="reception" href="../achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
     <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
     <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
   </div>
   <p class="autres">Autres outils :
     <a href="../commercial/triage/">Triage</a><a href="../commercial/annexe-devis/">Annexe devis</a>
-    <a href="../achats/appro-v2/">Réception marchandise</a>
+    
     <a href="../rh/paie/">Paie</a><a href="../tutos/">Tutos</a><a href="../">Accueil actuel</a>
   </p>
 </main>
@@ -93,7 +94,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "0.2";
+const APP_VERSION = "0.3";
 const APP_DATE = "21/09/2026";
 document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
@@ -105,6 +106,9 @@ const $ = id => document.getElementById(id);
 
 function lire(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
 function ecrire(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+
+// Marque « arrivé par l'accueil » : lue par shared/retour-accueil.js dans chaque appli
+try { sessionStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch(e){}
 
 // Session : regroupe les mesures d'un même passage (accueil puis appli)
 let session = lire('pp_session');
