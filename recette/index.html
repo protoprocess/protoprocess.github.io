@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proto Process — Accueil</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#0a0c12;--surface:#1a2030;--surface2:#161b27;--border:#262e42;--border2:#333d55;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--accent:#F07B1F;--accent-bg:#2a1f10;--pp-blue:#5BC4D8;
+  --green:#86c564;--amber:#eab676;--red:#f09595;
+  --radius:6px;--radius-lg:10px;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
+header{background:#0f1117;height:52px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:.5px solid var(--border)}
+.logo-text{display:flex;align-items:center;font-size:13px;font-weight:500}
+.logo-text .lt{color:#fff}.logo-text .ls{color:#444;margin:0 3px}.logo-text .lo{color:var(--accent)}
+.me{margin-left:auto;color:var(--text2);font-size:12px;display:flex;align-items:center;gap:6px}
+.me button{background:none;border:none;color:var(--text3);cursor:pointer;font:inherit;text-decoration:underline;padding:0}
+.ver{margin-left:12px;font-size:11px;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:2px 8px;white-space:nowrap}
+.recette{background:var(--accent-bg);color:var(--amber);font-size:12px;padding:6px 18px;border-bottom:.5px solid #4a3418}
+main{max-width:min(96vw,1100px);margin:0 auto;padding:28px 18px 60px}
+h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{display:block;background:var(--surface);border:.5px solid var(--border);border-left:3px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:16px;cursor:pointer;text-align:left;color:inherit;font:inherit;text-decoration:none}
+.tile:hover,.tile:focus-visible{background:#1d2436;border-color:var(--border2);outline:none}
+.tile:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.tile i{font-size:20px;color:var(--accent);display:block;margin-bottom:8px}
+.tile b{display:block;font-size:15px;font-weight:500;margin-bottom:2px}
+.tile .sub{color:var(--text2);font-size:12px;display:block}
+.tile .cpt{display:block;margin-top:10px;font-size:12px;color:var(--text3);min-height:18px}
+.tile .cpt.on{color:var(--amber)}
+.tile.free{border-left-color:var(--pp-blue)}.tile.free i{color:var(--pp-blue)}
+.autres{margin-top:26px;color:var(--text3);font-size:12px}
+.autres a{color:var(--text2);margin-right:14px;text-decoration:none;white-space:nowrap}
+.autres a:hover{color:var(--accent)}
+.veil{position:fixed;inset:0;background:rgba(5,7,12,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.veil.show{display:flex}
+.box{background:var(--surface);border:1px solid var(--border2);border-top:3px solid var(--accent);border-radius:var(--radius-lg);padding:22px;max-width:440px;width:100%}
+.box h2{margin:0 0 6px;font-size:18px;font-weight:500}.box p{margin:0 0 14px;color:var(--text2);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid button{padding:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--radius);font:inherit;cursor:pointer}
+.grid button:hover,.grid button:focus-visible{border-color:var(--accent);outline:none}
+.btn-s{padding:6px 13px;background:transparent;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);font:12px var(--sans);cursor:pointer}
+</style>
+</head>
+<body>
+<header>
+  <img src="../picto-pp.png" alt="Proto Process" width="24" height="24" style="object-fit:contain" onerror="this.style.display='none'">
+  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Accueil</span></span>
+  <span class="me" id="me" hidden><i class="ti ti-user"></i><span id="mename"></span><button id="chg">changer</button></span>
+  <span class="ver" id="ver"></span>
+</header>
+<div class="recette">Version de recette : on teste ici avant de remplacer l'accueil actuel. Les applis ouvertes sont les vraies.</div>
+
+<main>
+  <h1>Que veux-tu faire maintenant ?</h1>
+  <div class="tiles">
+    <a class="tile" data-appli="devis" href="../commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
+    <a class="tile" data-appli="commande" href="../commercial/commande/"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Bon de commande reçu jusqu'à l'accusé</span><span class="cpt" id="cpt-commandes"></span></a>
+    <a class="tile" data-appli="fabstory" href="../commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="appro" href="../achats/appro-v2/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Appro</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer une carte</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
+    <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
+  </div>
+  <p class="autres">Autres outils :
+    <a href="../commercial/triage/">Triage</a><a href="../commercial/annexe-devis/">Annexe devis</a>
+    <a href="../achats/bom-sourcing/">bom-sourcing</a><a href="../achats/po-odoo/">PO Odoo</a>
+    <a href="../rh/paie/">Paie</a><a href="../tutos/">Tutos</a><a href="../">Accueil actuel</a>
+  </p>
+</main>
+
+<div class="veil" id="who"><div class="box" role="dialog" aria-labelledby="whot">
+  <h2 id="whot">Qui es-tu ?</h2><p>Demandé une seule fois sur ce poste.</p>
+  <div class="grid" id="whogrid"></div>
+</div></div>
+
+<script>
+const APP_VERSION = "0.1";
+const APP_DATE = "21/09/2026";
+document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
+document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
+
+const SB_URL = "https://gzljssjjrqbxgnxugiqu.supabase.co/rest/v1";
+const SB_KEY = "sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O";
+const EQUIPE = ["Maura","Dorian","Stéphane","Ariel","Jérôme","Fred","Valérie","Olivier"];
+const $ = id => document.getElementById(id);
+
+function lire(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function ecrire(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+
+// Session : regroupe les mesures d'un même passage (accueil puis appli)
+let session = lire('pp_session');
+if(!session){ session = Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+ecrire('pp_session', session);
+
+function mesure(appli, evenement, etape){
+  const corps = { personne: lire('pp_personne'), appli, evenement, etape: etape || null, session_id: session };
+  try {
+    fetch(`${SB_URL}/deroule_mesures`, { method:'POST', keepalive:true,
+      headers:{ apikey:SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify(corps) }).catch(()=>{});
+  } catch(e){}
+}
+
+// Qui es-tu : une seule fois par poste
+function afficherNom(){
+  const n = lire('pp_personne');
+  $('me').hidden = !n; $('mename').textContent = n || '';
+}
+$('whogrid').innerHTML = EQUIPE.map(n => `<button type="button">${n}</button>`).join('');
+$('whogrid').querySelectorAll('button').forEach(b => b.onclick = () => {
+  ecrire('pp_personne', b.textContent); $('who').classList.remove('show'); afficherNom();
+  mesure('accueil','ouverture');
+});
+$('chg').onclick = () => $('who').classList.add('show');
+if(!lire('pp_personne')) $('who').classList.add('show'); else mesure('accueil','ouverture');
+afficherNom();
+
+// Clic sur une tuile : début de déroulé
+document.querySelectorAll('a.tile').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
+$('free').onclick = () => {};
+
+// Compteurs
+function jours(d){ return Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000)); }
+function depuis(d){ const j = jours(d); return j === 0 ? "date d'aujourd'hui" : j === 1 ? 'depuis 1 jour' : `depuis ${j} jours`; }
+fetch(`${SB_URL}/v_accueil_compteurs?select=*`, { headers:{ apikey:SB_KEY } })
+  .then(r => r.ok ? r.json() : [])
+  .then(rows => {
+    for(const r of rows){
+      if(r.file === 'commandes'){
+        const el = $('cpt-commandes');
+        if(r.a_faire > 0){ el.textContent = `${r.a_faire} à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; el.classList.add('on'); }
+        else el.textContent = 'Aucune commande en attente';
+      }
+      if(r.file === 'devis'){
+        const el = $('cpt-devis'); const parts = [];
+        if(r.a_faire > 0) parts.push(`${r.a_faire} à faire`);
+        if(r.a_envoyer > 0) parts.push(`${r.a_envoyer} à envoyer`);
+        if(parts.length){ el.textContent = `${parts.join(', ')}, le plus ancien ${depuis(r.plus_ancien)}`; el.classList.add('on'); }
+        else el.textContent = 'Aucun devis en attente';
+      }
+    }
+  }).catch(()=>{});
+</script>
+</body>
+</html>
