@@ -45,6 +45,10 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
 .grid button{padding:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--radius);font:inherit;cursor:pointer}
 .grid button:hover,.grid button:focus-visible{border-color:var(--accent);outline:none}
+.choix{display:grid;gap:8px}
+.ch{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;color:var(--text);text-decoration:none}
+.ch:hover,.ch:focus-visible{border-color:var(--accent);outline:none}
+.ch i{font-size:20px;color:var(--accent)}.ch b{display:block;font-weight:500}.ch small{color:var(--text2);font-size:12px}
 .btn-s{padding:6px 13px;background:transparent;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);font:12px var(--sans);cursor:pointer}
 </style>
 </head>
@@ -61,18 +65,27 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
   <h1>Que veux-tu faire maintenant ?</h1>
   <div class="tiles">
     <a class="tile" data-appli="devis" href="../commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
-    <a class="tile" data-appli="commande" href="../commercial/commande/"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Bon de commande reçu jusqu'à l'accusé</span><span class="cpt" id="cpt-commandes"></span></a>
+    <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="../commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="appro" href="../achats/appro-v2/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Appro</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer une carte</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="appro" href="../achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">bom-sourcing</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
     <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
   </div>
   <p class="autres">Autres outils :
     <a href="../commercial/triage/">Triage</a><a href="../commercial/annexe-devis/">Annexe devis</a>
-    <a href="../achats/bom-sourcing/">bom-sourcing</a><a href="../achats/po-odoo/">PO Odoo</a>
+    <a href="../achats/appro-v2/">Réception marchandise</a>
     <a href="../rh/paie/">Paie</a><a href="../tutos/">Tutos</a><a href="../">Accueil actuel</a>
   </p>
 </main>
+
+<div class="veil" id="cmd"><div class="box" role="dialog" aria-labelledby="cmdt">
+  <h2 id="cmdt">Quelle commande ?</h2><p>Choisis le type de commande à saisir.</p>
+  <div class="choix">
+    <a class="ch" data-appli="commande" href="../commercial/commande/"><i class="ti ti-user"></i><span><b>Commande client</b><small id="cpt-commandes2">Bon de commande reçu d'un client</small></span></a>
+    <a class="ch" data-appli="po-odoo" href="../achats/po-odoo/"><i class="ti ti-building-warehouse"></i><span><b>Commande d'achat</b><small>P.O. fournisseur dans Odoo</small></span></a>
+  </div>
+  <button class="btn-s" type="button" id="cmdx" style="margin-top:14px">Annuler</button>
+</div></div>
 
 <div class="veil" id="who"><div class="box" role="dialog" aria-labelledby="whot">
   <h2 id="whot">Qui es-tu ?</h2><p>Demandé une seule fois sur ce poste.</p>
@@ -80,7 +93,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "0.1";
+const APP_VERSION = "0.2";
 const APP_DATE = "21/09/2026";
 document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
@@ -124,6 +137,10 @@ afficherNom();
 // Clic sur une tuile : début de déroulé
 document.querySelectorAll('a.tile').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
 $('free').onclick = () => {};
+$('t-commande').onclick = () => $('cmd').classList.add('show');
+$('cmdx').onclick = () => $('cmd').classList.remove('show');
+$('cmd').addEventListener('click', e => { if(e.target.id === 'cmd') $('cmd').classList.remove('show'); });
+document.querySelectorAll('a.ch').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
 
 // Compteurs
 function jours(d){ return Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000)); }
@@ -134,7 +151,8 @@ fetch(`${SB_URL}/v_accueil_compteurs?select=*`, { headers:{ apikey:SB_KEY } })
     for(const r of rows){
       if(r.file === 'commandes'){
         const el = $('cpt-commandes');
-        if(r.a_faire > 0){ el.textContent = `${r.a_faire} à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; el.classList.add('on'); }
+        if(r.a_faire > 0){ el.textContent = `${r.a_faire} commandes client à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; el.classList.add('on');
+          $('cpt-commandes2').textContent = `${r.a_faire} à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; }
         else el.textContent = 'Aucune commande en attente';
       }
       if(r.file === 'devis'){
