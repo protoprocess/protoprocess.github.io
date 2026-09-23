@@ -1,6 +1,6 @@
 # Plan de construction — Déroulé devis automatique assisté
 
-**v1.1 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
+**v1.2 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
 
 Le bilan dit **d'où on part** (dossier HORIBA de A à Z, règles, pièges). Ce plan dit **où on va** et dans quel ordre. Chaque lot livré met à jour les deux documents.
 
@@ -135,7 +135,7 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 |---|---|
 | Stockage et versionnage des scripts (`run_script`) | cœur de l'architecture |
 | `code_mode_stage_file` pour Gerber/PnP | supprimer le dépôt manuel |
-| Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 — *(v1.1)* un PDF lu via le MCP depuis Claude arrive **corrompu** (binaire converti en texte) → d'où la lecture à la source (§2) |
+| Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 — *(v1.1)* via le MCP le PDF arrive **corrompu** (binaire converti en texte) ; **résolu le 23/09** : n8n le télécharge **intact** en HTTP direct avec le lien signé fourni par la fiche PCB (`files[].path`, test sur PP5 AURA : 773 971 octets, identique à l'original). Le devis fournisseur reste lu à la source (§2) ; les PDF déjà dans Luminovo sont relisibles par n8n |
 | Dépôt d'un PDF dans une offre depuis n8n (lien `…/additional-files/upload-link`) | dépôt automatique du devis fournisseur (§2) |
 | Budget ~25 s par exécution de script | découper « lancer » / « lire plus tard » |
 | Droits minimaux de l'utilisateur dédié | sécurité des écritures |
@@ -146,5 +146,6 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.2 | 23/09/2026 | Lecture des PDF Luminovo résolue (téléchargement direct par n8n) ; maintien hebdomadaire du MCP en place (`6OfqNbiplgHLbSLn`). |
 | v1.1 | 23/09/2026 | Leçons du contrôle AURA : trois sources, valeur sans source = 🟠, date code et exigences matière, note de fabrication ; devis PCB déposé dans le pop-up, lu à la source par Claude puis déposé automatiquement dans l'offre (idée d'Olivier). |
 | v1.0 | 23/09/2026 | Rédaction initiale après la séance HORIBA et l'ouverture du MCP n8n. |
