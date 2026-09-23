@@ -1,6 +1,6 @@
 # Plan de construction — Déroulé devis automatique assisté
 
-**v1.0 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
+**v1.1 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
 
 Le bilan dit **d'où on part** (dossier HORIBA de A à Z, règles, pièges). Ce plan dit **où on va** et dans quel ordre. Chaque lot livré met à jour les deux documents.
 
@@ -27,7 +27,8 @@ Cible : **30 à 45 min par devis** au lieu d'une journée.
 | Compteur d'autonomie | seules les **corrections de fond** comptent (mauvaise pièce, quantité, prix) ; les retouches de forme sont ignorées |
 | Relecture finale | remplacée par la **fiche de cohérence** (§5) ; le **sourcing en est exclu** (c'est l'étape que l'humain regarde vraiment) |
 | Envoi du devis | **toujours humain** |
-| PCB Ellipse | l'humain dépose le devis PDF **dans l'offre Luminovo** ; Claude contrôle qu'il n'y a **pas d'écart** entre la spec PCB et le devis (§6) |
+| Devis PCB fournisseur | *(v1.1)* l'humain dépose le devis PDF **dans le pop-up devis-client** (étape 7) ; Claude le lit **à la source** (PDF intact), le contrôle (§6) ; si rien d'anormal, n8n **crée l'offre et joint le PDF** dans Luminovo automatiquement ; sinon arrêt et écart affiché. Plus aucune saisie de prix, plus d'offre sans devis derrière |
+| Source des valeurs | *(v1.1)* **toute valeur de spec PCB porte sa source** (fichier, page) ; une valeur sans source identifiée sort en 🟠. Principe : aucune source n'est crue seule, pas même Claude |
 | Rôle de l'IA | jugement seulement ; la mécanique passe par des scripts |
 
 ---
@@ -83,7 +84,7 @@ Coût IA estimé : quelques centimes à quelques dizaines de centimes par devis 
 | Indicateur | Contrôle | Besoin |
 |---|---|---|
 | BOM | repères = quantités, pièces au bon fabricant, obsolètes signalés | règles du bilan §B.5 |
-| PCB spec | fiche Luminovo = fiche fabricant client = devis PCB (§6) | — |
+| PCB spec | *(v1.1)* recoupement **à trois sources** : spec client (fiche fabricant / empilage) + Gerber (nombre de couches, faces de sérigraphie) + spec Luminovo ; puis devis fournisseur (§6) | — |
 | PCB prix | prix au dm² selon couches et délai vs historique | **référence historique** |
 | Scénarios | modèle cohérent avec les règles (nouveau/refab, quantités échelonnées, CMS light) | règles du bilan §B.6 |
 | M.O. | coût par composant, par tranche de quantité, vs historique | **référence historique** |
@@ -100,7 +101,11 @@ Tout 🟢 → devis validable. 🟠/🔴 → seul l'écart est montré, avec sa 
 | **Ellipse en ligne** (pcbprototypes.com) | **PP saisit le formulaire** | **oui** : devis PDF (joint à l'offre Luminovo) comparé à la spec PCB |
 | Ellipse PCB (RFQ), PCB Electronics (RFQ) | le fournisseur, depuis les fichiers | **à décider** (voir §8) |
 
-Paramètres contrôlés : couches, épaisseur, cuivre fini, finition, vernis/sérigraphie, dimensions, panneau, quantités, délai.
+Paramètres contrôlés : couches, épaisseur, cuivre fini, finition, vernis/sérigraphie, dimensions, panneau, quantités, délai. *(v1.1)* + **date code**, **exigences matière** (Tg, low CTE…), test électrique.
+
+*(v1.1)* Les exigences sans champ Luminovo (low CTE, zone de date code…) sont écrites dans la **note de fabrication** de la fiche PCB, avec leur source, par le script `creer_rfq_pcb`.
+
+**Cas réel, 23/09 (AURA ADEC111290000, devis déjà envoyé)** : Luminovo portait 6 couches et ENIG (valeurs forcées sans source) ; la spec client PP5 et les Gerber donnent 8 couches et HAL sans plomb ; le devis Ellipse était juste mais sans date code ni low CTE. Les offres Safe radar, calculées sur la fausse spec, ont été expirées. Le prix envoyé reposait sur Ellipse, donc cohérent. Corrigé dans Luminovo le 23/09.
 
 ---
 
@@ -130,7 +135,8 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 |---|---|
 | Stockage et versionnage des scripts (`run_script`) | cœur de l'architecture |
 | `code_mode_stage_file` pour Gerber/PnP | supprimer le dépôt manuel |
-| Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 |
+| Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 — *(v1.1)* un PDF lu via le MCP depuis Claude arrive **corrompu** (binaire converti en texte) → d'où la lecture à la source (§2) |
+| Dépôt d'un PDF dans une offre depuis n8n (lien `…/additional-files/upload-link`) | dépôt automatique du devis fournisseur (§2) |
 | Budget ~25 s par exécution de script | découper « lancer » / « lire plus tard » |
 | Droits minimaux de l'utilisateur dédié | sécurité des écritures |
 
@@ -140,4 +146,5 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.1 | 23/09/2026 | Leçons du contrôle AURA : trois sources, valeur sans source = 🟠, date code et exigences matière, note de fabrication ; devis PCB déposé dans le pop-up, lu à la source par Claude puis déposé automatiquement dans l'offre (idée d'Olivier). |
 | v1.0 | 23/09/2026 | Rédaction initiale après la séance HORIBA et l'ouverture du MCP n8n. |
