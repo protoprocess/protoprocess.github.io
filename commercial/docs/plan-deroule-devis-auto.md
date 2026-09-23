@@ -1,6 +1,6 @@
 # Plan de construction — Déroulé devis automatique assisté
 
-**v1.2 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
+**v1.3 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
 
 Le bilan dit **d'où on part** (dossier HORIBA de A à Z, règles, pièges). Ce plan dit **où on va** et dans quel ordre. Chaque lot livré met à jour les deux documents.
 
@@ -27,7 +27,8 @@ Cible : **30 à 45 min par devis** au lieu d'une journée.
 | Compteur d'autonomie | seules les **corrections de fond** comptent (mauvaise pièce, quantité, prix) ; les retouches de forme sont ignorées |
 | Relecture finale | remplacée par la **fiche de cohérence** (§5) ; le **sourcing en est exclu** (c'est l'étape que l'humain regarde vraiment) |
 | Envoi du devis | **toujours humain** |
-| Devis PCB fournisseur | *(v1.1)* l'humain dépose le devis PDF **dans le pop-up devis-client** (étape 7) ; Claude le lit **à la source** (PDF intact), le contrôle (§6) ; si rien d'anormal, n8n **crée l'offre et joint le PDF** dans Luminovo automatiquement ; sinon arrêt et écart affiché. Plus aucune saisie de prix, plus d'offre sans devis derrière |
+| Devis PCB fournisseur | *(v1.3, O)* l'humain dépose le devis PDF **directement dans l'offre Luminovo** (Luminovo lit le PDF et remplit l'offre, rien à saisir) ; n8n **relit ce PDF** depuis Luminovo et le **contrôle se fait à la fin**, dans la fiche de cohérence (§5, §6). Une offre PCB sans devis PDF joint sort en 🟠 |
+| Principe d'ergonomie | *(v1.3, O)* **quand on est dans Luminovo, on y traite un maximum de choses sans en ressortir** : pas d'aller-retour entre les écrans, source de perte de temps et pénible pour l'humain. Les contrôles se regroupent en fin de parcours plutôt que de couper le travail |
 | Source des valeurs | *(v1.1)* **toute valeur de spec PCB porte sa source** (fichier, page) ; une valeur sans source identifiée sort en 🟠. Principe : aucune source n'est crue seule, pas même Claude |
 | Rôle de l'IA | jugement seulement ; la mécanique passe par des scripts |
 
@@ -136,7 +137,7 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 | Stockage et versionnage des scripts (`run_script`) | cœur de l'architecture |
 | `code_mode_stage_file` pour Gerber/PnP | supprimer le dépôt manuel |
 | Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 — *(v1.1)* via le MCP le PDF arrive **corrompu** (binaire converti en texte) ; **résolu le 23/09** : n8n le télécharge **intact** en HTTP direct avec le lien signé fourni par la fiche PCB (`files[].path`, test sur PP5 AURA : 773 971 octets, identique à l'original). Le devis fournisseur reste lu à la source (§2) ; les PDF déjà dans Luminovo sont relisibles par n8n |
-| Dépôt d'un PDF dans une offre depuis n8n (lien `…/additional-files/upload-link`) | dépôt automatique du devis fournisseur (§2) |
+| Relecture par n8n d'un PDF joint à une **offre** (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB en fin de parcours (§2) — la relecture des PDF de la **fiche PCB** est prouvée (v1.2), celle des pièces jointes d'offre reste à tester |
 | Budget ~25 s par exécution de script | découper « lancer » / « lire plus tard » |
 | Droits minimaux de l'utilisateur dédié | sécurité des écritures |
 
@@ -146,6 +147,7 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.3 | 23/09/2026 | Devis PCB déposé directement dans l'offre Luminovo, contrôle en fin de parcours ; principe « rester dans Luminovo » (O). Remplace le circuit « dépôt dans le pop-up » de la v1.1. |
 | v1.2 | 23/09/2026 | Lecture des PDF Luminovo résolue (téléchargement direct par n8n) ; maintien hebdomadaire du MCP en place (`6OfqNbiplgHLbSLn`). |
 | v1.1 | 23/09/2026 | Leçons du contrôle AURA : trois sources, valeur sans source = 🟠, date code et exigences matière, note de fabrication ; devis PCB déposé dans le pop-up, lu à la source par Claude puis déposé automatiquement dans l'offre (idée d'Olivier). |
 | v1.0 | 23/09/2026 | Rédaction initiale après la séance HORIBA et l'ouverture du MCP n8n. |
