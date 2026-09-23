@@ -1,6 +1,6 @@
 # Bilan « Déroulé devis assisté par Claude » — HORIBA 1300131501D de A à Z
 
-**v1.0 — 23/09/2026** · chantier 169 (déroulé devis) · chantier 174 (hub d'accueil) · fil « Attente retour Luminovo n8n »
+**v1.1 — 23/09/2026** · chantier 169 (déroulé devis) · chantier 174 (hub d'accueil) · fil « Attente retour Luminovo n8n »
 
 Document de référence rédigé à la fin de la séance du 23/09/2026, à partir du transcript complet, du chantier 169 (Supabase) et du fil Luminovo/n8n. Chaque point porte sa date et sa source. Il sert d'ouverture à la conversation suivante : « chantier 169, on construit le déroulé auto assisté — lire le bilan v1.0 ».
 
@@ -130,7 +130,7 @@ Numérotation des étapes : 1 dossier reçu · 2 analyse devis-client · 3 carte
 - Calcul flexible : `GET /flexible-calculation/plans/rfq/:rfqId` donne la structure, **pas les résultats** ; `GET /calculations/calculation-assembly-costs` = 404 tant que le calcul n'est pas créé à l'écran.
 - Modèle sourcing : `GET /sourcing-templates` ; préférences fournisseurs `Approved/Preferred/Excluded` ; « préféré » ≠ « approuvé » côté API mais un seul statut à l'écran ; ne jamais copier les préférences d'un ancien scénario.
 - Extraction de spec PDF : `GET /pcb-pdf-specification-extraction` existe, **aucun déclencheur trouvé** (ni écran ni API) → à voir avec Marco.
-- Pas de dépôt de fichier (Gerber, PnP) possible depuis Claude.
+- Pas de dépôt de fichier (Gerber, PnP) possible depuis Claude dans le chat. *(v1.1)* Piste à tester depuis n8n : l'outil MCP `code_mode_stage_file`.
 - Budget d'exécution `code_mode_exec` ≈ 25 s : ne pas attendre plus de ~20 s dans un script.
 
 ### n8n / Odoo
@@ -183,7 +183,7 @@ Numérotation des étapes : 1 dossier reçu · 2 analyse devis-client · 3 carte
 | E5 | devis-client / trame devis | Adresses livraison / facturation non préremplies ; notes « x€ / délai x jrs » à remplir | O, 16h30 |
 | E6 | Luminovo modèle « PP Chiffrage » | Agrégateurs dans les sources (fournisseurs bidon) ; liste des approuvés hétéroclite ; Mouser corrigé par O | O, 23/09 |
 | E7 | Luminovo | Extraction PDF de spec introuvable à l'écran | 23/09 |
-| E8 | Claude | Incident repères inventés ; sélection fabricant laxiste ; PATCH bulk mal formé ; adresses oubliées ; préférence de délai proposée à tort → règles §B | 23/09 |
+| E8 | Claude | Incident repères inventés ; sélection fabricant laxiste ; PATCH bulk mal formé ; adresses oubliées ; préférence de délai proposée à tort → règles §B. *(v1.1)* Cause de l'incident repères : workflow « BOM Client — Ingestion » ne reconnaissait pas la colonne « COMPONENT » sur la voie MPN → **corrigé en v2.1** (repères reconnus par leur contenu + contrôle bloquant repères ≠ quantité dans la fiche), testé et publié ; RfQ réparé (85 placements) | 23/09 |
 | E9 | Sécurité | Webhook devis-analyses `2WOsElx0jJbY2OuY` ouvert sans clé ; clé API Odoo en clair dans `06tqfU9B8HglMT6r` | 21/09 |
 | E10 | Chantier 125 | Modèles de calcul flexible à enrichir (postures commerciales) | O |
 | E11 | Chantier 174 | Déroulé commande v2.0 déployé (recette), **non testé** (pas de commande reçue) ; « Demander de l'aide à Claude » = message d'attente ; écarts bon/devis non calculés | 22/09 |
@@ -197,12 +197,12 @@ Numérotation des étapes : 1 dossier reçu · 2 analyse devis-client · 3 carte
 | Webhook n8n « Déroulé devis — ping » | **v0.2**, exige `X-PP-Secret`, test 403 / 200 passé, workflow de test archivé | — |
 | Appli `deroule-devis` | **v0.6** (release 7), connexion n8n *auth static*, plus de connexion Anthropic ; en attente de revue | ① l'équipe lance le déroulé depuis l'appli Luminovo |
 | Secret | credential n8n « Luminovo deroule-devis — Header Auth » + coffre Luminovo (statut active) ; jamais dans le code, mails, Supabase | — |
-| MCP pour n8n | enregistrement dynamique si callback whitelisté ; **vraie URL n8n Cloud = `https://oauth.n8n.cloud/oauth2/callback`** (relais partagé — risque à signaler à Marco) ; mail corrigé | ② n8n agit seul dans Luminovo |
+| MCP pour n8n | ✅ **ouvert le 23/09 après-midi** *(v1.1)* : callback `https://oauth.n8n.cloud/oauth2/callback` ajouté par Luminovo ; credential n8n « Luminovo MCP (OAuth) » connecté **avec le compte d'Olivier** ; test `get_tenant` → « proto-process », 19 outils visibles (dont `code_mode_exec`, `run_script`) ; workflow de test archivé. Selon Marco, le jeton reste valide **tant qu'il sert au moins une fois par semaine** → appel hebdomadaire à mettre en place | ② n8n agit seul dans Luminovo — **débloqué** |
 | API publique à jeton | proposée par Marco ; fourchette connue 4-5 k€/an ; prix à demander | flux automatisés sans chat |
-| Utilisateur Luminovo dédié | à créer par Olivier (droits minimaux) | ①② |
+| Utilisateur Luminovo dédié | à créer par Olivier (droits minimaux) ; en attendant, n8n écrit **au nom d'Olivier** | ①② |
 | Relance de Marco | non (O lui fait confiance) | — |
 
-**Aucune de ces attentes ne bloque le déroulé piloté par Claude** ; l'exécutant (Claude → n8n/appli) changera quand ① ou ② sera ouvert, le cadrage reste le même.
+**Aucune de ces attentes ne bloque le déroulé piloté par Claude.** *(v1.1)* ② est ouvert : n8n peut désormais exécuter la mécanique du déroulé dans Luminovo. ① (revue de l'appli) reste en attente ; décision d'Olivier : rien de plus n'est construit dans l'appli `deroule-devis` d'ici là, l'écran de l'équipe sera devis-client (plan de construction à suivre).
 
 ---
 
@@ -230,12 +230,12 @@ Durée observée : une journée avec incidents et apprentissage ; cible réalist
 1. **Créer le projet « Équipe »** avec ces règles consignées, pour qu'Ariel/Maura déroulent seuls.
 2. **devis-client** : E1, E2, E5 (adresses préremplies dans la trame, notes), E4 (conserver les fichiers, convertir le PnP), E3 (qualification « plans en traits »).
 3. **Modèle sourcing « PP Chiffrage »** : sources sans agrégateurs, liste des approuvés à jour, doublons de sites (Olivier).
-4. **Passe BOM codifiée** (règle fabricant strict, confiance haute/douteuse) — en script réutilisable côté Claude, puis n8n quand le MCP s'ouvre.
+4. **Passe BOM codifiée** (règle fabricant strict, confiance haute/douteuse) — en script réutilisable. *(v1.1)* Le MCP n8n étant ouvert, ce script peut tourner directement depuis n8n.
 5. **Questions client au devis** : générer les entrées FabStory + notes Odoo depuis la lecture du sourcing (non-dispo non remplaçables, obsolètes, écarts pose/BOM).
 6. **Extraction PDF Luminovo** : demander la méthode à Marco.
 7. Sécurité E9.
 8. Chantier 125 (modèles de calcul) ; test du déroulé commande v2.0 à la prochaine commande.
-9. Prix de l'API publique Luminovo (décision au vu du volume).
+9. Prix de l'API publique Luminovo (décision au vu du volume). *(v1.1)* À réévaluer : le MCP n8n couvre peut-être le besoin.
 
 ---
 
@@ -243,4 +243,5 @@ Durée observée : une journée avec incidents et apprentissage ; cible réalist
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.1 | 23/09/2026 | Ouverture du MCP Luminovo pour n8n (§F, §H.4, §H.9), piste `code_mode_stage_file` (§C), cause et correctif de l'incident repères — workflow BOM v2.1 (§E8), décision sur l'appli deroule-devis (§F). |
 | v1.0 | 23/09/2026 | Rédaction initiale à la fin de la séance HORIBA (chantiers 169/174, fil Luminovo/n8n). |
