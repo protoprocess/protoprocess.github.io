@@ -1,6 +1,6 @@
 # Plan de construction — Déroulé devis automatique assisté
 
-**v1.3 — 23/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
+**v1.4 — 24/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
 
 Le bilan dit **d'où on part** (dossier HORIBA de A à Z, règles, pièges). Ce plan dit **où on va** et dans quel ordre. Chaque lot livré met à jour les deux documents.
 
@@ -61,6 +61,15 @@ Cible : **30 à 45 min par devis** au lieu d'une journée.
 |---|---|---|
 | créer RfQ/PCB/scénarios, importer la BOM avec contrôles, lancer/lire le sourcing, remplir Odoo | lire la fiche fabricant PDF, classer les lignes douteuses, rédiger les questions client, contrôle PCB (§6), fiche de cohérence (§5), bouton « Aide de Claude » du pop-up | valider la spec, trancher le douteux, choisir les offres PCB, regarder le sourcing, envoyer |
 
+**Suivi du déroulé (Supabase, v1.0 — 24/09/2026)** *(v1.4)*
+
+| Table | Contenu | Garde-fous |
+|---|---|---|
+| `deroule_devis` | 1 ligne par dossier : dossier, client, SO Odoo, RfQ, étape (1-8), statut, en pause depuis, raison d'abandon | 1 seul déroulé actif par dossier ; pause toujours datée ; abandon toujours motivé |
+| `deroule_devis_journal` | 1 ligne par événement : étape, événement (ouverture, script, alerte, porte, go, correction_fond / correction_forme, pause, reprise, abandon, fin), qui, script + version, détail | ajout seul (ni modification ni suppression) |
+
+Statuts : `en_cours` → `attente_porte` (go humain) / `bloque` (contrôle KO) / `pause` (bouton Quitter ; **reprise à la même étape, contrôles de l'étape rejoués**) / `abandonne` → `fait` (devis envoyé). Le temps par devis et le compteur d'autonomie se calculent depuis le journal.
+
 Coût IA estimé : quelques centimes à quelques dizaines de centimes par devis (à mesurer).
 
 ---
@@ -114,7 +123,7 @@ Paramètres contrôlés : couches, épaisseur, cuivre fini, finition, vernis/sé
 
 | Lot | Contenu | Test d'acceptation |
 |---|---|---|
-| **0 Socle** | utilisateur Luminovo dédié ; appel MCP hebdomadaire ; table `deroule_devis` ; sécurité E9 ; **référence historique** (M.O./composant, PCB/dm²) ; levée des inconnues §9 | connexion MCP stable 2 semaines |
+| **0 Socle** | ~~utilisateur Luminovo dédié~~ (reporté, v1.4) ; appel MCP hebdomadaire ✅ ; tables `deroule_devis` + `deroule_devis_journal` ✅ *(v1.4)* ; relecture PDF d'offre ✅ *(v1.4)* ; sécurité E9 ; **référence historique** (M.O./composant, PCB/dm²) — en cours, non urgente ; levée des inconnues §9 | connexion MCP stable 2 semaines |
 | **1 BOM** | `importer_bom` + étape 5 dans le pop-up | rejouer HORIBA : 85 repères, 31 postes, mêmes pièces |
 | **2 RfQ + PCB** | `creer_rfq_pcb` + spec PDF + test dépôt de fichiers | spec HORIBA identique |
 | **3 Scénarios + sourcing** | étapes 6-7 + contrôle PCB §6 | mêmes offres que le réel ; test sur devis Ellipse réels |
@@ -137,9 +146,9 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 | Stockage et versionnage des scripts (`run_script`) | cœur de l'architecture |
 | `code_mode_stage_file` pour Gerber/PnP | supprimer le dépôt manuel |
 | Lecture des fichiers joints à une offre (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB §6 — *(v1.1)* via le MCP le PDF arrive **corrompu** (binaire converti en texte) ; **résolu le 23/09** : n8n le télécharge **intact** en HTTP direct avec le lien signé fourni par la fiche PCB (`files[].path`, test sur PP5 AURA : 773 971 octets, identique à l'original). Le devis fournisseur reste lu à la source (§2) ; les PDF déjà dans Luminovo sont relisibles par n8n |
-| Relecture par n8n d'un PDF joint à une **offre** (`GET /offers/custom-part/:id/additional-files`) | contrôle PCB en fin de parcours (§2) — la relecture des PDF de la **fiche PCB** est prouvée (v1.2), celle des pièces jointes d'offre reste à tester |
+| Relecture par n8n d'un PDF joint à une **offre** (`GET /offers/custom-part/:id/additional-files`) | ✅ *(v1.4)* **résolu le 24/09** : l'appel MCP renvoie un lien signé, n8n télécharge le PDF **intact** (test SICPA xdk-xc7a-board A.0.0.0, offre PCB Electronics DE23483 : 97 783 octets = taille annoncée, `%PDF`…`%%EOF`, 2 pages ; workflow de test archivé) |
 | Budget ~25 s par exécution de script | découper « lancer » / « lire plus tard » |
-| Droits minimaux de l'utilisateur dédié | sécurité des écritures |
+| Droits minimaux de l'utilisateur dédié | *(v1.4)* **reporté** : pas d'utilisateur dédié pour l'instant (O) — n8n agit avec le compte d'Olivier, éventuellement un utilisateur existant reconfiguré ou « commercial » plus tard |
 
 ---
 
@@ -147,6 +156,7 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.4 | 24/09/2026 | Lot 0 : relecture par n8n d'un PDF joint à une offre prouvée (SICPA) ; tables Supabase `deroule_devis` (statuts en_cours / attente_porte / bloque / **pause** / fait / abandonne ; reprise après pause à la même étape, contrôles de l'étape rejoués) et `deroule_devis_journal` (ajout seul) ; utilisateur Luminovo dédié reporté (O) ; entrepôt Luminovo indisponible (option Insights non activée) → référence historique reconstruite depuis Odoo + offres PCB. |
 | v1.3 | 23/09/2026 | Devis PCB déposé directement dans l'offre Luminovo, contrôle en fin de parcours ; principe « rester dans Luminovo » (O). Remplace le circuit « dépôt dans le pop-up » de la v1.1. |
 | v1.2 | 23/09/2026 | Lecture des PDF Luminovo résolue (téléchargement direct par n8n) ; maintien hebdomadaire du MCP en place (`6OfqNbiplgHLbSLn`). |
 | v1.1 | 23/09/2026 | Leçons du contrôle AURA : trois sources, valeur sans source = 🟠, date code et exigences matière, note de fabrication ; devis PCB déposé dans le pop-up, lu à la source par Claude puis déposé automatiquement dans l'offre (idée d'Olivier). |
