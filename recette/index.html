@@ -59,7 +59,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
   <span class="me" id="me" hidden><i class="ti ti-user"></i><span id="mename"></span><button id="chg">changer</button></span>
   <span class="ver" id="ver"></span>
 </header>
-<div class="recette">Version de recette : on teste ici avant de remplacer l'accueil actuel. Les applis ouvertes sont les vraies.</div>
+<div class="recette">Version de recette : on teste ici avant de remplacer l'accueil actuel. Les applis marquées RECETTE sont des copies de test (écritures Odoo réelles) ; les autres sont les vraies applis.</div>
 
 <main>
   <h1>Que veux-tu faire maintenant ?</h1>
@@ -82,7 +82,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 <div class="veil" id="cmd"><div class="box" role="dialog" aria-labelledby="cmdt">
   <h2 id="cmdt">Quelle commande ?</h2><p>Choisis le type de commande à saisir.</p>
   <div class="choix">
-    <a class="ch" data-appli="commande" href="../commercial/commande/"><i class="ti ti-user"></i><span><b>Commande client</b><small id="cpt-commandes2">Bon de commande reçu d'un client</small></span></a>
+    <a class="ch" data-appli="commande" href="../commercial/commande/recette/"><i class="ti ti-user"></i><span><b>Commande client</b> <small style="color:var(--amber)">RECETTE</small><small id="cpt-commandes2">Bon de commande reçu d'un client</small></span></a>
     <a class="ch" data-appli="po-odoo" href="../achats/po-odoo/"><i class="ti ti-building-warehouse"></i><span><b>Commande d'achat</b><small>P.O. fournisseur dans Odoo</small></span></a>
   </div>
   <button class="btn-s" type="button" id="cmdx" style="margin-top:14px">Annuler</button>
@@ -94,8 +94,8 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "0.3";
-const APP_DATE = "21/09/2026";
+const APP_VERSION = "0.4";
+const APP_DATE = "24/09/2026";
 document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
 
