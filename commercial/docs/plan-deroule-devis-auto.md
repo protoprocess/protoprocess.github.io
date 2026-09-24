@@ -1,6 +1,6 @@
 # Plan de construction — Déroulé devis automatique assisté
 
-**v1.4 — 24/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
+**v1.5 — 24/09/2026** · chantier 169 · s'appuie sur [bilan-deroule-devis-230926.md](bilan-deroule-devis-230926.md) (v1.1)
 
 Le bilan dit **d'où on part** (dossier HORIBA de A à Z, règles, pièges). Ce plan dit **où on va** et dans quel ordre. Chaque lot livré met à jour les deux documents.
 
@@ -156,6 +156,7 @@ Banc d'essai permanent : le dossier HORIBA, dont on connaît le résultat au cen
 
 | Version | Date | Objet |
 |---|---|---|
+| v1.5 | 24/09/2026 | **Lot 1 livré en recette.** Règles BOM d'Olivier : import toujours par FICHIER (BOM traitée = BOM client + IPN, colonnes vides retirées, IPN placé après la référence), jamais de création de lignes par API (cause de l'absence de « BOM originale » sur HORIBA, corrigée par réimport) ; rien n'est retiré ; approbation d'office si même fabricant et référence identique à tirets/espaces près (confiance haute), sinon confirmation humaine ; « non câblé » proposé, jamais imposé ; ligne PCB gardée (« PCB-BOM », non câblé) ; seul arrêt : BOM inexploitable. Livrés : workflows n8n RECETTE `importer_bom` (N7Qr9MOZSOqA1cjq, testé 3× : 33 lignes, 87 éléments, 77 approuvés, 8 en attente, 4 min), `BOM traitée : fichier` (IdvrFoHJOYM3wWWp v1.1), `écran` (zFTzcLK7o9BfTWoX : état, RfQ du client, go) ; pop-up étape 5 dans `devis-client/recette/` v12.20-recette ; maquette v0.3. Mappage des colonnes corrigé d'après les entêtes (le mappage auto de Luminovo se trompait). |
 | v1.4 | 24/09/2026 | Lot 0 : relecture par n8n d'un PDF joint à une offre prouvée (SICPA) ; tables Supabase `deroule_devis` (statuts en_cours / attente_porte / bloque / **pause** / fait / abandonne ; reprise après pause à la même étape, contrôles de l'étape rejoués) et `deroule_devis_journal` (ajout seul) ; utilisateur Luminovo dédié reporté (O) ; entrepôt Luminovo indisponible (option Insights non activée) → référence historique reconstruite depuis Odoo + offres PCB. |
 | v1.3 | 23/09/2026 | Devis PCB déposé directement dans l'offre Luminovo, contrôle en fin de parcours ; principe « rester dans Luminovo » (O). Remplace le circuit « dépôt dans le pop-up » de la v1.1. |
 | v1.2 | 23/09/2026 | Lecture des PDF Luminovo résolue (téléchargement direct par n8n) ; maintien hebdomadaire du MCP en place (`6OfqNbiplgHLbSLn`). |
