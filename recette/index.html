@@ -79,7 +79,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
     <a class="tile" data-appli="devis" href="../commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
     <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="../commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="appro" href="../achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">bom-sourcing</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="appro" href="../achats/bom-sourcing/recette/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Achats PP <small style="color:var(--amber)">RECETTE</small> — commandes, analyse BOM, achats</span><span class="cpt"></span></a>
     <a class="tile" data-appli="reception" href="../achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
     <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
     <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
@@ -106,7 +106,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "0.6";
+const APP_VERSION = "0.7";
 const APP_DATE = "24/09/2026";
 document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
