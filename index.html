@@ -142,8 +142,6 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
   <div class="spacer"></div>
   <span class="hdr-note" id="hdr-version">v1.3 — 01/08/2026</span>
 </header>
-<!-- v1.7 — bandeau URGENT : stock critique détecté par l'analyse appro Luminovo (table appro_analyses, SO encore AF) -->
-<a id="urgent" href="achats/appro/" hidden style="display:none;align-items:center;gap:10px;margin:14px auto 0;max-width:min(96vw,1800px);padding:10px 16px;border-radius:var(--radius);background:#FCEBEB;color:#A32D2D;border-left:4px solid #A32D2D;font-size:13px;font-weight:600;text-decoration:none"><i class="ti ti-alert-triangle" aria-hidden="true" style="font-size:18px"></i><span id="urgent-txt"></span><span style="margin-left:auto;font-weight:500">Voir l'Analyse Achats →</span></a>
 
 <div class="wrap">
 
@@ -271,23 +269,10 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
 <script>
 /* ---------- version ---------- */
 // Convention : X = nouvelle fonctionnalite, Y = correctif / reglage.
-const APP_VERSION = "1.7";
-const APP_DATE = "24/09/2026";
+const APP_VERSION = "1.6";
+const APP_DATE = "11/09/2026";
 document.title = `Proto Process — Applications internes — v${APP_VERSION} — ${APP_DATE}`;
 document.getElementById('hdr-version').textContent = `v${APP_VERSION} — ${APP_DATE}`;
-
-/* ---------- v1.7 : bandeau URGENT stock critique (lecture Supabase, 0 exécution n8n) ---------- */
-const SB_URL = "https://gzljssjjrqbxgnxugiqu.supabase.co/rest/v1";
-const SB_KEY = "sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O";
-fetch(`${SB_URL}/v_accueil_compteurs?select=*&file=eq.appro_urgent`, { headers: { apikey: SB_KEY } })
-  .then(r => r.ok ? r.json() : [])
-  .then(rows => {
-    const r = rows && rows[0];
-    if (!r || !(r.a_faire > 0)) return;
-    const n = r.a_faire;
-    document.getElementById('urgent-txt').textContent = `URGENT — ${n} commande${n > 1 ? 's' : ''} en stock critique (composant quasi introuvable) : à traiter aujourd'hui.`;
-    const el = document.getElementById('urgent'); el.hidden = false; el.style.display = 'flex';
-  }).catch(() => {});
 </script>
 </body>
 </html>
