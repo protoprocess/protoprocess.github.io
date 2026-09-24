@@ -34,7 +34,12 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 .tile .sub{color:var(--text2);font-size:12px;display:block}
 .tile .cpt{display:block;margin-top:10px;font-size:12px;color:var(--text3);min-height:18px}
 .tile .cpt.on{color:var(--amber)}
-.tile .cpt.urgent{color:var(--red);font-weight:500}
+.urgent{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px auto 0;max-width:min(96vw,1100px);padding:10px 16px;border-radius:var(--radius);background:#FCEBEB;color:#A32D2D;border-left:4px solid #A32D2D;font-size:13px;font-weight:500}
+.urgent i{font-size:18px}
+.urgent .so{display:flex;flex-wrap:wrap;gap:8px}
+.urgent .so a{color:#A32D2D;background:#fff;border:1px solid #F09595;border-radius:20px;padding:3px 10px;text-decoration:none;font-family:var(--mono);font-size:12px}
+.urgent .so a small{margin-left:6px;font-family:var(--sans);font-weight:400;color:#993556}
+.urgent .so a:hover{background:#F7C1C1}
 .tile.free{border-left-color:var(--pp-blue)}.tile.free i{color:var(--pp-blue)}
 .autres{margin-top:26px;color:var(--text3);font-size:12px}
 .autres a{color:var(--text2);margin-right:14px;text-decoration:none;white-space:nowrap}
@@ -62,13 +67,19 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </header>
 <div class="recette">Version de recette : on teste ici avant de remplacer l'accueil actuel. Les applis marquées RECETTE sont des copies de test (écritures Odoo réelles) ; les autres sont les vraies applis.</div>
 
+<div class="urgent" id="urgent" hidden>
+  <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+  <span id="urgent-txt"></span>
+  <span class="so" id="urgent-so"></span>
+</div>
+
 <main>
   <h1>Que veux-tu faire maintenant ?</h1>
   <div class="tiles">
     <a class="tile" data-appli="devis" href="../commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
     <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="../commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="appro" href="../achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">bom-sourcing</span><span class="cpt" id="cpt-appro"></span></a>
+    <a class="tile" data-appli="appro" href="../achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">bom-sourcing</span><span class="cpt"></span></a>
     <a class="tile" data-appli="reception" href="../achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
     <a class="tile" data-appli="methodes" href="../methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
     <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
@@ -95,7 +106,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "0.5";
+const APP_VERSION = "0.6";
 const APP_DATE = "24/09/2026";
 document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 document.title = `Proto Process — Accueil (recette v${APP_VERSION} — ${APP_DATE})`;
@@ -160,11 +171,6 @@ fetch(`${SB_URL}/v_accueil_compteurs?select=*`, { headers:{ apikey:SB_KEY } })
           $('cpt-commandes2').textContent = `${r.a_faire} à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; }
         else el.textContent = 'Aucune commande en attente';
       }
-      if(r.file === 'appro_urgent'){
-        // v0.5 — stock critique détecté par l'analyse appro Luminovo (table appro_analyses, SO encore AF)
-        const el = $('cpt-appro');
-        if(r.a_faire > 0){ el.textContent = `⚠ URGENT : ${r.a_faire} commande${r.a_faire > 1 ? 's' : ''} en stock critique — voir le tableau de bord appro`; el.classList.add('urgent'); }
-      }
       if(r.file === 'devis'){
         const el = $('cpt-devis'); const parts = [];
         if(r.a_faire > 0) parts.push(`${r.a_faire} à faire`);
@@ -173,6 +179,18 @@ fetch(`${SB_URL}/v_accueil_compteurs?select=*`, { headers:{ apikey:SB_KEY } })
         else el.textContent = 'Aucun devis en attente';
       }
     }
+  }).catch(()=>{});
+
+// v0.6 — bandeau URGENT : SO encore « AF » en stock critique (analyse appro Luminovo), un lien par SO vers sa page carte
+fetch(`${SB_URL}/v_appro_urgent?select=*`, { headers:{ apikey:SB_KEY } })
+  .then(r => r.ok ? r.json() : [])
+  .then(rows => {
+    if(!rows || !rows.length) return;
+    const el = $('urgent');
+    el.querySelector('#urgent-txt').textContent = `URGENT — ${rows.length} commande${rows.length > 1 ? 's' : ''} en stock critique (composant quasi introuvable) :`;
+    el.querySelector('#urgent-so').innerHTML = rows.map(r =>
+      `<a href="${r.report_url || '../achats/appro/'}" target="_blank" rel="noopener">${r.so}<small>${r.nb_stock_critique} ligne${r.nb_stock_critique > 1 ? 's' : ''}</small></a>`).join('');
+    el.hidden = false;
   }).catch(()=>{});
 </script>
 </body>
