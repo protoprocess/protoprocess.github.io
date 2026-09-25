@@ -1,283 +1,222 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Proto Process — Applications internes — v1.2 — 28/07/2026</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Proto Process — Accueil</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
 :root{
-  --bg:#0a0c12; --surface:#1a2030; --surface2:#161b27; --border:#262e42; --border2:#333d55;
-  --text:#e2e8f0; --text2:#94a3b8; --text3:#64748b;
-  --accent:#F07B1F; --accent-bg:#2a1f10; --pp-blue:#5BC4D8;
-  --radius:6px; --radius-lg:10px;
-  --mono:"SF Mono","Cascadia Code",Consolas,monospace;
+  --bg:#0a0c12;--surface:#1a2030;--surface2:#161b27;--border:#262e42;--border2:#333d55;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--accent:#F07B1F;--accent-bg:#2a1f10;--pp-blue:#5BC4D8;
+  --green:#86c564;--amber:#eab676;--red:#f09595;
+  --radius:6px;--radius-lg:10px;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.55;min-height:100vh}
-
-header{background:#0f1117;height:52px;display:flex;align-items:center;gap:14px;
-  padding:0 20px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
-.logo{display:flex;align-items:center;gap:9px}
-.logo-text{display:flex;align-items:center;gap:0;font-size:13px;font-weight:500}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
+header{background:#0f1117;height:52px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:.5px solid var(--border)}
+.logo-text{display:flex;align-items:center;font-size:13px;font-weight:500}
 .logo-text .lt{color:#fff}.logo-text .ls{color:#444;margin:0 3px}.logo-text .lo{color:var(--accent)}
-.spacer{flex:1}
-.hdr-note{font-size:11px;color:var(--text3);font-family:var(--mono)}
-
-.wrap{max-width:min(96vw,1400px);margin:0 auto;padding:28px 20px 60px}
-
-.intro{margin-bottom:30px}
-.intro h1{font-size:19px;font-weight:600;margin-bottom:5px}
-.intro p{font-size:13px;color:var(--text2)}
-
-.pole{margin-bottom:30px}
-.pole-hd{display:flex;align-items:center;gap:9px;margin-bottom:13px;
-  padding-bottom:9px;border-bottom:1px solid var(--border)}
-.pole-hd i{color:var(--accent);font-size:17px}
-.pole-hd h2{font-size:14px;font-weight:600;letter-spacing:.01em}
-.pole-hd .count{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
-
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:13px}
-
-.app{display:block;background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-lg);padding:17px;text-decoration:none;color:inherit;
-  transition:border-color .15s,transform .15s}
-.app:hover{border-color:var(--accent);transform:translateY(-2px)}
-.app-top{display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.app-ico{width:40px;height:40px;object-fit:contain;flex-shrink:0}
-.app-name{font-size:14px;font-weight:600}
-.app-desc{font-size:12px;color:var(--text2);line-height:1.5}
-.app-go{margin-top:11px;font-size:11px;color:var(--text3);font-family:var(--mono);
-  display:flex;align-items:center;gap:5px}
-.app:hover .app-go{color:var(--accent)}
-
-.empty{background:var(--surface2);border:1px dashed var(--border2);border-radius:var(--radius-lg);
-  padding:17px;font-size:12px;color:var(--text3);display:flex;align-items:center;gap:9px}
-.empty i{font-size:17px}
-
-footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
-  font-size:11px;color:var(--text3);border-top:1px solid var(--border);padding-top:16px}
+.me{margin-left:auto;color:var(--text2);font-size:12px;display:flex;align-items:center;gap:6px}
+.me button{background:none;border:none;color:var(--text3);cursor:pointer;font:inherit;text-decoration:underline;padding:0}
+.ver{margin-left:12px;font-size:11px;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:2px 8px;white-space:nowrap}
+.recette{background:var(--accent-bg);color:var(--amber);font-size:12px;padding:6px 18px;border-bottom:.5px solid #4a3418}
+main{max-width:min(96vw,1100px);margin:0 auto;padding:28px 18px 60px}
+h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.tile{display:block;background:var(--surface);border:.5px solid var(--border);border-left:3px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:16px;cursor:pointer;text-align:left;color:inherit;font:inherit;text-decoration:none}
+.tile:hover,.tile:focus-visible{background:#1d2436;border-color:var(--border2);outline:none}
+.tile:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.tile i{font-size:20px;color:var(--accent);display:block;margin-bottom:8px}
+.tile b{display:block;font-size:15px;font-weight:500;margin-bottom:2px}
+.tile .sub{color:var(--text2);font-size:12px;display:block}
+.tile .cpt{display:block;margin-top:10px;font-size:12px;color:var(--text3);min-height:18px}
+.tile .cpt.on{color:var(--amber)}
+.urgent{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px auto 0;max-width:min(96vw,1100px);padding:10px 16px;border-radius:var(--radius);background:#FCEBEB;color:#A32D2D;border-left:4px solid #A32D2D;font-size:13px;font-weight:500}
+.urgent i{font-size:18px}
+.urgent .so{display:flex;flex-wrap:wrap;gap:8px}
+.urgent .so a{color:#A32D2D;background:#fff;border:1px solid #F09595;border-radius:20px;padding:3px 10px;text-decoration:none;font-family:var(--mono);font-size:12px}
+.urgent .so a small{margin-left:6px;font-family:var(--sans);font-weight:400;color:#993556}
+.urgent .so a:hover{background:#F7C1C1}
+.tile.free{border-left-color:var(--pp-blue)}.tile.free i{color:var(--pp-blue)}
+.autres{margin-top:26px;color:var(--text3);font-size:12px}
+.autres a{color:var(--text2);margin-right:14px;text-decoration:none;white-space:nowrap}
+.autres a:hover{color:var(--accent)}
+.veil{position:fixed;inset:0;background:rgba(5,7,12,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
+.veil.show{display:flex}
+.box{background:var(--surface);border:1px solid var(--border2);border-top:3px solid var(--accent);border-radius:var(--radius-lg);padding:22px;max-width:440px;width:100%}
+.box h2{margin:0 0 6px;font-size:18px;font-weight:500}.box p{margin:0 0 14px;color:var(--text2);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.grid button{padding:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--radius);font:inherit;cursor:pointer}
+.grid button:hover,.grid button:focus-visible{border-color:var(--accent);outline:none}
+.choix{display:grid;gap:8px}
+.ch{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;color:var(--text);text-decoration:none}
+.ch:hover,.ch:focus-visible{border-color:var(--accent);outline:none}
+.ch i{font-size:20px;color:var(--accent)}.ch b{display:block;font-weight:500}.ch small{color:var(--text2);font-size:12px}
+.btn-s{padding:6px 13px;background:transparent;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);font:12px var(--sans);cursor:pointer}
 </style>
 </head>
 <body>
-<!-- ===== ACCES PROTO PROCESS ===== -->
-<script>
-(function(){
-  var KEY='pp_access_code', HDR='X-PP-Auth', HOST='protoprocess.app.n8n.cloud';
-  function get(){try{return localStorage.getItem(KEY)||''}catch(e){return ''}}
-  function set(v){try{localStorage.setItem(KEY,v)}catch(e){}}
-  function del(){try{localStorage.removeItem(KEY)}catch(e){}}
-
-  /* 1) Interception installee EN PREMIER : ne depend d'aucun element HTML */
-  var _f = window.fetch;
-  window.fetch = function(input, init){
-    var url = '';
-    try { url = (typeof input === 'string') ? input : ((input && input.url) || ''); } catch(e){}
-    if (url.indexOf(HOST) === -1) { return _f.apply(this, arguments); }
-    init = init || {};
-    try { var h = new Headers(init.headers || {}); h.set(HDR, get()); init.headers = h; } catch(e){}
-    return _f.call(this, input, init).then(function(r){
-      if (r && (r.status === 401 || r.status === 403)) { del(); demander("Code d'acces refuse. Ressaisissez-le."); }
-      return r;
-    });
-  };
-
-  /* 2) Ecran construit en JS : aucune dependance au HTML de l'appli */
-  var box = null;
-  function construire(){
-    if (box) return box;
-    box = document.createElement('div');
-    box.id = 'pp-gate';
-    box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#0a0c12;display:none;'
-      + 'align-items:center;justify-content:center;padding:20px;'
-      + 'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif';
-    box.innerHTML =
-      '<div style="background:#1a2030;border:1px solid #262e42;border-radius:10px;padding:26px;max-width:380px;width:100%">'
-      + '<div style="font-size:13px;font-weight:500;margin-bottom:14px">'
-      +   '<span style="color:#fff">PROTO PROCESS</span><span style="color:#444;margin:0 3px">/</span>'
-      +   '<span style="color:#F07B1F">Acces</span></div>'
-      + '<div style="font-size:12.5px;color:#94a3b8;line-height:1.55;margin-bottom:16px">'
-      +   "Saisissez le code d'acces interne. Il ne vous sera demande qu'une fois sur cet appareil.</div>"
-      + '<input id="pp-in" type="password" placeholder="Code d acces" autocomplete="off" '
-      +   'style="width:100%;background:#161b27;border:1px solid #262e42;border-radius:6px;color:#e2e8f0;'
-      +   'padding:9px 11px;font-size:13px;outline:none;font-family:inherit;box-sizing:border-box">'
-      + '<div id="pp-err" style="font-size:12px;color:#f09595;margin-top:9px;min-height:16px"></div>'
-      + '<button id="pp-btn" style="width:100%;margin-top:12px;padding:9px;background:#F07B1F;color:#fff;'
-      +   'border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit">Valider</button>'
-      + '</div>';
-    document.body.appendChild(box);
-    var inp = box.querySelector('#pp-in'), btn = box.querySelector('#pp-btn');
-    btn.addEventListener('click', function(){
-      var v = (inp.value || '').trim();
-      if (!v) { box.querySelector('#pp-err').textContent = 'Code requis.'; return; }
-      set(v); inp.value = ''; box.style.display = 'none'; location.reload();
-    });
-    inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') { btn.click(); } });
-    return box;
-  }
-
-  function demander(msg){
-    if (!document.body) { document.addEventListener('DOMContentLoaded', function(){ demander(msg); }); return; }
-    var b = construire();
-    b.querySelector('#pp-err').textContent = msg || '';
-    b.style.display = 'flex';
-    setTimeout(function(){ try { b.querySelector('#pp-in').focus(); } catch(e){} }, 50);
-  }
-
-  window.ppChangerCode = function(){ del(); demander(''); };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ if (!get()) demander(''); });
-  } else if (!get()) { demander(''); }
-})();
-</script>
-<!-- ===== FIN ACCES ===== -->
-
-
 <header>
-  <div class="logo">
-    <img src="picto-pp.png" alt="Proto Process" width="24" height="24" style="object-fit:contain" onerror="this.style.display='none'">
-    <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Applications</span></span>
-  </div>
-  <div class="spacer"></div>
-  <span class="hdr-note" id="hdr-version">v1.3 — 01/08/2026</span>
+  <img src="picto-pp.png" alt="Proto Process" width="24" height="24" style="object-fit:contain" onerror="this.style.display='none'">
+  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Accueil</span></span>
+  <span class="me" id="me" hidden><i class="ti ti-user"></i><span id="mename"></span><button id="chg">changer</button></span>
+  <span class="ver" id="ver"></span>
 </header>
 
-<div class="wrap">
-
-  <div class="intro">
-    <h1>Applications internes</h1>
-    <p>Outils Proto Process, regroupés par pôle métier. · <a href="tutos/" style="color:var(--accent);text-decoration:none">Tutos &amp; guides →</a></p>
-  </div>
-
-  <!-- COMMERCIAL -->
-  <div class="pole">
-    <div class="pole-hd">
-      <i class="ti ti-file-invoice" aria-hidden="true"></i>
-      <h2>Commercial</h2>
-      <span class="count">3 applications</span>
-    </div>
-    <div class="grid">
-      <a class="app" href="commercial/devis-client/">
-        <div class="app-top"><img class="app-ico" src="icons/devis-client.png" alt=""><span class="app-name">Devis Client</span></div>
-        <div class="app-desc">Analyse de dossier client : nomenclature, PCB, plans et fichiers. Triage PCB et codification IPN.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="recette/" style="border-color:var(--blue)">
-        <div class="app-top"><img class="app-ico" src="icons/devis-client.png" alt=""><span class="app-name">Déroulé devis <small style="color:var(--blue);font-weight:500">RECETTE</small></span></div>
-        <div class="app-desc">Du dossier client au devis rempli, guidé étape par étape (RfQ, PCB, BOM, scénarios, sourcing, devis). Vrais dossiers, vraies écritures Luminovo/Odoo — en test avec Olivier et Claude.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir l'accueil recette</div>
-      </a>
-      <a class="app" href="commercial/commande/">
-        <div class="app-top"><img class="app-ico" src="icons/commande.png" alt="" onerror="this.style.display='none'"><span class="app-name">Commande</span></div>
-        <div class="app-desc">L'entrée de toute commande : diagnostic des 5 pièces d'une affaire (SO, article, carte, liens, projet), régularisation guidée et devis refab.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="commercial/annexe-devis/">
-        <div class="app-top"><img class="app-ico" src="icons/annexe-devis.png" alt="" onerror="this.style.display='none'"><span class="app-name">Annexe technique</span></div>
-        <div class="app-desc">Enrichit un devis Odoo des analyses Luminovo : composants, conformité, délais et spécification du circuit imprimé.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-    </div>
-  </div>
-
-  <!-- ACHATS -->
-  <div class="pole">
-    <div class="pole-hd">
-      <i class="ti ti-shopping-cart" aria-hidden="true"></i>
-      <h2>Achats</h2>
-      <span class="count">4 applications</span>
-    </div>
-    <div class="grid">
-      <a class="app" href="achats/bom-sourcing/">
-        <div class="app-top"><img class="app-ico" src="icons/bom-sourcing.png" alt=""><span class="app-name">BOM Sourcing</span></div>
-        <div class="app-desc">Import Luminovo, codification IPN, vérification qualité et export vers la GSheet achats.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="achats/appro-v2/">
-        <div class="app-top"><img class="app-ico" src="icons/appro-v2.png" alt=""><span class="app-name">Appro V2</span></div>
-        <div class="app-desc">Réception, suivi des commandes fournisseurs et qualité. Composants, mécanique et PCB.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="achats/po-odoo/">
-        <div class="app-top"><img class="app-ico" src="icons/po-odoo.png" alt=""><span class="app-name">PO Odoo</span></div>
-        <div class="app-desc">Lecture d'un devis fournisseur, vérification à l'écran et création de la commande dans Odoo.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="achats/appro/">
-        <div class="app-top"><img class="app-ico" src="icons/analyse-achats.png" alt="" onerror="this.style.display='none'"><span class="app-name">Analyse Achats</span></div>
-        <div class="app-desc">Tableau de bord des analyses achat Luminovo par commande : prix vs devis, stock critique, PCB, lignes à consulter.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-    </div>
-  </div>
-
-  <!-- METHODES / PRODUCTION -->
-  <div class="pole">
-    <div class="pole-hd">
-      <i class="ti ti-settings-automation" aria-hidden="true"></i>
-      <h2>Méthodes &amp; Production</h2>
-      <span class="count">3 applications</span>
-    </div>
-    <div class="grid">
-      <a class="app" href="methodes-production/methodes/">
-        <div class="app-top"><img class="app-ico" src="icons/mycenter-prep.png" alt=""><span class="app-name">MYCenter Prep</span></div>
-        <div class="app-desc">Préparation des fichiers machines : import MYCenter (MY200 / MY700), supports, EXPERT et AOI.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-    </div>
-  </div>
-
-  <!-- QUALITE -->
-  <div class="pole">
-    <div class="pole-hd">
-      <i class="ti ti-shield-check" aria-hidden="true"></i>
-      <h2>Qualité</h2>
-      <span class="count">2 applications</span>
-    </div>
-    <div class="grid">
-      <a class="app" href="commercial/fabstory/">
-        <div class="app-top"><img class="app-ico" src="icons/fiche-de-vie.png" alt="" onerror="this.style.display='none'"><span class="app-name">FabStory</span></div>
-        <div class="app-desc">L'histoire de chaque carte, du devis à l'expédition : statut Odoo en direct, journal par métier, questions client, indices et règles.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-    </div>
-  </div>
-
-
-  <!-- RESSOURCES HUMAINES -->
-  <div class="pole">
-    <div class="pole-hd">
-      <i class="ti ti-users" aria-hidden="true"></i>
-      <h2>Ressources humaines</h2>
-      <span class="count">2 applications</span>
-    </div>
-    <div class="grid">
-      <a class="app" href="rh/paie/">
-        <div class="app-top"><img class="app-ico" src="icons/paie.png" alt="" onerror="this.style.display='none'"><span class="app-name">Paie</span></div>
-        <div class="app-desc">Prépare l'envoi mensuel au cabinet social : lecture des pointages Odoo, détection des oublis, croisement des congés et génération du fichier planning.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-      <a class="app" href="commercial/triage/">
-        <div class="app-top"><img class="app-ico" src="icons/triage.png" alt="" onerror="this.style.display='none'"><span class="app-name">Triage boîte commerciale</span></div>
-        <div class="app-desc">Les mails non lus de commercial@, résumés et classés par urgence. À ouvrir en début de matinée, midi et milieu d'après-midi.</div>
-        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
-      </a>
-    </div>
-  </div>
+<div class="urgent" id="urgent" hidden>
+  <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+  <span id="urgent-txt"></span>
+  <span class="so" id="urgent-so"></span>
 </div>
 
-<footer>
-  Portail interne Proto Process. Les applications s'ouvrent dans le même onglet — utilisez le retour arrière du navigateur pour revenir ici.
-</footer>
+<main>
+  <h1>Que veux-tu faire maintenant ?</h1>
+  <!-- v0.8 — « À toi de jouer » : déroulés devis en attente d'un humain (chantier 169) -->
+  <div id="atoi" hidden style="margin:0 0 18px;padding:12px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg)">
+    <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">À toi de jouer — déroulés devis</div>
+    <div id="atoi-liste" style="display:flex;flex-direction:column;gap:6px"></div>
+  </div>
+  <div class="tiles">
+    <a class="tile" data-appli="devis" href="commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
+    <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
+    <a class="tile" data-appli="fabstory" href="commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="appro" href="achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Achats PP — commandes, analyse BOM, achats</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="reception" href="achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="methodes" href="methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
+    <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
+  </div>
+  <p class="autres">Autres outils :
+    <a href="commercial/triage/">Triage</a><a href="commercial/annexe-devis/">Annexe devis</a>
+    
+    <a href="rh/paie/">Paie</a><a href="tutos/">Tutos</a>
+  </p>
+</main>
+
+<div class="veil" id="cmd"><div class="box" role="dialog" aria-labelledby="cmdt">
+  <h2 id="cmdt">Quelle commande ?</h2><p>Choisis le type de commande à saisir.</p>
+  <div class="choix">
+    <a class="ch" data-appli="commande" href="commercial/commande/"><i class="ti ti-user"></i><span><b>Commande client</b><small id="cpt-commandes2">Bon de commande reçu d'un client</small></span></a>
+    <a class="ch" data-appli="po-odoo" href="achats/po-odoo/"><i class="ti ti-building-warehouse"></i><span><b>Commande d'achat</b><small>P.O. fournisseur dans Odoo</small></span></a>
+  </div>
+  <button class="btn-s" type="button" id="cmdx" style="margin-top:14px">Annuler</button>
+</div></div>
+
+<div class="veil" id="who"><div class="box" role="dialog" aria-labelledby="whot">
+  <h2 id="whot">Qui es-tu ?</h2><p>Demandé une seule fois sur ce poste.</p>
+  <div class="grid" id="whogrid"></div>
+</div></div>
 
 <script>
-/* ---------- version ---------- */
-// Convention : X = nouvelle fonctionnalite, Y = correctif / reglage.
-const APP_VERSION = "1.7";
+const APP_VERSION = "2.0";
 const APP_DATE = "25/09/2026";
-document.title = `Proto Process — Applications internes — v${APP_VERSION} — ${APP_DATE}`;
-document.getElementById('hdr-version').textContent = `v${APP_VERSION} — ${APP_DATE}`;
+/* v2.0 (25/09/2026) : bascule de l accueil recette v0.8 en prod (remplace v1.7 ; retour : etiquette avant-bascule-2026-09-25).
+   Bloc « À toi de jouer » conserve tel quel, liens vers commercial/devis-client/recette/ (proprietaire : fil deroule devis, chantier 169).
+   Tuile « Déroulé devis — RECETTE » de la v1.7 retiree a la demande du fil devis : le bloc et « Créer un devis » (prod) prennent le relais. */
+document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
+document.title = `Proto Process — Accueil — v${APP_VERSION} — ${APP_DATE}`;
+
+const SB_URL = "https://gzljssjjrqbxgnxugiqu.supabase.co/rest/v1";
+const SB_KEY = "sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O";
+const EQUIPE = ["Maura","Dorian","Stéphane","Ariel","Jérôme","Fred","Valérie","Olivier"];
+const $ = id => document.getElementById(id);
+
+function lire(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+function ecrire(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+
+// Marque « arrivé par l'accueil » : lue par shared/retour-accueil.js dans chaque appli
+try { sessionStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch(e){}
+
+// Session : regroupe les mesures d'un même passage (accueil puis appli)
+let session = lire('pp_session');
+if(!session){ session = Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+ecrire('pp_session', session);
+
+function mesure(appli, evenement, etape){
+  const corps = { personne: lire('pp_personne'), appli, evenement, etape: etape || null, session_id: session };
+  try {
+    fetch(`${SB_URL}/deroule_mesures`, { method:'POST', keepalive:true,
+      headers:{ apikey:SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
+      body: JSON.stringify(corps) }).catch(()=>{});
+  } catch(e){}
+}
+
+// Qui es-tu : une seule fois par poste
+function afficherNom(){
+  const n = lire('pp_personne');
+  $('me').hidden = !n; $('mename').textContent = n || '';
+}
+$('whogrid').innerHTML = EQUIPE.map(n => `<button type="button">${n}</button>`).join('');
+$('whogrid').querySelectorAll('button').forEach(b => b.onclick = () => {
+  ecrire('pp_personne', b.textContent); $('who').classList.remove('show'); afficherNom();
+  mesure('accueil','ouverture');
+});
+$('chg').onclick = () => $('who').classList.add('show');
+if(!lire('pp_personne')) $('who').classList.add('show'); else mesure('accueil','ouverture');
+afficherNom();
+
+// Clic sur une tuile : début de déroulé
+document.querySelectorAll('a.tile').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
+$('free').onclick = () => {};
+$('t-commande').onclick = () => $('cmd').classList.add('show');
+$('cmdx').onclick = () => $('cmd').classList.remove('show');
+$('cmd').addEventListener('click', e => { if(e.target.id === 'cmd') $('cmd').classList.remove('show'); });
+document.querySelectorAll('a.ch').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
+
+// Compteurs
+function jours(d){ return Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000)); }
+function depuis(d){ const j = jours(d); return j === 0 ? "date d'aujourd'hui" : j === 1 ? 'depuis 1 jour' : `depuis ${j} jours`; }
+// v0.8 — déroulés devis en attente de quelqu'un (vue v_deroule_a_toi), rafraîchi toutes les 30 s
+function atoiRendre(rows){
+  const box = $('atoi'), liste = $('atoi-liste'); if(!box) return;
+  const ETAPES = {3:'RfQ',4:'PCB',5:'BOM',6:'scénarios',7:'sourcing',8:'devis'};
+  const html = (rows||[]).map(r => {
+    const bomBloque = r.bom_statut === 'bloque', bomPorte = r.bom_statut === 'attente_porte';
+    const quoi = r.statut === 'bloque' ? ('⛔ ' + (r.motif || 'bloqué')) : r.statut === 'attente_porte' ? ('● ' + (r.attendu || 'à valider')) : bomBloque ? '⛔ import BOM bloqué' : bomPorte ? '● pièces BOM à confirmer' : '⏳ scripts en cours' + (r.bom_statut === 'en_cours' ? ' (BOM)' : '');
+    const url = r.job_id ? `commercial/devis-client/recette/?fiche=${encodeURIComponent(r.job_id)}&deroule=1` : 'commercial/devis-client/recette/';
+    return `<a href="${url}" style="display:flex;gap:12px;align-items:center;padding:8px 10px;border-radius:var(--radius);background:var(--surface2);color:var(--text);text-decoration:none;font-size:13px"><span style="min-width:150px"><b>${(r.client||'')}</b></span><span style="flex:1">${r.dossier||''} <span style="color:var(--text3)">· étape ${r.etape} ${ETAPES[r.etape]||''}</span></span><span style="color:${r.a_toi ? 'var(--amber)' : 'var(--text3)'}">${quoi}</span></a>`;
+  }).join('');
+  liste.innerHTML = html; box.hidden = !html;
+}
+function atoiCharger(){
+  fetch(`${SB_URL}/v_deroule_a_toi?select=*&order=a_toi.desc,maj_le.desc`, { headers:{ apikey:SB_KEY } })
+    .then(r => r.json()).then(rows => atoiRendre(Array.isArray(rows) ? rows : [])).catch(()=>{});
+}
+atoiCharger(); setInterval(atoiCharger, 30000);
+
+fetch(`${SB_URL}/v_accueil_compteurs?select=*`, { headers:{ apikey:SB_KEY } })
+  .then(r => r.ok ? r.json() : [])
+  .then(rows => {
+    for(const r of rows){
+      if(r.file === 'commandes'){
+        const el = $('cpt-commandes');
+        if(r.a_faire > 0){ el.textContent = `${r.a_faire} commandes client à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; el.classList.add('on');
+          $('cpt-commandes2').textContent = `${r.a_faire} à saisir, la plus ancienne ${depuis(r.plus_ancien)}`; }
+        else el.textContent = 'Aucune commande en attente';
+      }
+      if(r.file === 'devis'){
+        const el = $('cpt-devis'); const parts = [];
+        if(r.a_faire > 0) parts.push(`${r.a_faire} à faire`);
+        if(r.a_envoyer > 0) parts.push(`${r.a_envoyer} à envoyer`);
+        if(parts.length){ el.textContent = `${parts.join(', ')}, le plus ancien ${depuis(r.plus_ancien)}`; el.classList.add('on'); }
+        else el.textContent = 'Aucun devis en attente';
+      }
+    }
+  }).catch(()=>{});
+
+// v0.6 — bandeau URGENT : SO encore « AF » en stock critique (analyse appro Luminovo), un lien par SO vers sa page carte
+fetch(`${SB_URL}/v_appro_urgent?select=*`, { headers:{ apikey:SB_KEY } })
+  .then(r => r.ok ? r.json() : [])
+  .then(rows => {
+    if(!rows || !rows.length) return;
+    const el = $('urgent');
+    el.querySelector('#urgent-txt').textContent = `URGENT — ${rows.length} commande${rows.length > 1 ? 's' : ''} en stock critique (composant quasi introuvable) :`;
+    el.querySelector('#urgent-so').innerHTML = rows.map(r =>
+      `<a href="${r.report_url || 'achats/bom-sourcing/'}" target="_blank" rel="noopener">${r.so}<small>${r.nb_stock_critique} ligne${r.nb_stock_critique > 1 ? 's' : ''}</small></a>`).join('');
+    el.hidden = false;
+  }).catch(()=>{});
 </script>
 </body>
 </html>
