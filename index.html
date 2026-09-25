@@ -77,6 +77,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
   <h1>Que veux-tu faire maintenant ?</h1>
   <div class="tiles">
     <a class="tile" data-appli="devis" href="commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
+    <a class="tile" data-appli="refab" href="commercial/devis-client/recette/?refab=1"><i class="ti ti-refresh"></i><b>Chiffrer une refab</b><span class="sub">Carte déjà fabriquée : devis direct</span><span class="cpt"></span></a>
     <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
     <a class="tile" data-appli="appro" href="achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Achats PP — commandes, analyse BOM, achats</span><span class="cpt" id="cpt-appro"></span></a>
@@ -106,8 +107,9 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "2.1";
+const APP_VERSION = "2.2";
 const APP_DATE = "25/09/2026";
+/* v2.2 (25/09/2026, fil devis) : tuile « Chiffrer une refab » → devis-client recette, formulaire refab ouvert d'office (demande Olivier, pour Dorian).
 /* v2.1 (25/09/2026) : tuiles « qui / quoi » (client ou SO écrit dans la tuile, liste au survol, vue v_accueil_details) ;
    bloc « À toi de jouer » retiré (doublon des tuiles ; accord du fil devis, qui déplace la liste dans devis-client recette). */
 /* v2.0 (25/09/2026) : bascule de l accueil recette v0.8 en prod (remplace v1.7 ; retour : etiquette avant-bascule-2026-09-25).
