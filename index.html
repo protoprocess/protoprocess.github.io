@@ -163,6 +163,11 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
         <div class="app-desc">Analyse de dossier client : nomenclature, PCB, plans et fichiers. Triage PCB et codification IPN.</div>
         <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir</div>
       </a>
+      <a class="app" href="recette/" style="border-color:var(--blue)">
+        <div class="app-top"><img class="app-ico" src="icons/devis-client.png" alt=""><span class="app-name">Déroulé devis <small style="color:var(--blue);font-weight:500">RECETTE</small></span></div>
+        <div class="app-desc">Du dossier client au devis rempli, guidé étape par étape (RfQ, PCB, BOM, scénarios, sourcing, devis). Vrais dossiers, vraies écritures Luminovo/Odoo — en test avec Olivier et Claude.</div>
+        <div class="app-go"><i class="ti ti-arrow-right" aria-hidden="true"></i> Ouvrir l'accueil recette</div>
+      </a>
       <a class="app" href="commercial/commande/">
         <div class="app-top"><img class="app-ico" src="icons/commande.png" alt="" onerror="this.style.display='none'"><span class="app-name">Commande</span></div>
         <div class="app-desc">L'entrée de toute commande : diagnostic des 5 pièces d'une affaire (SO, article, carte, liens, projet), régularisation guidée et devis refab.</div>
@@ -269,8 +274,8 @@ footer{max-width:min(96vw,1400px);margin:0 auto;padding:0 20px 30px;
 <script>
 /* ---------- version ---------- */
 // Convention : X = nouvelle fonctionnalite, Y = correctif / reglage.
-const APP_VERSION = "1.6";
-const APP_DATE = "11/09/2026";
+const APP_VERSION = "1.7";
+const APP_DATE = "25/09/2026";
 document.title = `Proto Process — Applications internes — v${APP_VERSION} — ${APP_DATE}`;
 document.getElementById('hdr-version').textContent = `v${APP_VERSION} — ${APP_DATE}`;
 </script>
