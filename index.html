@@ -82,6 +82,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
     <a class="tile" data-appli="appro" href="achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Achats PP — commandes, analyse BOM, achats</span><span class="cpt" id="cpt-appro"></span></a>
     <a class="tile" data-appli="reception" href="achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
     <a class="tile" data-appli="methodes" href="methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="controle-cms" href="methodes-production/controle-cms/"><i class="ti ti-zoom-check"></i><b>Contrôler des cartes</b><span class="sub">Contrôle CMS — liste du jour, saisie, registre F07</span><span class="cpt"></span></a>
     <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
   </div>
   <p class="autres">Autres outils :
@@ -106,8 +107,11 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "2.4";
-const APP_DATE = "29/09/2026";
+const APP_VERSION = "2.5";
+const APP_DATE = "30/10/2026";
+/* v2.5 (30/10/2026) : tuile « Contrôler des cartes » (appli Contrôle CMS, premier usage de
+   l'écran de déclaration d'anomalie ; chantier 153). Pas de compteur : le nombre de cartes à
+   contrôler se calcule dans Odoo, pas dans une vue Supabase publique. */
 /* v2.4 (29/09/2026) : tuile « Devis refab » retirée (décision Olivier, à rediscuter). */
 /* v2.3 (29/09/2026) : tuile « Devis refab » vers la prod devis-client (v13.0, déroulé devis basculé en prod). */
 /* v2.2 (25/09/2026) : tuile « Devis refab » (essai, déroulé devis recette ?refab=1, chantier 169).
