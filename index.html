@@ -59,13 +59,36 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .qui .ini{font-family:var(--mono);font-size:11px;color:var(--text3);
   background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
 
+/* v1.20 : la tete de page. Les indicateurs a gauche, « ce qui sonne » a droite.
+   Avant, les pastilles tenaient une ligne entiere et les courbes une autre : deux bandes
+   pour cinq chiffres et trois petites mesures. */
+.tete{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;align-items:stretch}
+.tete .courbes{flex:999 1 560px;min-width:0;margin-bottom:0}
+.sonne{flex:1 1 270px;min-width:240px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:11px 13px}
+.sonne h3{margin:0 0 9px;font-size:9.5px;letter-spacing:.06em;color:var(--text3);font-weight:700}
+.sonne .l{display:flex;align-items:center;gap:9px;padding:2px 0}
+.sonne .l b{width:22px;height:22px;border-radius:5px;background:#f1f3f6;color:var(--text3);
+  font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+.sonne .l span{font-size:12px;color:var(--text3)}
+/* Un compteur a zero reste gris : il ne demande rien. Des qu il compte, il se colore et
+   son libelle passe en noir — c est le seul signal qui doit attraper l oeil. */
+.sonne .l.on b{background:var(--surface2)} .sonne .l.on span{color:var(--text);font-weight:600}
+.sonne .l.on.r b{background:var(--rouge-bg);color:var(--rouge)}
+.sonne .l.on.a b{background:var(--ambre-bg);color:var(--ambre)}
+.sonne .l.on.b b{background:var(--bleuf-bg);color:var(--bleuf)}
+.sonne .l.on.d b{background:var(--ppblue-bg);color:var(--ppblue)}
 .resume{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
 .chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:9px 14px;font-size:12px;color:var(--text2)}
 .chip b{font-family:var(--mono);font-size:15px;color:var(--text)}
 .chip.r b{color:var(--rouge)} .chip.a b{color:var(--ambre)} .chip.b b{color:var(--bleuf)}
 
-.grille{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+/* v1.20 : trois blocs par ligne (demande Olivier du 02/11). En dessous de 1180 px on
+   repasse a deux, puis a un : a un tiers de 900 px une ligne de P.O. ne tient plus. */
+.grille{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+@media (max-width:1180px){ .grille{grid-template-columns:repeat(2,minmax(0,1fr))} }
+@media (max-width:820px){ .grille{grid-template-columns:1fr} }
 @media (max-width:1100px){.grille{grid-template-columns:1fr}}
 /* v1.15 : TOUS les blocs sont en demi-page (demande Olivier du 02/11/2026 : un bloc
    pleine largeur oblige l oeil a traverser l ecran pour rien). En demi-largeur une
@@ -75,6 +98,13 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 
 /* v1.16 : la bande de courbes. Fine par construction — c'est un résultat qu'on regarde
    une seconde, pas un tableau qu'on lit. Elle ne doit jamais repousser les blocs. */
+/* v1.20 : l anneau des livraisons. Le chiffre est au centre, la legende a cote — pas
+   dessous : a trois cartes par bande, la hauteur est comptee. */
+.anneau{display:flex;align-items:center;gap:12px;margin:4px 0 2px}
+.anneau svg{flex-shrink:0}
+.anneau .leg{display:flex;flex-direction:column;gap:3px;min-width:0}
+.anneau .leg div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);white-space:nowrap}
+.anneau .leg i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
 .courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
@@ -330,6 +360,20 @@ section.replie .dater{display:none}
  * « PP — AR client : page ».
  * ------------------------------------------------------------------
  *
+ * v1.20 (02/11/2026) : REFONTE DE LA MISE EN PAGE, apres maquette validee par Olivier.
+ *   - LES OUTILS EN PREMIER. « Je trouve plus logique les outils en haut » : cette page
+ *     est la page d accueil, on y arrive pour faire quelque chose, et la production (deux
+ *     blocs en tout) devait defiler avant d atteindre ses outils.
+ *   - TROIS BLOCS PAR LIGNE au lieu de deux, TROIS LIGNES par bloc puis « Voir les N
+ *     autres ». A trois colonnes, un bloc qui deroule dix lignes decale tout le reste.
+ *   - LES INDICATEURS ET LES ALERTES SUR LA MEME BANDE : les trois mesures a gauche,
+ *     « ce qui sonne » a droite. Avant : deux bandes pleines pour cinq chiffres.
+ *   - LES LIVRAISONS PASSENT EN ANNEAU (voir carteCourbe). La pile garde sa courbe : la
+ *     pente est ce qu elle a d utile. Les devis n ont pas encore d historique.
+ *   - ORDRE des blocs pour le commercial, donne par Olivier : ce qui attend un geste,
+ *     mes devis, AR client / a facturer, commandes fournisseur, pense-bete.
+ *   - « P.O. sans affaire » ne concerne plus que la direction et Fred.
+ *
  * v1.19 (02/11/2026) : CETTE PAGE EST DESORMAIS LA PAGE D ACCUEIL.
  * Elle a quitte /ma-gestion/ pour la racine et remplace l ancien hub (v2.7), qui
  * est supprime. /ma-gestion/ redirige ici.
@@ -349,7 +393,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.19";
+const APP_VERSION = "1.20";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -599,53 +643,64 @@ function rendre() {
   document.getElementById('zscore').style.display = '';
 
   const c = (d && d.compteurs) || {};
-  let h = '<div class="resume">';
+  let h = '';
+
+  // v1.20 : LES OUTILS EN PREMIER. Cette page est la page d accueil depuis le 02/11 au
+  // soir : on y arrive pour FAIRE quelque chose. Et pour la production, dont le tableau
+  // de bord tient en deux blocs, faire defiler avant d atteindre ses outils n avait
+  // aucun sens. Decision Olivier : « je trouve plus logique les outils en haut ».
+  h += outils();
+
+  // v1.20 : la tete de page. Les trois indicateurs a gauche, « ce qui sonne » a droite,
+  // sur une seule bande au lieu de deux.
+  h += '<div class="tete">';
+  if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
+  h += '<div class="sonne"><h3>CE QUI SONNE</h3>';
   // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
   if (voitLesAffaires()) {
-    h += chip('r', c.rouge || 0, 'en danger');
-    h += chip('a', c.orange || 0, 'à surveiller');
-    h += chip('b', c.bleu || 0, 'information manquante');
-    h += chip('', c.devis || 0, 'devis à traiter');
+    h += sonne('r', c.rouge || 0, 'en danger');
+    h += sonne('a', c.orange || 0, 'à surveiller');
+    h += sonne('b', c.bleu || 0, 'information manquante');
+    h += sonne('', c.devis || 0, 'devis à traiter');
   }
   // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
   // Il part à zéro et se remplit quand le bloc Divers a répondu.
-  h += '<div class="chip d" id="chip-divers"><b>0</b> demandes</div>';
-  h += '</div>';
+  h += '<div class="l d" id="chip-divers"><b>0</b><span>demande</span></div>';
+  h += '</div></div>';
 
-  // v1.16 : la bande de courbes, juste sous les compteurs. Elle se remplit par son
-  // propre appel — une panne de ce service-là ne doit pas retarder le « à faire ».
-  if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
-
-  // v1.15 : tous les blocs dans la même grille à deux colonnes. Ils se remplissent de
-  // gauche à droite, chacun à sa hauteur (align-items:start) — donc l ordre ci-dessous
-  // est l ordre de lecture, et une personne qui ne voit pas un bloc ne laisse pas de trou.
+  // v1.20 : trois blocs par ligne, dans l ORDRE voulu par Olivier le 02/11 :
+  //   ce qui attend un geste | mes devis        | AR client
+  //   mes commandes a facturer | commandes fournisseur | pense-bete
+  //   P.O. sans affaire (direction et Fred seulement)
+  // Ils se remplissent de gauche a droite, chacun a sa hauteur (align-items:start) :
+  // l ordre ci-dessous est l ordre de lecture, et un bloc qu une personne ne voit pas
+  // ne laisse pas de trou.
   h += '<div class="grille">';
   if (voitLesAffaires()) {
     h += blocAffaires(d);
     h += blocDevis(d);
+    // L AR client suit la même porte que les affaires : son responsable est lu en colonne N.
+    h += '<section id="bloc-arclient"></section>';
+    // À facturer : même porte. Replié d'entrée — c'est un rappel, pas une urgence
+    // (règle Olivier du 30/10).
+    h += '<section id="bloc-facturer" class="replie"></section>';
   }
 
   // Le bloc AR ne concerne que ceux qui achètent. Il se remplit après coup, par son propre
   // appel : la page reste lisible même si ce service-là ne répond pas.
   if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
 
-  // L AR client suit la même porte que les affaires : son responsable est lu en colonne N.
-  if (voitLesAffaires()) h += '<section id="bloc-arclient"></section>';
-
-  // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
-  // l'en-tête suffit à dire combien il en reste.
-  if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
-
-  // À facturer : même porte que les affaires (le responsable se lit en colonne N).
-  // Replié d'entrée — c'est un rappel, pas une urgence (règle Olivier du 30/10).
-  if (voitLesAffaires()) h += '<section id="bloc-facturer" class="replie"></section>';
-
   // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
   // maison peut être tracé. Il se remplit aussi par son propre appel.
   h += '<section id="bloc-divers"></section>';
+
+  // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
+  // l'en-tête suffit à dire combien il en reste. En dernier, et seulement pour ceux qui
+  // en font le ménage.
+  if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
+
   h += '</div>';
 
-  h += outils();
   document.getElementById('app').innerHTML = h;
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
@@ -718,7 +773,57 @@ function sparkline(vals, max, couleur) {
        + aire + ligne + dernier + '</svg>';
 }
 
+/* v1.20 : l ANNEAU des livraisons. Une courbe de pourcentage ment dans les deux sens —
+   echelle 0-100 elle est plate, echelle automatique un ecart de deux points ressemble a
+   une falaise. Et surtout elle cache le volume : 88 % sur 59 cartes et 88 % sur 4 cartes
+   ne valent pas la meme chose.
+   L anneau repond a une autre question, la bonne : DE QUOI sont faits les echecs. Rater
+   d un jour ou rater de deux semaines, ce n est pas le meme metier.
+   Trois parts, le chiffre au centre. Les couleurs different aussi en CLARTE, pas seulement
+   en teinte : lues en noir et blanc ou par un oeil qui confond les rouges et les verts,
+   elles restent distinctes. */
+function anneau(parts, centre) {
+  const R = 26, C = 2 * Math.PI * R, total = parts.reduce((s, p) => s + p.n, 0);
+  let a = 0, arcs = '';
+  if (!total) {
+    arcs = '<circle cx="32" cy="32" r="' + R + '" fill="none" stroke="#e4e7ec" stroke-width="10"/>';
+  } else {
+    for (const p of parts) {
+      if (!p.n) continue;
+      const len = (p.n / total) * C;
+      arcs += '<circle cx="32" cy="32" r="' + R + '" fill="none" stroke="' + p.c
+            + '" stroke-width="10" stroke-dasharray="' + len.toFixed(2) + ' ' + (C - len).toFixed(2)
+            + '" stroke-dashoffset="' + (-a).toFixed(2) + '" transform="rotate(-90 32 32)"/>';
+      a += len;
+    }
+  }
+  const lu = parts.filter(p => p.n).map(p => p.n + ' ' + p.t).join(', ');
+  let h = '<div class="anneau">';
+  h += '<svg viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="'
+     + esc(centre + '. ' + (lu || 'aucune mesure')) + '">' + arcs
+     + '<text x="32" y="32" text-anchor="middle" dominant-baseline="central" '
+     + 'font-size="15" font-weight="700" fill="#1b2232">' + esc(centre) + '</text></svg>';
+  h += '<div class="leg">';
+  for (const p of parts) {
+    h += '<div><i style="background:' + p.c + '"></i>' + p.n + ' ' + esc(p.t) + '</div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
 function carteCourbe(titre, valeur, sous, vals, max, couleur, infobulle) {
+  // v1.20 : couleur = 'ANNEAU' remplace la courbe par un anneau a deux parts, vals valant
+  // alors [ce qui va, ce qui rate]. Le chiffre va AU CENTRE de l anneau et non au-dessus :
+  // un pourcentage et son anneau repetes l un sous l autre, c est la meme chose dite deux
+  // fois. Le sous-titre, lui, porte le volume, qui est la vraie information manquante.
+  if (couleur === 'ANNEAU') {
+    const centre = String(valeur).replace(/<[^>]*>/g, '').replace(/\s+/g, '');
+    return '<div class="courbe"' + (infobulle ? ' title="' + esc(infobulle) + '"' : '') + '>'
+         + '<div class="ct">' + esc(titre) + '</div>'
+         + anneau([ { n: vals[0] || 0, t: 'a l heure', c: '#4A7C3F' },
+                    { n: vals[1] || 0, t: 'en retard', c: '#C4651F' } ], centre)
+         + '<div class="cs">' + esc(sous) + '</div></div>';
+  }
   return '<div class="courbe"' + (infobulle ? ' title="' + esc(infobulle) + '"' : '') + '>'
        + '<div class="ct">' + esc(titre) + '</div>'
        + '<div class="cv">' + valeur + '</div>'
@@ -755,13 +860,19 @@ function bandeCourbes(d) {
                      + 'Dans les temps = 2 jours ouvrés ou moins.');
   }
 
-  const valsL = liv.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
+  // v1.20 : les livraisons passent de la COURBE a l ANNEAU (decision Olivier du 02/11).
+  // Une courbe de pourcentage ment dans les deux sens : echelle 0-100 elle est plate,
+  // echelle automatique un ecart de deux points ressemble a une falaise. Et elle cache le
+  // volume, alors que 88 % sur 59 cartes et 88 % sur 4 cartes ne valent pas la meme chose.
+  // L anneau montre le volume et la part qui rate. Deux parts aujourd hui : la mesure ne
+  // separe pas encore « a l heure » de « a J+1 », comptes ensemble dans a_l_heure. La
+  // troisieme part viendra quand la photo du matin de 6h10 saura les distinguer.
   const nL = liv.reduce((t, s) => t + s.n, 0);
   const okL = liv.reduce((t, s) => t + s.ok, 0);
   h += carteCourbe('LIVRAISONS À L\u2019HEURE',
                    nL ? Math.round(okL / nL * 100) + ' <span>%</span>' : '—',
                    nL ? nL + ' cartes livrées · toute l\u2019équipe' : 'pas encore de livraison mesurée',
-                   valsL, 100, '#5d8f4e',
+                   [okL, nL - okL], 0, 'ANNEAU',
                    'Une ligne carte est à l\u2019heure si elle part au plus tard à la date promise de sa ligne '
                    + 'dans Odoo, plus un jour ouvré de tolérance. Chiffre d’équipe, semaine par semaine.');
   return h;
@@ -812,7 +923,7 @@ function blocFacturer(d) {
   }
   if (d.fin_de_mois)
     h += '<div class="dater">Fin de mois : ce qui est livré devrait partir en facture avant la clôture.</div>';
-  h += mien.map(l => ligneFacturer(l, false)).join('');
+  h += capper(mien.map(l => ligneFacturer(l, false)), 'commande');
   if (sans.length) h += sans.map(l => ligneFacturer(l, true)).join('');
   return h;
 }
@@ -859,9 +970,12 @@ function voitLesAchats() {
   return p === 'direction' || p === 'commercial_achats' || p === 'production';
 }
 
-// Le ménage des P.O. sans affaire reste à la direction : c'est une corvée, pas la peine
-// d'en charger l'écran des autres.
-function voitLeMenagePo() { return POLE_DE[MOI] === 'direction'; }
+// Le ménage des P.O. sans affaire reste à la direction et à Fred : c'est une corvée, pas
+// la peine d'en charger l'écran des autres.
+// v1.20 (02/11/2026) : Fred en est. Décision Olivier — depuis que l'appli P.O. note son
+// émetteur, il ne reste ici que les P.O. saisis à la main dans Odoo, dont personne ne sait
+// à qui ils sont. Maura et Dorian n'ont pas à les porter.
+function voitLeMenagePo() { return POLE_DE[MOI] === 'direction' || MOI === 'FR'; }
 
 async function chargerAR() {
   const z = document.getElementById('bloc-ar');
@@ -891,9 +1005,9 @@ function blocAR(d) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Toutes les commandes ont leur date.</div>';
     return h;
   }
-  if (avec.length) h += avec.map(ligneAR).join('');
+  if (avec.length) h += capper(avec.map(ligneAR), 'commande');
   if (sans.length) {
-    h += sans.map(ligneAR).join('');
+    h += capper(sans.map(ligneAR), 'commande');
   }
   return h;
 }
@@ -1016,7 +1130,7 @@ function blocArClient(d) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Tous les clients ont leur accusé.</div>';
     return h;
   }
-  return h + l.map(ligneArClient).join('');
+  return h + capper(l.map(ligneArClient), 'commande');
 }
 
 function ligneArClient(x) {
@@ -1098,7 +1212,7 @@ function blocPoRattacher(d) {
   h += '<div class="dater">Ces commandes ont été créées à la main dans Odoo : rien ne dit à quelle '
      + 'affaire elles appartiennent. Dis-le une fois — elles partent chez leur responsable et chez Fred, '
      + 'et ne reviennent plus ici.</div>';
-  h += l.map(lignePoRattacher).join('');
+  h += capper(l.map(lignePoRattacher), 'P.O.');
   return h;
 }
 
@@ -1174,7 +1288,12 @@ async function chargerDivers() {
     const ch = document.getElementById('chip-divers');
     const n = ((d.on_me_demande || []).filter(x => !x.clos).length)
             + ((d.pense_bete    || []).filter(x => !x.clos).length);
-    if (ch) ch.innerHTML = '<b>' + n + '</b> demande' + (n > 1 ? 's' : '');
+    // v1.20 : le compteur vit maintenant dans « ce qui sonne », avec la structure
+    // b + span, et se colore des qu il compte. Il faut donc poser la classe aussi.
+    if (ch) {
+      ch.className = 'l d' + (n > 0 ? ' on' : '');
+      ch.innerHTML = '<b>' + n + '</b><span>demande' + (n > 1 ? 's' : '') + '</span>';
+    }
   } catch (e) {
     z.innerHTML = '<div class="msg err">Le bloc Divers n a pas pu être lu (' + esc(e.message)
                 + '). Le reste de la page est à jour.</div>';
@@ -1369,6 +1488,31 @@ function chip(cl, n, lib) {
   return '<div class="chip ' + cl + '"><b>' + n + '</b> ' + lib + '</div>';
 }
 
+/* v1.20 : une ligne de « ce qui sonne ». A zero elle reste grise et muette ; des qu elle
+   compte, elle se colore. Cinq compteurs empiles se lisent d un coup d oeil, cinq
+   pastilles cote a cote non. */
+function sonne(cl, n, lib) {
+  return '<div class="l ' + cl + (n > 0 ? ' on' : '') + '"><b>' + n + '</b><span>'
+       + esc(lib) + '</span></div>';
+}
+
+/* v1.20 : trois lignes par bloc, le reste derriere « Voir les N autres ». Demande
+   d Olivier du 02/11 : a trois blocs par ligne, un bloc qui deroule dix lignes decale
+   tout ce qui est en dessous. Reutilise le mecanisme .sup/.cache deja en place. */
+function capper(lignes, mot, n) {
+  n = n || 3;
+  if (lignes.length <= n) return lignes.join('');
+  const reste = lignes.length - n;
+  // « 1 autre commande » marche au masculin comme au feminin, contrairement a une elision
+  // qu il faudrait accorder mot par mot. Un mot abrege (« P.O. ») ne prend pas de s.
+  const pluriel = reste > 1 && !/\.$/.test(mot);
+  return lignes.slice(0, n).join('')
+       + '<div class="sup cache">' + lignes.slice(n).join('') + '</div>'
+       + '<button class="plus" onclick="deplier(this)">Voir '
+       + (reste > 1 ? 'les ' + reste + ' autres ' : '1 autre ')
+       + esc(mot) + (pluriel ? 's' : '') + ' ▾</button>';
+}
+
 function entete(cls, ico, titre, n, rep) {
   // L en-tete entier est cliquable : il replie le bloc. Un bloc traite ne doit pas
   // occuper l ecran de ceux qui restent.
@@ -1409,7 +1553,7 @@ function blocAffaires(d) {
        + (vieux ? 'Rien à faire ici au dernier balayage.' : 'Rien à faire ici. Tout est à jour.')
        + '</div>';
   } else {
-    h += aff.map(a => ligneAffaire(a, false)).join('');
+    h += capper(aff.map(a => ligneAffaire(a, false)), 'affaire');
   }
   if (calmes.length) {
     h += calmes.map(a => ligneAffaire(a, true)).join('');
