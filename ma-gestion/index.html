@@ -296,8 +296,12 @@ section.replie .dater{display:none}
  * quitte le planning et plus rien ne dit qui le portait — 55 lignes sur 60 non
  * attribuables sur 6 semaines. Elle est aussi montrée à la production, qui la
  * fabrique (demande d'Olivier : « tu l'ajouteras au tableau de bord de Fred »).
+ *
+ * v1.17 (02/11/2026) : tolérance d'un jour ouvré sur les livraisons — une
+ * expédition le lendemain de la date promise reste « dans les temps ». Le taux
+ * des 6 dernières semaines passe de 81 % à 88 %.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.16";
+const APP_VERSION = "1.17";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -507,8 +511,11 @@ function rendre() {
  *                       passé quelques jours, le SO quitte le planning et plus rien ne dit
  *                       qui le portait — 55 lignes sur 60 non attribuables sur 6 semaines.
  *                       Une ligne carte est à l heure si elle est livrée au plus tard à la
- *                       date promise de SA ligne dans Odoo. La date Odoo fait foi à l instant
- *                       T : si elle a bougé, c est qu un report a été convenu avec le client.
+ *                       date promise de SA ligne dans Odoo, PLUS UN JOUR OUVRÉ de tolérance
+ *                       (décision Olivier du 02/11 : « si J+1 on peut aussi considérer dans
+ *                       les temps »). La tolérance se compte en jour ouvré, sinon un week-end
+ *                       la mangerait pour rien. La date Odoo fait foi à l instant T : si elle
+ *                       a bougé, c est qu un report a été convenu avec le client.
  * ------------------------------------------------------------------ */
 const COURBES = 'https://protoprocess.app.n8n.cloud/webhook/pp-courbes-liste';
 
@@ -599,7 +606,7 @@ function bandeCourbes(d) {
                    nL ? nL + ' cartes livrées · toute l\u2019équipe' : 'pas encore de livraison mesurée',
                    valsL, 100, '#5d8f4e',
                    'Une ligne carte est à l\u2019heure si elle part au plus tard à la date promise de sa ligne '
-                   + 'dans Odoo. Chiffre d équipe, semaine par semaine.');
+                   + 'dans Odoo, plus un jour ouvré de tolérance. Chiffre d’équipe, semaine par semaine.');
   return h;
 }
 
