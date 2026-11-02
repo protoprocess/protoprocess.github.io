@@ -300,8 +300,14 @@ section.replie .dater{display:none}
  * v1.17 (02/11/2026) : tolérance d'un jour ouvré sur les livraisons — une
  * expédition le lendemain de la date promise reste « dans les temps ». Le taux
  * des 6 dernières semaines passe de 81 % à 88 %.
+ *
+ * v1.18 (02/11/2026) : bloc « AR CLIENT — DATE PROMISE ». L accusé qu'on envoie au
+ * client, le pendant du bloc AR fournisseur. Détection sur DEUX signaux (modèle Odoo
+ * ou réponse dans le fil du client) : avec le seul modèle, le bloc aurait crié au loup
+ * 34 fois sur 500 commandes. Services n8n « PP — AR client : balayage » et
+ * « PP — AR client : page ».
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.17";
+const APP_VERSION = "1.18";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -476,6 +482,9 @@ function rendre() {
   // appel : la page reste lisible même si ce service-là ne répond pas.
   if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
 
+  // L AR client suit la même porte que les affaires : son responsable est lu en colonne N.
+  if (voitLesAffaires()) h += '<section id="bloc-arclient"></section>';
+
   // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
   // l'en-tête suffit à dire combien il en reste.
   if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
@@ -494,6 +503,7 @@ function rendre() {
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
   if (voitLesAffaires()) chargerFacturer();
+  if (voitLesAffaires()) chargerArClient();
   if (voitLesCourbes()) chargerCourbes();
   chargerDivers();
 }
@@ -805,6 +815,92 @@ async function deciderAR(po, geste) {
     if (!r.ok) throw new Error('réponse ' + r.status);
     toast(geste === 'valider' ? 'Date retenue pour ' + po : po + ' retiré de la liste');
     chargerAR();
+  } catch (e) {
+    toast('Pas enregistré : ' + e.message);
+  }
+}
+
+/* ---------- AR client : la date promise ---------- *
+ * L AR client, c est l accusé qu ON envoie AU client avec la date promise — à ne pas
+ * confondre avec l AR fournisseur, juste au-dessus, qui est l accusé qu on REÇOIT.
+ *
+ * Ce n est pas un champ Odoo, c est un message. Et la mesure du 02/11/2026 a montré que
+ * l équipe n utilise PAS le modèle « PROTO PROCESS - Commande <SO> » : elle RÉPOND dans
+ * le fil du bon de commande du client (« Re: URGENT : Commande achat - P2700189 »).
+ * Les deux signaux comptent donc. Avec le seul modèle Odoo, le bloc annonçait 76
+ * commandes sans AR ; avec les deux, il en reste 49 — et 36 étaient MERIO et QUOBLY.
+ *
+ * Les 25 MERIO ont été sorties à l ouverture : leur AR est bien parti, hors Odoo
+ * (Olivier, 02/11/2026).
+ *
+ * Trois gestes, et aucun ne ment :
+ *   AR envoyé   la ligne ne revient plus ; c est une déclaration humaine, elle gagne
+ *               sur le balayage
+ *   En attente  on attend une date (fournisseur) avant de s engager — la ligne revient
+ *               au bout de 7 jours. Une mise en attente sans retour serait un oubli déguisé
+ *   Odoo        pour envoyer l AR depuis la commande
+ * ------------------------------------------------------------------ */
+const ARCLIENT_LIRE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-liste';
+const ARCLIENT_GESTE = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-geste';
+
+async function chargerArClient() {
+  const z = document.getElementById('bloc-arclient');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des accusés client…</div>';
+  try {
+    const r = await fetch(ARCLIENT_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                           body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                                  qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocArClient(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les accusés client n ont pas pu être lus (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocArClient(d) {
+  const l = (d && d.lignes) || [];
+  // Au-delà de 5 jours ouvrés, le client attend sa date depuis une semaine : c est le moment
+  // où le silence commence à coûter.
+  const chaud = l.some(x => Number(x.jours_ouvres) > 5);
+  let h = entete(chaud ? 't-crit' : l.length ? 't-crit' : 't-ok', '', 'AR CLIENT — DATE PROMISE', l.length, '');
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Tous les clients ont leur accusé.</div>';
+    return h;
+  }
+  return h + l.map(ligneArClient).join('');
+}
+
+function ligneArClient(x) {
+  const j = Number(x.jours_ouvres || 0);
+  const niv = j > 5 ? 'orange' : 'gris';
+  let h = '<div class="row ' + niv + '" id="ac-' + esc(x.so) + '">';
+  h += '<div class="l1"><span class="so">' + esc(x.so) + '</span>';
+  if (x.client) h += '<span class="sep">·</span><span class="cli">' + esc(x.client) + '</span>';
+  h += '<span class="badge b-' + (j > 5 ? 'orange' : 'gris') + '">' + j + ' j ouvrés</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + (j > 5 ? 'orange' : 'gris') + '">'
+     + (x.revenue ? 'attente terminée' : 'pas d accusé envoyé') + '</span>';
+  h += '<span class="quoi">confirmée le ' + frDate(x.confirme_le)
+     + (x.revenue ? ' · remise en attente le ' + frDate(x.attente_jusqu_au) : '') + '</span>';
+  h += '<span class="acts">';
+  if (x.lien_odoo) h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(x.lien_odoo) + '">Odoo</a>';
+  h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'envoye\')">AR envoyé</button>';
+  h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'attente\')">En attente</button>';
+  h += '</span></div></div>';
+  return h;
+}
+
+async function gesteArClient(so, geste) {
+  try {
+    const r = await fetch(ARCLIENT_GESTE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ so: so, geste: geste, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    toast(geste === 'envoye' ? 'AR noté pour ' + so : so + ' revient dans 7 jours');
+    const ligne = document.getElementById('ac-' + so);
+    if (ligne) { ligne.classList.add('parti'); setTimeout(chargerArClient, 450); }
+    else chargerArClient();
   } catch (e) {
     toast('Pas enregistré : ' + e.message);
   }
