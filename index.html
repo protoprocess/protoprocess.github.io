@@ -1,227 +1,1579 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Proto Process — Accueil</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mon tableau de bord</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<script src="achats/shared/pp-acces.js"></script>
+<script src="achats/shared/pp-signalement.js" defer></script>
+<!-- retour-accueil.js n est PAS charge ici : cette page EST l accueil. -->
+<link rel="icon" href="achats/shared/picto-pp.png">
 <style>
 :root{
-  --bg:#0a0c12;--surface:#1a2030;--surface2:#161b27;--border:#262e42;--border2:#333d55;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--accent:#F07B1F;--accent-bg:#2a1f10;--pp-blue:#5BC4D8;
-  --green:#86c564;--amber:#eab676;--red:#f09595;
-  --radius:6px;--radius-lg:10px;
+  --bg:#f5f6f8; --surface:#ffffff; --surface2:#fafbfc;
+  --border:#e4e7ec; --border2:#cfd5de;
+  --text:#1b2232; --text2:#5a6577; --text3:#8e98a8;
+  --orange:#F07B1F; --orange-bg:#FDF1E6;
+  --ppblue:#17697A; --ppblue-bg:#E6F2F4;
+  --rouge:#A32D2D; --rouge-bg:#FCEBEB; --rouge-l:#C94B4B;
+  --ambre:#854F0B; --ambre-bg:#FAEEDA; --ambre-l:#D89B3A;
+  --bleuf:#2F5273; --bleuf-bg:#EAF0F6; --bleuf-l:#5A7FA3;
+  --vert:#3B6D11;  --vert-bg:#EAF3DE;
+  --radius:6px; --radius-lg:10px;
+  --mono:"SF Mono","Cascadia Code",Consolas,monospace;
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
-  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-*,*::before,*::after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--sans)}
-header{background:#0f1117;height:52px;display:flex;align-items:center;gap:10px;padding:0 18px;border-bottom:.5px solid var(--border)}
-.logo-text{display:flex;align-items:center;font-size:13px;font-weight:500}
-.logo-text .lt{color:#fff}.logo-text .ls{color:#444;margin:0 3px}.logo-text .lo{color:var(--accent)}
-.me{margin-left:auto;color:var(--text2);font-size:12px;display:flex;align-items:center;gap:6px}
-.me button{background:none;border:none;color:var(--text3);cursor:pointer;font:inherit;text-decoration:underline;padding:0}
-.ver{margin-left:12px;font-size:11px;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);padding:2px 8px;white-space:nowrap}
-.recette{background:var(--accent-bg);color:var(--amber);font-size:12px;padding:6px 18px;border-bottom:.5px solid #4a3418}
-main{max-width:min(96vw,1100px);margin:0 auto;padding:28px 18px 60px}
-h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.tile{display:block;background:var(--surface);border:.5px solid var(--border);border-left:3px solid var(--accent);border-radius:0 var(--radius-lg) var(--radius-lg) 0;padding:16px;cursor:pointer;text-align:left;color:inherit;font:inherit;text-decoration:none}
-.tile:hover,.tile:focus-visible{background:#1d2436;border-color:var(--border2);outline:none}
-.tile:focus-visible{box-shadow:0 0 0 2px var(--accent)}
-.tile i{font-size:20px;color:var(--accent);display:block;margin-bottom:8px}
-.tile b{display:block;font-size:15px;font-weight:500;margin-bottom:2px}
-.tile .sub{color:var(--text2);font-size:12px;display:block}
-.tile .cpt{display:block;margin-top:10px;font-size:12px;color:var(--text3);min-height:18px}
-.tile .cpt.on{color:var(--amber)}
-.tile .cpt{white-space:pre-line}
-.urgent{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:14px auto 0;max-width:min(96vw,1100px);padding:10px 16px;border-radius:var(--radius);background:#FCEBEB;color:#A32D2D;border-left:4px solid #A32D2D;font-size:13px;font-weight:500}
-.urgent i{font-size:18px}
-.urgent .so{display:flex;flex-wrap:wrap;gap:8px}
-.urgent .so a{color:#A32D2D;background:#fff;border:1px solid #F09595;border-radius:20px;padding:3px 10px;text-decoration:none;font-family:var(--mono);font-size:12px}
-.urgent .so a small{margin-left:6px;font-family:var(--sans);font-weight:400;color:#993556}
-.urgent .so a:hover{background:#F7C1C1}
-.tile.free{border-left-color:var(--pp-blue)}.tile.free i{color:var(--pp-blue)}
-.autres{margin-top:26px;color:var(--text3);font-size:12px}
-.autres a{color:var(--text2);margin-right:14px;text-decoration:none;white-space:nowrap}
-.autres a:hover{color:var(--accent)}
-.veil{position:fixed;inset:0;background:rgba(5,7,12,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:20px}
-.veil.show{display:flex}
-.box{background:var(--surface);border:1px solid var(--border2);border-top:3px solid var(--accent);border-radius:var(--radius-lg);padding:22px;max-width:440px;width:100%}
-.box h2{margin:0 0 6px;font-size:18px;font-weight:500}.box p{margin:0 0 14px;color:var(--text2);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.grid button{padding:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:var(--radius);font:inherit;cursor:pointer}
-.grid button:hover,.grid button:focus-visible{border-color:var(--accent);outline:none}
-.choix{display:grid;gap:8px}
-.ch{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--border);border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 var(--radius) var(--radius) 0;color:var(--text);text-decoration:none}
-.ch:hover,.ch:focus-visible{border-color:var(--accent);outline:none}
-.ch i{font-size:20px;color:var(--accent)}.ch b{display:block;font-weight:500}.ch small{color:var(--text2);font-size:12px}
-.btn-s{padding:6px 13px;background:transparent;color:var(--text2);border:.5px solid var(--border);border-radius:var(--radius);font:12px var(--sans);cursor:pointer}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px}
+
+header{background:var(--surface);height:52px;display:flex;align-items:center;gap:14px;
+  padding:0 20px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50}
+.logo-text{display:flex;align-items:center;font-size:13px;font-weight:600}
+.logo-text .lt{color:var(--text)}.logo-text .ls{color:var(--border2);margin:0 4px}
+.logo-text .lo{color:var(--orange)}
+.vbadge{font-size:10px;color:var(--text3);border:1px solid var(--border);
+  border-radius:20px;padding:2px 9px;font-family:var(--mono)}
+.spacer{flex:1}
+.moi{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 6px 4px 12px;font-size:12px}
+.moi .nom{color:var(--text);font-weight:600}
+.moi button{background:transparent;border:none;color:var(--text3);font-size:11px;cursor:pointer;
+  padding:3px 8px;border-radius:14px}
+.moi button:hover{background:#eef1f5;color:var(--text2)}
+.score{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2)}
+.score b{color:var(--vert);font-size:15px;font-family:var(--mono)}
+
+.wrap{max-width:min(96vw,1800px);margin:0 auto;padding:20px 20px 70px}
+
+/* choix de la personne */
+.portail{max-width:460px;margin:60px auto;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:26px;box-shadow:0 1px 3px rgba(20,30,50,.06)}
+.portail h1{margin:0 0 6px;font-size:17px}
+.portail p{margin:0 0 18px;color:var(--text2);font-size:12.5px;line-height:1.6}
+.qui{display:flex;flex-direction:column;gap:8px}
+.qui button{display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--radius);font-size:13px;cursor:pointer;
+  text-align:left;color:var(--text);font-family:var(--sans)}
+.qui button:hover{border-color:var(--orange);background:var(--orange-bg)}
+.qui .ini{font-family:var(--mono);font-size:11px;color:var(--text3);
+  background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px}
+
+.resume{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:9px 14px;font-size:12px;color:var(--text2)}
+.chip b{font-family:var(--mono);font-size:15px;color:var(--text)}
+.chip.r b{color:var(--rouge)} .chip.a b{color:var(--ambre)} .chip.b b{color:var(--bleuf)}
+
+.grille{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+@media (max-width:1100px){.grille{grid-template-columns:1fr}}
+/* v1.15 : TOUS les blocs sont en demi-page (demande Olivier du 02/11/2026 : un bloc
+   pleine largeur oblige l oeil a traverser l ecran pour rien). En demi-largeur une
+   ligne chargee — bloc AR : une date et trois boutons — n entre plus sur un seul
+   rang : les gestes passent alors sous le libelle au lieu de deborder. */
+.grille > section{min-width:0}
+
+/* v1.16 : la bande de courbes. Fine par construction — c'est un résultat qu'on regarde
+   une seconde, pas un tableau qu'on lit. Elle ne doit jamais repousser les blocs. */
+.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
+.courbe .ct{font-size:10px;letter-spacing:.06em;color:var(--text3);font-weight:700}
+.courbe .cv{font-size:21px;font-weight:700;color:var(--text);margin-top:2px;line-height:1.1}
+.courbe .cv span{font-size:12px;font-weight:600;color:var(--text3)}
+.courbe .cs{font-size:10.5px;color:var(--text3);margin-top:1px}
+.courbe .spark{display:block;width:100%;height:36px;margin:4px 0 1px}
+.l2{flex-wrap:wrap}
+.l2 .quoi{min-width:110px}
+
+section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;box-shadow:0 1px 2px rgba(20,30,50,.04)}
+.shead{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border);
+  background:var(--surface2)}
+.shead h2{margin:0;font-size:12.5px;font-weight:700;letter-spacing:.3px;flex:1}
+.shead i.ico{font-size:17px}
+.t-ok h2,.t-ok i.ico{color:var(--ppblue)}
+.t-crit h2,.t-crit i.ico{color:var(--orange)}
+.t-urg h2,.t-urg i.ico{color:var(--rouge)}
+.cpt{font-family:var(--mono);font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px}
+.c-ok{background:var(--ppblue-bg);color:var(--ppblue)}
+.c-crit{background:var(--ambre-bg);color:var(--ambre)}
+.c-urg{background:var(--rouge-bg);color:var(--rouge)}
+.repart{display:flex;height:7px;width:86px;border-radius:4px;overflow:hidden;background:#eef1f5}
+.repart span{display:block;height:100%}
+.sp-r{background:var(--rouge-l)} .sp-a{background:var(--ambre-l)} .sp-b{background:var(--bleuf-l)}
+.vide{padding:16px 14px;color:var(--vert);font-size:12px;display:flex;align-items:center;gap:8px}
+
+.row{position:relative;padding:10px 12px 10px 16px;border-bottom:1px solid #f0f2f5;
+  transition:opacity .4s ease,transform .4s ease,max-height .4s ease;max-height:460px;overflow:hidden}
+.row:last-of-type{border-bottom:none}
+.row::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px}
+.row.rouge::before{background:var(--rouge-l)}  .row.rouge{background:#fffafa}
+.row.orange::before{background:var(--ambre-l)} .row.orange{background:#fffdf8}
+.row.bleu::before{background:var(--bleuf-l)}
+.row.gris::before{background:var(--border2)}
+.row.parti{opacity:0;transform:translateX(26px);max-height:0;padding-top:0;padding-bottom:0;border:none}
+.l1{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.l1 .so{font-family:var(--mono);font-size:12px;font-weight:700}
+.l1 .cli{color:var(--text2);font-size:12px}
+.l1 .sep{color:var(--border2)}
+.l1 .badge{margin-left:auto}
+.badge{display:inline-block;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;
+  color:#fff;white-space:nowrap}
+.b-rouge{background:var(--rouge)} .b-orange{background:var(--ambre)}
+.b-bleu{background:var(--bleuf)} .b-gris{background:#6b7280}
+.l2{display:flex;align-items:center;gap:8px;margin-top:6px}
+.l2 .quoi{font-size:12px;color:var(--text2);flex:1;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pastille{display:inline-block;font-size:10px;font-weight:700;border-radius:20px;padding:2px 8px;flex-shrink:0}
+.p-rouge{background:var(--rouge-bg);color:var(--rouge)}
+.p-orange{background:var(--ambre-bg);color:var(--ambre)}
+.p-bleu{background:var(--bleuf-bg);color:var(--bleuf)}
+.p-gris{background:#eef1f5;color:var(--text2)}
+.p-vert{background:var(--vert-bg);color:var(--vert)}
+.acts{display:flex;align-items:center;gap:5px;flex-shrink:0}
+/* Champ de date du bloc AR fournisseur : meme gabarit que les boutons, pour que la ligne
+   garde sa hauteur quand la date est proposee ou saisie a la main. */
+.acts input[type=text]{padding:4px 7px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:12px;font-family:var(--mono);color:var(--text);background:#fff;width:118px}
+.acts input[type=text]:focus{outline:none;border-color:var(--orange)}
+.acts input[type=date]{padding:4px 7px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:11.5px;font-family:var(--sans);color:var(--text);background:#fff}
+.acts input[type=date]:focus{outline:none;border-color:var(--orange)}
+.btn-p{padding:5px 11px;background:var(--orange);color:#fff;border:none;border-radius:var(--radius);
+  font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;
+  display:inline-block;font-family:var(--sans)}
+.btn-p:hover{background:#d96c15}
+.btn-s{padding:5px 11px;background:var(--surface);color:var(--text2);border:1px solid var(--border);
+  border-radius:var(--radius);font-size:11.5px;cursor:pointer;white-space:nowrap;text-decoration:none;
+  display:inline-block;font-family:var(--sans)}
+.btn-s:hover{border-color:var(--border2);color:var(--text)}
+.detail{display:none;margin-top:9px;padding-top:9px;border-top:1px dashed var(--border);
+  font-size:11.5px;color:var(--text2);line-height:1.6}
+.row.ouverte .detail{display:block}
+.detail .geste{color:var(--text);margin-top:4px}
+.detail .refs{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:3px}
+.detail .acts2{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+
+.lien{font-size:11px;color:var(--text3);text-decoration:none;border-bottom:1px dotted var(--border2);
+  padding-bottom:1px;margin-left:4px}
+.lien:hover{color:var(--ppblue);border-bottom-color:var(--ppblue)}
+.shead{cursor:pointer}
+.shead h2::after{content:" ▾";color:var(--text3);font-size:10px}
+section.replie .shead h2::after{content:" ▸"}
+section.replie .row,section.replie .vide,section.replie .plus{display:none}
+.plus{display:block;width:100%;text-align:center;padding:8px;background:var(--surface2);
+  border:none;border-top:1px solid var(--border);color:var(--text2);font-size:11px;
+  cursor:pointer;font-weight:600;font-family:var(--sans)}
+.plus:hover{color:var(--orange)}
+.cache{display:none}
+
+/* de quand datent les données d'un bloc, quand ce n'est pas d'aujourd'hui */
+.dater{padding:7px 14px;background:var(--ambre-bg);color:var(--ambre);font-size:11.5px;
+  line-height:1.5;border-bottom:1px solid var(--border)}
+section.replie .dater{display:none}
+
+/* bloc Divers : le fil de la demande, la réponse écrite, le formulaire */
+.chip.d b{color:var(--ppblue)}
+.row.vert::before{background:#7aa84f} .row.vert{background:#fcfdfa}
+.b-vert{background:var(--vert)}
+.fil{margin-top:8px;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);font-size:11.5px;line-height:1.6;color:var(--text2)}
+.fil.rep{border-left:3px solid var(--vert)}
+.fil .qui{font-weight:700;color:var(--text)}
+.fil .quand{color:var(--text3);font-size:10.5px;font-family:var(--mono);margin-left:6px}
+.detail textarea{width:100%;min-height:54px;resize:vertical;margin-top:8px;padding:7px 9px;
+  border:1px solid var(--border);border-radius:var(--radius);font-size:12px;
+  font-family:var(--sans);color:var(--text);background:#fff}
+.dform{padding:12px 14px;background:var(--surface2);border-top:1px solid var(--border)}
+.dform .ligne{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.dform label{font-size:11px;color:var(--text3);font-weight:600}
+.dform input[type=text],.dform select,.dform input[type=date],.dform textarea{
+  padding:6px 9px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:12px;font-family:var(--sans);color:var(--text);background:#fff}
+.dform input[type=text]{flex:1;min-width:200px}
+.dform textarea{width:100%;min-height:54px;resize:vertical}
+.dform input:focus,.dform select:focus,.dform textarea:focus,.detail textarea:focus{
+  outline:none;border-color:var(--orange)}
+.dform .aide{font-size:11px;color:var(--text3)}
+
+/* tuiles applis */
+.outils{margin-top:26px}
+.outils h3{font-size:11px;letter-spacing:.06em;color:var(--text3);font-weight:700;margin:0 0 10px}
+/* v1.19 : ligne « autres outils », reprise de l ancien hub. Volontairement discrete :
+   ce sont des outils qu on ouvre rarement, ils ne doivent pas concurrencer les tuiles. */
+.autres{margin:14px 0 0;font-size:12px;color:var(--text3)}
+.autres a{color:var(--text2);text-decoration:none;border-bottom:1px solid var(--border2);margin-left:9px}
+.autres a:hover{color:var(--ppblue);border-bottom-color:var(--ppblue)}
+/* v1.19 : bandeau URGENT, repris de l ancien hub — SO en stock critique. */
+.urgent{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--rouge-bg);
+  border:1px solid var(--rouge-l);border-radius:8px;padding:10px 13px;margin:0 0 16px;
+  font-size:12.5px;color:var(--rouge);font-weight:600}
+.urgent .so{display:flex;gap:7px;flex-wrap:wrap}
+.urgent .so a{display:inline-flex;align-items:center;gap:5px;background:var(--surface);
+  border:1px solid var(--rouge-l);border-radius:5px;padding:2px 8px;color:var(--rouge);
+  text-decoration:none;font-weight:600}
+.urgent .so a small{font-weight:400;color:var(--text2)}
+.tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
+.tuile{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-lg);padding:13px 15px;text-decoration:none;color:var(--text);
+  box-shadow:0 1px 2px rgba(20,30,50,.04)}
+.tuile:hover{border-color:var(--orange)}
+.tuile i{font-size:20px;color:var(--orange)}
+.tuile .tt{font-size:12.5px;font-weight:600}
+.tuile .ts{font-size:11px;color:var(--text3);margin-top:1px}
+
+.msg{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:18px;color:var(--text2);font-size:12.5px;line-height:1.6}
+.msg.err{border-left:4px solid var(--rouge)}
+.bientot{margin-top:18px;background:var(--ppblue-bg);border:1px solid #cfe3e7;border-radius:var(--radius-lg);
+  padding:13px 16px;color:var(--ppblue);font-size:12px;line-height:1.6}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(90px);
+  background:var(--vert);color:#fff;font-weight:600;font-size:12.5px;
+  padding:10px 20px;border-radius:24px;transition:transform .3s ease;z-index:99;
+  box-shadow:0 4px 14px rgba(20,40,10,.2)}
+.toast.on{transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
+
 <header>
-  <img src="picto-pp.png" alt="Proto Process" width="24" height="24" style="object-fit:contain" onerror="this.style.display='none'">
-  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Accueil</span></span>
-  <span class="me" id="me" hidden><i class="ti ti-user"></i><span id="mename"></span><button id="chg">changer</button></span>
-  <span class="ver" id="ver"></span>
+  <img src="achats/shared/picto-pp-fond-clair.png" alt="" width="24" height="24" style="object-fit:contain"
+       onerror="this.style.display='none'">
+  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Mon tableau de bord</span></span>
+  <span class="vbadge" id="vbadge"></span>
+  <span class="spacer"></span>
+  <span class="score" id="zscore" style="display:none"><i class="ti ti-check"></i> traités aujourd'hui <b id="score">0</b></span>
+  <span class="moi" id="zmoi" style="display:none">
+    <span class="nom" id="monnom"></span>
+    <button onclick="changerDePersonne()">ce n'est pas moi</button>
+  </span>
 </header>
 
-<div class="urgent" id="urgent" hidden>
-  <i class="ti ti-alert-triangle" aria-hidden="true"></i>
-  <span id="urgent-txt"></span>
-  <span class="so" id="urgent-so"></span>
+<div class="wrap">
+  <div class="urgent" id="urgent" hidden>
+    <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+    <span id="urgent-txt"></span>
+    <span class="so" id="urgent-so"></span>
+  </div>
 </div>
-
-<main>
-  <h1>Que veux-tu faire maintenant ?</h1>
-  <div class="tiles">
-    <a class="tile" data-appli="ma-gestion" href="ma-gestion/"><i class="ti ti-layout-dashboard"></i><b>Mon tableau de bord</b><span class="sub">Ce qui attend un geste de ma part</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="devis" href="commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
-    <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
-    <a class="tile" data-appli="fabstory" href="commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="appro" href="achats/bom-sourcing/"><i class="ti ti-truck"></i><b>Approvisionner</b><span class="sub">Achats PP — commandes, analyse BOM, achats</span><span class="cpt" id="cpt-appro"></span></a>
-    <a class="tile" data-appli="reception" href="achats/appro-v2/"><i class="ti ti-package"></i><b>Réceptionner des colis</b><span class="sub">Réception marchandise</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="methodes" href="methodes-production/methodes/"><i class="ti ti-settings"></i><b>Préparer un dossier Méthodes</b><span class="sub">MYCenter Prep</span><span class="cpt"></span></a>
-    <a class="tile" data-appli="controle-cms" href="methodes-production/controle-cms/"><i class="ti ti-zoom-check"></i><b>Contrôler des cartes</b><span class="sub">Contrôle CMS — liste du jour, saisie, registre F07</span><span class="cpt"></span></a>
-    <button class="tile free" data-appli="assistant" id="free"><i class="ti ti-message-dots"></i><b>Rien de tout ça</b><span class="sub">Explique ce que tu veux faire</span><span class="cpt">Arrive dans une prochaine version</span></button>
-  </div>
-  <p class="autres">Autres outils :
-    <a href="commercial/triage/">Triage</a><a href="commercial/annexe-devis/">Annexe devis</a>
-    
-    <a href="rh/paie/">Paie</a><a href="tutos/">Tutos</a>
-  </p>
-</main>
-
-<div class="veil" id="cmd"><div class="box" role="dialog" aria-labelledby="cmdt">
-  <h2 id="cmdt">Quelle commande ?</h2><p>Choisis le type de commande à saisir.</p>
-  <div class="choix">
-    <a class="ch" data-appli="commande" href="commercial/commande/"><i class="ti ti-user"></i><span><b>Commande client</b><small id="cpt-commandes2">Bon de commande reçu d'un client</small></span></a>
-    <a class="ch" data-appli="po-odoo" href="achats/po-odoo/"><i class="ti ti-building-warehouse"></i><span><b>Commande d'achat</b><small>P.O. fournisseur dans Odoo</small></span></a>
-  </div>
-  <button class="btn-s" type="button" id="cmdx" style="margin-top:14px">Annuler</button>
-</div></div>
-
-<div class="veil" id="who"><div class="box" role="dialog" aria-labelledby="whot">
-  <h2 id="whot">Qui es-tu ?</h2><p>Demandé une seule fois sur ce poste.</p>
-  <div class="grid" id="whogrid"></div>
-</div></div>
+<div class="wrap" id="app"></div>
+<div class="toast" id="toast">Traité</div>
 
 <script>
-const APP_VERSION = "2.7";
-const APP_DATE = "02/11/2026";
-/* v2.7 (02/11/2026) : la tuile s'appelle « Mon tableau de bord ». L'adresse ne change pas
-   (ma-gestion/) : le mail du matin pointe dessus et la page vient d'être déplacée. */
-/* v2.6 (02/11/2026) : tuile « Ma gestion de projets » EN TÊTE, vers ma-gestion/. La page
-   existait depuis le 29/10 mais n'était atteignable que par son URL : aucune porte n'y menait.
-   Elle est en tête parce qu'elle répond à la question qu'on se pose en arrivant — ce qui
-   m'attend — avant celle de l'outil à ouvrir. Pas de compteur : il dépend de QUI regarde,
-   et le hub ne sait pas encore qui c'est au moment où il s'affiche. */
-/* v2.5 (30/10/2026) : tuile « Contrôler des cartes » (appli Contrôle CMS, premier usage de
-   l'écran de déclaration d'anomalie ; chantier 153). Pas de compteur : le nombre de cartes à
-   contrôler se calcule dans Odoo, pas dans une vue Supabase publique. */
-/* v2.4 (29/09/2026) : tuile « Devis refab » retirée (décision Olivier, à rediscuter). */
-/* v2.3 (29/09/2026) : tuile « Devis refab » vers la prod devis-client (v13.0, déroulé devis basculé en prod). */
-/* v2.2 (25/09/2026) : tuile « Devis refab » (essai, déroulé devis recette ?refab=1, chantier 169).
-/* v2.1 (25/09/2026) : tuiles « qui / quoi » (client ou SO écrit dans la tuile, liste au survol, vue v_accueil_details) ;
-   bloc « À toi de jouer » retiré (doublon des tuiles ; accord du fil devis, qui déplace la liste dans devis-client recette). */
-/* v2.0 (25/09/2026) : bascule de l accueil recette v0.8 en prod (remplace v1.7 ; retour : etiquette avant-bascule-2026-09-25).
-   Bloc « À toi de jouer » conserve tel quel, liens vers commercial/devis-client/recette/ (proprietaire : fil deroule devis, chantier 169).
-   Tuile « Déroulé devis — RECETTE » de la v1.7 retiree a la demande du fil devis : le bloc et « Créer un devis » (prod) prennent le relais. */
-document.getElementById('ver').textContent = `v${APP_VERSION} — ${APP_DATE}`;
-document.title = `Proto Process — Accueil — v${APP_VERSION} — ${APP_DATE}`;
+/* ------------------------------------------------------------------ *
+ * Mon tableau de bord — page de suivi par personne.
+ *
+ * Elle n'invente aucune règle : tout ce qu'elle affiche vient du service
+ * « PP — Points a traiter », qui est aussi ce que lit le point du matin.
+ * Une règle changée dans le service vaut pour le mail ET pour cette page.
+ *
+ * Entrée (décision Olivier du 29/10/2026) :
+ *   - depuis le mail : le lien porte ?j=<jeton>, qui dit QUI tu es
+ *   - depuis le hub  : le code d'accès PP ouvre la page, puis on choisit son nom
+ *   - le code d'accès PP est exigé dans les deux cas : c'est lui qui protège
+ *     les données client (NDA). Le jeton seul n'ouvre rien.
+ *
+ * v1.11 (02/11/2026) : la page a quitté le dépôt « achats » pour le dépôt
+ * racine. Sur GitHub Pages le premier segment de l'URL est imposé par le
+ * dépôt qui héberge le fichier : tant qu'elle vivait dans « achats », son
+ * adresse disait « achats » — alors que tout le monde y passera à terme.
+ *   avant  protoprocess.github.io/achats/ma-gestion/
+ *   après  protoprocess.github.io/ma-gestion/
+ * Les scripts partagés et le picto restent lus dans achats/shared/ : même
+ * domaine, donc une seule source, aucune copie à maintenir.
+ *
+ * v1.13 (02/11/2026) : la page s'appelle « Mon tableau de bord ». L'adresse
+ * ne bouge pas (/ma-gestion/) : le mail du matin pointe dessus et elle vient
+ * d'être déplacée — on ne casse pas deux fois les liens dans la même journée.
+ * Arrivée de la production et des méthodes : Fred, Stéphane, Jérôme et
+ * Valérie peuvent ouvrir leur page. Les blocs qui ne pourront JAMAIS rien
+ * contenir pour eux (affaires, devis) ne s'affichent pas — la colonne
+ * Responsable du planning n'accepte que AC, DG, MM et OC, donc ces blocs
+ * resteraient vides à vie. Règle Olivier du 22/10 : ce qui ne demande aucun
+ * geste ne s'affiche pas.
+ *
+ * v1.14 (02/11/2026, constats d'Olivier à l'usage) :
+ *   1. « Je m'en occupe » ouvrait Achats PP DANS cette page : on perdait son
+ *      tableau de bord pour y revenir ensuite. Le lien s'ouvre maintenant dans
+ *      un nouvel onglet — la page reste là, derrière.
+ *   2. il fallait RETAPER le SO une fois dans Achats PP, alors qu'on venait de
+ *      cliquer sur une ligne qui le dit. Le lien porte désormais ?so=…&onglet=achats,
+ *      et Achats PP v15.47 charge la feuille d'achat tout seul.
+ *   3. nouveau bloc « MES COMMANDES À FACTURER » (service « PP — Commandes a
+ *      facturer (page) »). Règle Olivier du 30/10 : facturer 2 ou 3 jours après
+ *      la livraison n'est PAS un retard — la ligne reste grise, et ne s'allume
+ *      qu'au-delà de 5 jours ouvrés, ou les 3 derniers jours du mois, moment où
+ *      la facturation devient sensible. C'est un rappel, pas une alerte.
+ *
+ * v1.15 (02/11/2026, demande Olivier) : TOUS les blocs en demi-page, dans la
+ * même grille à deux colonnes — comme « ce qui attend un geste » et « mes devis
+ * à traiter » l'étaient déjà. Un bloc pleine largeur fait traverser l'écran pour
+ * lire trois mots, et repousse les suivants sous la ligne de flottaison.
+ *
+ * v1.16 (02/11/2026) : LES COURBES, en bande fine sous les compteurs (service
+ * « PP — Courbes (page) », mesures écrites par « PP — Photos du matin »). Six
+ * semaines. Deux d'entre elles sont personnelles (la pile, les devis dans les
+ * temps), la troisième est une courbe d'ÉQUIPE : passé quelques jours, le SO
+ * quitte le planning et plus rien ne dit qui le portait — 55 lignes sur 60 non
+ * attribuables sur 6 semaines. Elle est aussi montrée à la production, qui la
+ * fabrique (demande d'Olivier : « tu l'ajouteras au tableau de bord de Fred »).
+ *
+ * v1.17 (02/11/2026) : tolérance d'un jour ouvré sur les livraisons — une
+ * expédition le lendemain de la date promise reste « dans les temps ». Le taux
+ * des 6 dernières semaines passe de 81 % à 88 %.
+ *
+ * v1.18 (02/11/2026) : bloc « AR CLIENT — DATE PROMISE ». L accusé qu'on envoie au
+ * client, le pendant du bloc AR fournisseur. Détection sur DEUX signaux (modèle Odoo
+ * ou réponse dans le fil du client) : avec le seul modèle, le bloc aurait crié au loup
+ * 34 fois sur 500 commandes. Services n8n « PP — AR client : balayage » et
+ * « PP — AR client : page ».
+ * ------------------------------------------------------------------
+ *
+ * v1.19 (02/11/2026) : CETTE PAGE EST DESORMAIS LA PAGE D ACCUEIL.
+ * Elle a quitte /ma-gestion/ pour la racine et remplace l ancien hub (v2.7), qui
+ * est supprime. /ma-gestion/ redirige ici.
+ *
+ * Pourquoi : il y avait DEUX portes d entree qui ne disaient pas la meme chose. Le hub
+ * montrait toutes les tuiles a tout le monde, sans filtre ; le tableau de bord filtrait
+ * les outils par pole. Le constat d Olivier du 02/11 au soir : « donc Stephane a acces a
+ * l appli P.O. ?! » — oui, par le hub, alors que son propre tableau de bord ne lui
+ * proposait pas la tuile. Deux endroits decidaient, ils se contredisaient. Un seul
+ * decide maintenant.
+ *
+ * Recupere du hub : le bandeau URGENT (stock critique), la ligne « autres outils »,
+ * l ecriture de pp_personne et la mesure de deroule.
+ * NON repris : les compteurs de tuiles de l ancien hub (devis a faire, commandes a
+ * saisir). Ils etaient calcules pour TOUTE l equipe, alors que cette page dit a chacun
+ * ce qui l attend, lui — un compteur collectif a cote d un decompte personnel se
+ * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
+ * retire du hub des la v2.1, il n existait plus.
+ * ------------------------------------------------------------------ */
+const APP_VERSION = "1.19";
+const APP_DATE    = "02/11/2026";
+document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
+document.title = "Mon tableau de bord v" + APP_VERSION;
 
-const SB_URL = "https://gzljssjjrqbxgnxugiqu.supabase.co/rest/v1";
-const SB_KEY = "sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O";
-const EQUIPE = ["Maura","Dorian","Stéphane","Ariel","Jérôme","Fred","Valérie","Olivier"];
-const $ = id => document.getElementById(id);
+const SERVICE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-points-a-traiter';
+const SOURDINE = 'https://protoprocess.github.io/achats/sourdine/';
+const GMAIL    = 'https://mail.google.com/mail/u/0/#inbox/';
+const RACINE   = 'https://protoprocess.github.io/';
+const CLE_MOI  = 'pp_ma_gestion_qui';
+/* Le hub ecrivait le PRENOM sous une autre cle, et la mesure de deroule s en sert.
+   On continue de l ecrire pour ne pas casser la mesure ni les applis qui la lisent. */
+const CLE_PERSONNE = 'pp_personne';
+const SB_URL = 'https://gzljssjjrqbxgnxugiqu.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O';
 
-function lire(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
-function ecrire(k,v){ try { localStorage.setItem(k,v); } catch(e){} }
+/* ---------- repris de l ancien hub (v1.19) ---------- */
 
-// Marque « arrivé par l'accueil » : lue par shared/retour-accueil.js dans chaque appli
-try { sessionStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch(e){}
+/* Marque « arrivé par l accueil » : lue par achats/shared/retour-accueil.js dans chaque
+   appli, qui s en sert pour afficher le bouton de retour. Sans elle, les applis perdent
+   le chemin du retour. */
+try { sessionStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch (e) {}
 
-// Session : regroupe les mesures d'un même passage (accueil puis appli)
-let session = lire('pp_session');
-if(!session){ session = Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-ecrire('pp_session', session);
+/* Session : regroupe les mesures d un même passage (accueil puis appli). */
+let SESSION = null;
+try {
+  SESSION = localStorage.getItem('pp_session')
+    || (Date.now().toString(36) + Math.random().toString(36).slice(2, 7));
+  localStorage.setItem('pp_session', SESSION);
+} catch (e) { SESSION = 'x'; }
 
-function mesure(appli, evenement, etape){
-  const corps = { personne: lire('pp_personne'), appli, evenement, etape: etape || null, session_id: session };
+/* Mesure de déroulé. Tir et oubli : si ça échoue, la page n en sait rien et s en fiche. */
+function mesure(appli, evenement, etape) {
+  let personne = null;
+  try { personne = localStorage.getItem(CLE_PERSONNE); } catch (e) {}
   try {
-    fetch(`${SB_URL}/deroule_mesures`, { method:'POST', keepalive:true,
-      headers:{ apikey:SB_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
-      body: JSON.stringify(corps) }).catch(()=>{});
-  } catch(e){}
+    fetch(SB_URL + '/deroule_mesures', {
+      method: 'POST', keepalive: true,
+      headers: { apikey: SB_KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ personne: personne, appli: appli, evenement: evenement,
+                             etape: etape || null, session_id: SESSION })
+    }).catch(() => {});
+  } catch (e) {}
 }
 
-// Qui es-tu : une seule fois par poste
-function afficherNom(){
-  const n = lire('pp_personne');
-  $('me').hidden = !n; $('mename').textContent = n || '';
-}
-$('whogrid').innerHTML = EQUIPE.map(n => `<button type="button">${n}</button>`).join('');
-$('whogrid').querySelectorAll('button').forEach(b => b.onclick = () => {
-  ecrire('pp_personne', b.textContent); $('who').classList.remove('show'); afficherNom();
-  mesure('accueil','ouverture');
-});
-$('chg').onclick = () => $('who').classList.add('show');
-if(!lire('pp_personne')) $('who').classList.add('show'); else mesure('accueil','ouverture');
-afficherNom();
-
-// Clic sur une tuile : début de déroulé
-document.querySelectorAll('a.tile').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
-$('free').onclick = () => {};
-$('t-commande').onclick = () => $('cmd').classList.add('show');
-$('cmdx').onclick = () => $('cmd').classList.remove('show');
-$('cmd').addEventListener('click', e => { if(e.target.id === 'cmd') $('cmd').classList.remove('show'); });
-document.querySelectorAll('a.ch').forEach(t => t.addEventListener('click', () => mesure(t.dataset.appli,'debut')));
-
-// Compteurs
-function jours(d){ return Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000)); }
-function depuis(d){ const j = jours(d); return j === 0 ? "date d'aujourd'hui" : j === 1 ? 'depuis 1 jour' : `depuis ${j} jours`; }
-
-// v2.1 (25/09/2026) — tuiles « qui / quoi » (vue v_accueil_details) : le nom du client ou du SO
-// est ecrit dans la tuile, la liste complete au survol. Remplace les compteurs seuls de la v2.0.
-function grouper(rows){
-  const n = {}; rows.forEach(r => { n[r.qui] = (n[r.qui] || 0) + 1; });
-  return Object.keys(n).map(k => n[k] > 1 ? `${k} ×${n[k]}` : k).join(', ');
-}
-function plusAncien(rows){ return rows.reduce((m, r) => (!m || r.depuis < m) ? r.depuis : m, null); }
-function survol(rows){ return rows.map(r => `${r.qui}${r.quoi ? ' — ' + r.quoi : ''}`).join('\n'); }
-function poser(id, lignes, rows, vide){
-  const el = $(id); if(!el) return;
-  if(!rows.length){ el.textContent = vide; el.classList.remove('on'); el.removeAttribute('title'); return; }
-  el.textContent = lignes.filter(Boolean).join('\n'); el.classList.add('on'); el.title = survol(rows);
-}
-fetch(`${SB_URL}/v_accueil_details?select=*`, { headers:{ apikey:SB_KEY } })
+/* Bandeau URGENT : les SO en stock critique (composant quasi introuvable), un lien par SO.
+   Lecture publique de Supabase, hors du service : ce bandeau ne dépend de personne et doit
+   s afficher même avant qu on sache qui regarde. */
+fetch(SB_URL + '/v_appro_urgent?select=*', { headers: { apikey: SB_KEY } })
   .then(r => r.ok ? r.json() : [])
   .then(rows => {
-    rows = Array.isArray(rows) ? rows : [];
-    const f = k => rows.filter(r => r.file === k);
-    const dF = f('devis_a_faire'), dE = f('devis_a_envoyer'), c = f('commandes'), a = f('appro_urgent');
-    const d = dF.concat(dE);
-    poser('cpt-devis', [
-      dF.length ? `${dF.length} à faire : ${grouper(dF)}` : '',
-      dE.length ? `${dE.length} à envoyer : ${grouper(dE)}` : '',
-      d.length ? `le plus ancien ${depuis(plusAncien(d))}` : ''], d, 'Aucun devis en attente');
-    poser('cpt-commandes', [c.length ? `${c.length} à saisir : ${grouper(c)}` : '', c.length ? `la plus ancienne ${depuis(plusAncien(c))}` : ''], c, 'Aucune commande en attente');
-    const c2 = $('cpt-commandes2'); if(c2 && c.length) c2.textContent = `${c.length} à saisir : ${grouper(c)}`;
-    poser('cpt-appro', [a.length ? `${a.length} urgent : ${grouper(a)}` : ''], a, '');
-  }).catch(()=>{});
-
-// v0.6 — bandeau URGENT : SO encore « AF » en stock critique (analyse appro Luminovo), un lien par SO vers sa page carte
-fetch(`${SB_URL}/v_appro_urgent?select=*`, { headers:{ apikey:SB_KEY } })
-  .then(r => r.ok ? r.json() : [])
-  .then(rows => {
-    if(!rows || !rows.length) return;
-    const el = $('urgent');
-    el.querySelector('#urgent-txt').textContent = `URGENT — ${rows.length} commande${rows.length > 1 ? 's' : ''} en stock critique (composant quasi introuvable) :`;
+    if (!rows || !rows.length) return;
+    const el = document.getElementById('urgent');
+    el.querySelector('#urgent-txt').textContent = 'URGENT — ' + rows.length + ' commande'
+      + (rows.length > 1 ? 's' : '') + ' en stock critique (composant quasi introuvable) :';
     el.querySelector('#urgent-so').innerHTML = rows.map(r =>
-      `<a href="${r.report_url || 'achats/bom-sourcing/'}" target="_blank" rel="noopener">${r.so}<small>${r.nb_stock_critique} ligne${r.nb_stock_critique > 1 ? 's' : ''}</small></a>`).join('');
+      '<a href="' + esc(r.report_url || (RACINE + 'achats/bom-sourcing/')) + '" target="_blank" rel="noopener">'
+      + esc(r.so) + '<small>' + r.nb_stock_critique + ' ligne'
+      + (r.nb_stock_critique > 1 ? 's' : '') + '</small></a>').join('');
     el.hidden = false;
-  }).catch(()=>{});
+  }).catch(() => {});
+
+/* Clic sur une tuile d outil : début de déroulé. Délégation, parce que les tuiles sont
+   réécrites à chaque rendu. */
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-appli]');
+  if (a) mesure(a.dataset.appli, 'debut');
+});
+
+/* Les pôles, tels qu'Ariel les a décrits le 20/10/2026. Les adresses et les
+   libellés sont repris du hub, pour que personne n'ait à réapprendre un nom. */
+const POLES = {
+  direction:         { nom: 'Direction',            outils: ['devis','commande','achats','po','reception','fabstory','methodes','controle','paie'] },
+  commercial_achats: { nom: 'Commercial et achats',  outils: ['devis','commande','achats','po','fabstory'] },
+  production:        { nom: 'Gestion de production', outils: ['fabstory'] },
+  methodes:          { nom: 'Méthodes',              outils: ['reception','fabstory','methodes'] }
+};
+
+/* v1.19 : AJUSTEMENT PAR PERSONNE, par-dessus le pôle.
+   Le pôle seul ne suffit plus. Décision d'Olivier du 02/11/2026 au soir : Stéphane et Fred
+   passent les P.O. de consommable et de sous-traitance, Valérie est dans le même pôle et ne
+   les passe pas. Fred réceptionne et contrôle, Stéphane ni l'un ni l'autre. Une règle par
+   pôle ne sait pas dire ça.
+   Ce qui s'ajoute au pôle, et ce qui s'en retire. Ordre d'application : pôle, puis EN_PLUS,
+   puis EN_MOINS — le retrait gagne toujours. */
+const EN_PLUS = {
+  SG: ['po'],                          // consommable et sous-traitance, filtré dans l'appli P.O.
+  FR: ['po','reception','controle'],
+  VF: ['controle']
+};
+const EN_MOINS = {
+  MM: ['reception'], DG: ['reception'], AC: ['reception']   // « Réceptionner : pas le service commercial »
+};
+
+const OUTILS = {
+  devis:     { t: 'Créer un devis',        s: "Dossier client jusqu'au devis Odoo", i: 'ti-file-text',          u: 'commercial/devis-client/' },
+  commande:  { t: 'Commande client',       s: "Bon de commande reçu d'un client",   i: 'ti-clipboard-check',    u: 'commercial/commande/' },
+  achats:    { t: 'Approvisionner',        s: 'Achats PP',                          i: 'ti-shopping-cart',      u: 'achats/bom-sourcing/' },
+  po:        { t: "Commande d'achat",      s: 'P.O. fournisseur dans Odoo',         i: 'ti-receipt',            u: 'achats/po-odoo/' },
+  reception: { t: 'Réceptionner des colis',s: 'Réception marchandise',              i: 'ti-package',            u: 'achats/appro-v2/' },
+  fabstory:  { t: 'Suivre une fabrication',s: 'FabStory',                           i: 'ti-timeline',           u: 'commercial/fabstory/' },
+  methodes:  { t: 'Préparer un dossier',   s: 'MYCenter Prep',                      i: 'ti-settings',           u: 'methodes-production/methodes/' },
+  controle:  { t: 'Contrôler des cartes',  s: 'Contrôle CMS et registre F07',       i: 'ti-zoom-check',         u: 'methodes-production/controle-cms/' },
+  paie:      { t: 'Paie',                  s: 'Heures et congés',                   i: 'ti-calendar',           u: 'rh/paie/' }
+};
+
+/* Les outils que tout le monde atteint, en petit, sous les tuiles. Repris de la ligne
+   « Autres outils » de l'ancien hub : ils ne méritent pas une tuile mais ils ne doivent pas
+   disparaître pour autant. */
+const AUTRES = [
+  { t: 'Triage',       u: 'commercial/triage/' },
+  { t: 'Annexe devis', u: 'commercial/annexe-devis/' },
+  { t: 'Paie',         u: 'rh/paie/' },
+  { t: 'Tutos',        u: 'tutos/' }
+];
+
+/* Qui est dans quel pôle. Une personne absente d'ici tombe sur « commercial et achats »
+   par défaut (voir outils()) — alors mieux vaut l'y écrire.
+   02/11/2026 : Jérôme est JM (et non JE), Valérie VF, toutes deux créées ce jour. */
+const POLE_DE = { OC: 'direction', MM: 'commercial_achats', DG: 'commercial_achats',
+                  AC: 'commercial_achats', FR: 'production', SG: 'production',
+                  VF: 'production', JM: 'methodes' };
+
+/* La liste d'outils de cette personne : son pôle, plus ses ajouts, moins ses retraits. */
+function outilsDe(ini) {
+  const pole = POLES[POLE_DE[ini] || 'commercial_achats'];
+  const liste = pole.outils.slice();
+  (EN_PLUS[ini] || []).forEach(k => { if (liste.indexOf(k) < 0) liste.push(k); });
+  const hors = EN_MOINS[ini] || [];
+  // On garde l'ordre de déclaration d'OUTILS : l'écran doit toujours ranger pareil.
+  const ordre = Object.keys(OUTILS);
+  return ordre.filter(k => liste.indexOf(k) >= 0 && hors.indexOf(k) < 0);
+}
+
+/* Les affaires et les devis se rattachent à un responsable lu en colonne N du planning
+   « Cmd En cours », qui n'accepte que AC, DG, MM et OC. Pour la production et les méthodes
+   ces deux blocs resteraient donc vides À VIE — ce n'est pas « rien aujourd'hui », c'est
+   « jamais rien ». On ne les affiche pas (règle Olivier du 22/10/2026 : ce qui ne demande
+   aucun geste ne s'affiche pas). Le jour où la colonne N accepte d'autres initiales, il
+   suffira d'ajouter le pôle ici. */
+function voitLesAffaires() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats';
+}
+
+let DONNEES = null;   // réponse du service
+let MOI = null;       // initiales choisies
+let traites = 0;
+
+const esc = s => String(s == null ? '' : s)
+  .replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' })[c]);
+const frDate = iso => { const s = String(iso || ''); return s.length >= 10 ? s.slice(8,10) + '/' + s.slice(5,7) : ''; };
+
+// « vendredi 30/10 » : le jour de la semaine fait plus pour situer une donnée qu'une date seule.
+const JOURS = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+function jourEtDate(iso) {
+  const s = String(iso || '');
+  if (s.length < 10) return '';
+  const d = new Date(s.slice(0, 10) + 'T00:00:00');
+  return (isNaN(d) ? '' : JOURS[d.getDay()] + ' ') + s.slice(8, 10) + '/' + s.slice(5, 7);
+}
+
+/* ---------- appel du service ---------- */
+async function charger() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture en cours…</div>';
+  try {
+    const r = await fetch(SERVICE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION })
+    });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const data = await r.json();
+    DONNEES = Array.isArray(data) ? data : (data.responsables || data.data || []);
+    if (!Array.isArray(DONNEES)) DONNEES = [DONNEES];
+    demarrer();
+  } catch (e) {
+    app.innerHTML = '<div class="msg err"><strong>La lecture n a pas abouti.</strong><br>'
+      + esc(e.message) + '<br><br>Si le code d accès vient d être saisi, recharge la page. '
+      + 'Si ça recommence, dis-le : ce n est pas à toi de deviner.</div>';
+  }
+}
+
+/* ---------- qui es-tu ---------- */
+function demarrer() {
+  const url = new URLSearchParams(location.search);
+  const jeton = url.get('j');
+  // ?qui=MM force la personne sans rien memoriser : c est ce qu il faut pour un ecran
+  // d affichage, ou pour regarder la page d un collegue depuis son propre poste sans
+  // ecraser son propre choix.
+  const force = (url.get('qui') || '').toUpperCase();
+  if (force && DONNEES.some(d => d.initiales === force)) { MOI = force; rendre(); return; }
+  // Le jeton du mail porte l identité : on cherche à qui il appartient.
+  if (jeton) {
+    const trouve = DONNEES.find(d => (d.affaires_a_geste || []).concat(d.affaires_calmes || [])
+      .some(a => a.jeton === jeton));
+    if (trouve) { choisir(trouve.initiales); return; }
+  }
+  const garde = localStorage.getItem(CLE_MOI);
+  if (garde && DONNEES.some(d => d.initiales === garde)) { choisir(garde); return; }
+  portail();
+}
+
+function portail() {
+  document.getElementById('zmoi').style.display = 'none';
+  document.getElementById('zscore').style.display = 'none';
+  const gens = DONNEES.filter(d => d.initiales).sort((a,b) => a.nom.localeCompare(b.nom));
+  let h = '<div class="portail"><h1>Qui es-tu ?</h1>';
+  h += '<p>Une seule fois sur ce poste. Tu pourras changer à tout moment avec « ce n est pas moi ».</p>';
+  h += '<div class="qui">';
+  for (const g of gens) {
+    const n = (g.compteurs || {}).total || 0;
+    h += '<button onclick="choisir(\'' + esc(g.initiales) + '\')">'
+       + '<span class="ini">' + esc(g.initiales) + '</span>'
+       + '<span>' + esc(g.nom) + '</span>'
+       + '<span style="margin-left:auto;color:var(--text3);font-size:11px">' + n + ' point' + (n > 1 ? 's' : '') + '</span>'
+       + '</button>';
+  }
+  h += '</div></div>';
+  document.getElementById('app').innerHTML = h;
+}
+
+function choisir(ini) {
+  MOI = ini;
+  try { localStorage.setItem(CLE_MOI, ini); } catch (e) {}
+  // v1.19 : l ancien hub ecrivait le PRENOM sous pp_personne, et la mesure de deroule comme
+  // l appli P.O. le lisent. On continue de l ecrire : une seule identite choisie, deux
+  // ecritures, pour ne rien casser pendant que les applis migrent vers les initiales.
+  try {
+    const d = DONNEES && DONNEES.find(x => x.initiales === ini);
+    if (d && d.nom) localStorage.setItem(CLE_PERSONNE, d.nom);
+  } catch (e) {}
+  mesure('accueil', 'ouverture');
+  rendre();
+}
+function changerDePersonne() {
+  try { localStorage.removeItem(CLE_MOI); localStorage.removeItem(CLE_PERSONNE); } catch (e) {}
+  MOI = null;
+  portail();
+}
+
+/* ---------- la page ---------- */
+function rendre() {
+  const d = DONNEES.find(x => x.initiales === MOI);
+  document.getElementById('monnom').textContent = d ? d.nom : MOI;
+  document.getElementById('zmoi').style.display = '';
+  document.getElementById('zscore').style.display = '';
+
+  const c = (d && d.compteurs) || {};
+  let h = '<div class="resume">';
+  // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
+  if (voitLesAffaires()) {
+    h += chip('r', c.rouge || 0, 'en danger');
+    h += chip('a', c.orange || 0, 'à surveiller');
+    h += chip('b', c.bleu || 0, 'information manquante');
+    h += chip('', c.devis || 0, 'devis à traiter');
+  }
+  // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
+  // Il part à zéro et se remplit quand le bloc Divers a répondu.
+  h += '<div class="chip d" id="chip-divers"><b>0</b> demandes</div>';
+  h += '</div>';
+
+  // v1.16 : la bande de courbes, juste sous les compteurs. Elle se remplit par son
+  // propre appel — une panne de ce service-là ne doit pas retarder le « à faire ».
+  if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
+
+  // v1.15 : tous les blocs dans la même grille à deux colonnes. Ils se remplissent de
+  // gauche à droite, chacun à sa hauteur (align-items:start) — donc l ordre ci-dessous
+  // est l ordre de lecture, et une personne qui ne voit pas un bloc ne laisse pas de trou.
+  h += '<div class="grille">';
+  if (voitLesAffaires()) {
+    h += blocAffaires(d);
+    h += blocDevis(d);
+  }
+
+  // Le bloc AR ne concerne que ceux qui achètent. Il se remplit après coup, par son propre
+  // appel : la page reste lisible même si ce service-là ne répond pas.
+  if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
+
+  // L AR client suit la même porte que les affaires : son responsable est lu en colonne N.
+  if (voitLesAffaires()) h += '<section id="bloc-arclient"></section>';
+
+  // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
+  // l'en-tête suffit à dire combien il en reste.
+  if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
+
+  // À facturer : même porte que les affaires (le responsable se lit en colonne N).
+  // Replié d'entrée — c'est un rappel, pas une urgence (règle Olivier du 30/10).
+  if (voitLesAffaires()) h += '<section id="bloc-facturer" class="replie"></section>';
+
+  // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
+  // maison peut être tracé. Il se remplit aussi par son propre appel.
+  h += '<section id="bloc-divers"></section>';
+  h += '</div>';
+
+  h += outils();
+  document.getElementById('app').innerHTML = h;
+  if (voitLesAchats()) chargerAR();
+  if (voitLeMenagePo()) chargerPoRattacher();
+  if (voitLesAffaires()) chargerFacturer();
+  if (voitLesAffaires()) chargerArClient();
+  if (voitLesCourbes()) chargerCourbes();
+  chargerDivers();
+}
+
+/* ---------- les courbes ---------- *
+ * Trois mesures, six semaines, en petit. C est le résultat de ce qu on fait, pas une
+ * liste de gestes : la bande reste fine et ne pousse pas les blocs sous la ligne de
+ * flottaison.
+ *
+ * MA PILE               ce qui attend un geste, jour par jour (photo de 6h10).
+ * MES DEVIS DANS LES TEMPS  départ = jour d arrivée du mail + 0,5 jour, fin = jour où le
+ *                       fil sort du bloc. Dans les temps = 2 jours ouvrés ou moins.
+ *                       La mesure a commencé le 02/11/2026 : la courbe se remplit ensuite.
+ * LIVRAISONS À L HEURE  courbe d ÉQUIPE, pas personnelle (décision Olivier du 02/11/2026) :
+ *                       passé quelques jours, le SO quitte le planning et plus rien ne dit
+ *                       qui le portait — 55 lignes sur 60 non attribuables sur 6 semaines.
+ *                       Une ligne carte est à l heure si elle est livrée au plus tard à la
+ *                       date promise de SA ligne dans Odoo, PLUS UN JOUR OUVRÉ de tolérance
+ *                       (décision Olivier du 02/11 : « si J+1 on peut aussi considérer dans
+ *                       les temps »). La tolérance se compte en jour ouvré, sinon un week-end
+ *                       la mangerait pour rien. La date Odoo fait foi à l instant T : si elle
+ *                       a bougé, c est qu un report a été convenu avec le client.
+ * ------------------------------------------------------------------ */
+const COURBES = 'https://protoprocess.app.n8n.cloud/webhook/pp-courbes-liste';
+
+// Les livraisons sont un résultat de production : Fred les voit aussi (demande Olivier).
+function voitLesCourbes() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats' || p === 'production';
+}
+
+async function chargerCourbes() {
+  const z = document.getElementById('bande-courbes');
+  if (!z) return;
+  try {
+    const r = await fetch(COURBES, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                            qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = bandeCourbes(await r.json());
+  } catch (e) {
+    z.remove();   // une courbe absente ne vaut pas un message d erreur sur un écran de travail
+  }
+}
+
+/* Une courbe en SVG, sans bibliothèque : une ligne, un remplissage léger, rien d autre.
+   Un seul point ne fait pas une courbe : on affiche alors un repère plat. */
+function sparkline(vals, max, couleur) {
+  if (!vals.length) return '';
+  const L = 240, H = 46, m = max || Math.max(1, ...vals);
+  const x = i => vals.length < 2 ? L : (i / (vals.length - 1)) * L;
+  const y = v => H - 3 - (Math.max(0, Math.min(v, m)) / m) * (H - 8);
+  const pts = vals.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1));
+  const ligne = vals.length < 2
+    ? '<line x1="0" y1="' + y(vals[0]).toFixed(1) + '" x2="' + L + '" y2="' + y(vals[0]).toFixed(1)
+      + '" stroke="' + couleur + '" stroke-width="2" stroke-dasharray="3 3"/>'
+    : '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + couleur
+      + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  const aire = vals.length < 2 ? ''
+    : '<polygon points="0,' + H + ' ' + pts.join(' ') + ' ' + L + ',' + H + '" fill="' + couleur + '" opacity=".10"/>';
+  const dernier = vals.length < 2 ? '' :
+    '<circle cx="' + x(vals.length - 1).toFixed(1) + '" cy="' + y(vals[vals.length - 1]).toFixed(1)
+    + '" r="2.6" fill="' + couleur + '"/>';
+  return '<svg class="spark" viewBox="0 0 ' + L + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">'
+       + aire + ligne + dernier + '</svg>';
+}
+
+function carteCourbe(titre, valeur, sous, vals, max, couleur, infobulle) {
+  return '<div class="courbe"' + (infobulle ? ' title="' + esc(infobulle) + '"' : '') + '>'
+       + '<div class="ct">' + esc(titre) + '</div>'
+       + '<div class="cv">' + valeur + '</div>'
+       + sparkline(vals, max, couleur)
+       + '<div class="cs">' + esc(sous) + '</div></div>';
+}
+
+function bandeCourbes(d) {
+  const pile = (d && d.pile) || [];
+  const devis = (d && d.devis) || [];
+  const liv = (d && d.livraisons) || [];
+  let h = '';
+
+  if (voitLesAffaires()) {
+    const vals = pile.map(p => p.n);
+    const dernier = vals.length ? vals[vals.length - 1] : 0;
+    h += carteCourbe(POLE_DE[MOI] === 'direction' ? 'LA PILE DE L\u2019ÉQUIPE' : 'MA PILE',
+                     dernier + ' <span>points</span>',
+                     vals.length > 1 ? 'sur 6 semaines' : 'mesure commencée le ' + frDate(d.depuis),
+                     vals, 0, '#e07b1a',
+                     'Ce qui attend un geste, relevé chaque matin après le balayage de 5h50.');
+  }
+
+  if (voitLesAffaires()) {
+    const vals = devis.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
+    const n = devis.reduce((t, s) => t + s.n, 0);
+    const ok = devis.reduce((t, s) => t + s.ok, 0);
+    h += carteCourbe('DEVIS DANS LES TEMPS',
+                     n ? Math.round(ok / n * 100) + ' <span>%</span>' : '—',
+                     n ? n + ' demande' + (n > 1 ? 's' : '') + ' traitée' + (n > 1 ? 's' : '')
+                       : 'mesure commencée le ' + frDate(d.devis_depuis),
+                     vals, 100, '#3b7ea1',
+                     'Délai entre le mail du client et le moment où le fil sort de « mes devis à traiter ». '
+                     + 'Dans les temps = 2 jours ouvrés ou moins.');
+  }
+
+  const valsL = liv.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
+  const nL = liv.reduce((t, s) => t + s.n, 0);
+  const okL = liv.reduce((t, s) => t + s.ok, 0);
+  h += carteCourbe('LIVRAISONS À L\u2019HEURE',
+                   nL ? Math.round(okL / nL * 100) + ' <span>%</span>' : '—',
+                   nL ? nL + ' cartes livrées · toute l\u2019équipe' : 'pas encore de livraison mesurée',
+                   valsL, 100, '#5d8f4e',
+                   'Une ligne carte est à l\u2019heure si elle part au plus tard à la date promise de sa ligne '
+                   + 'dans Odoo, plus un jour ouvré de tolérance. Chiffre d’équipe, semaine par semaine.');
+  return h;
+}
+
+/* ---------- mes commandes à facturer ---------- *
+ * Source : Odoo, champ natif « invoice_status = à facturer » — il reste du livré non
+ * facturé sur la commande. Rien n est recalculé ici.
+ *
+ * Règle Olivier du 30/10/2026 : facturer 2 ou 3 jours après la livraison n est PAS un
+ * retard, ça ne devient sensible qu en fin de mois. Le bloc est donc un rappel de
+ * tableau de bord : gris par défaut, ambre au-delà de 5 jours ouvrés depuis la
+ * livraison, et ambre partout les 3 derniers jours du mois.
+ *
+ * La direction voit en plus les commandes dont le planning ne dit pas le responsable
+ * (affaires anciennes, soldes) : sans ça elles ne seraient sur l écran de personne.
+ * ------------------------------------------------------------------ */
+const FACTURER = 'https://protoprocess.app.n8n.cloud/webhook/pp-facturer-liste';
+
+async function chargerFacturer() {
+  const z = document.getElementById('bloc-facturer');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des commandes à facturer…</div>';
+  try {
+    const r = await fetch(FACTURER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                             qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocFacturer(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les commandes à facturer n ont pas pu être lues (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+const euros = n => (Math.round(Number(n) || 0)).toLocaleString('fr-FR') + ' €';
+
+function blocFacturer(d) {
+  const mien = (d && d.lignes) || [];
+  const sans = (d && d.sans_responsable) || [];
+  const n = mien.length + sans.length;
+  const chaud = mien.concat(sans).some(l => l.niveau === 'orange');
+  let h = entete(chaud ? 't-crit' : 't-ok', '', 'MES COMMANDES À FACTURER', n,
+                 n ? '<span class="quoi">' + euros(d.montant_total) + ' HT</span>' : '');
+  if (!n) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien à facturer. Tout est à jour.</div>';
+    return h;
+  }
+  if (d.fin_de_mois)
+    h += '<div class="dater">Fin de mois : ce qui est livré devrait partir en facture avant la clôture.</div>';
+  h += mien.map(l => ligneFacturer(l, false)).join('');
+  if (sans.length) h += sans.map(l => ligneFacturer(l, true)).join('');
+  return h;
+}
+
+function ligneFacturer(l, orpheline) {
+  let h = '<div class="row ' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">';
+  h += '<div class="l1"><span class="so">' + esc(l.so) + '</span>';
+  if (l.client) h += '<span class="sep">·</span><span class="cli">' + esc(l.client) + '</span>';
+  h += '<span class="badge b-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">' + euros(l.montant) + '</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">'
+     + (l.livre_le ? 'livré le ' + frDate(l.livre_le) : 'livraison partielle') + '</span>';
+  h += '<span class="quoi">'
+     + (l.jours === null || l.jours === undefined ? 'reste du livré non facturé'
+        : l.jours === 0 ? 'livré aujourd hui'
+        : l.jours + ' jour' + (l.jours > 1 ? 's' : '') + ' ouvré' + (l.jours > 1 ? 's' : '') + ' depuis la livraison')
+     + (orpheline ? ' · pas de responsable au planning' : '') + '</span>';
+  h += '<span class="acts">';
+  h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(l.lien_odoo) + '">Facturer dans Odoo</a>';
+  h += '</span></div></div>';
+  return h;
+}
+
+/* ---------- commandes fournisseur : la date de livraison ---------- *
+ * But du bloc (Olivier, 30/10/2026) : récupérer la DATE DE LIVRAISON du fournisseur,
+ * pour l inscrire et la confronter à la date promise au client. La liste n est que ce
+ * qui reste quand l automatique n a pas suffi.
+ *
+ * Rien n est jamais inscrit sans validation : « pas de règle, ça dépend du fournisseur,
+ * mais 95% des cas un PDF oui ». La date lue dans le PDF est une PROPOSITION — une lecture
+ * imparfaite n a donc aucune conséquence.
+ *
+ * Étape 1 (livrée) : on détecte, on propose, on valide. La date validée reste dans la base.
+ * Étape 2 (à venir) : elle part dans la sheet achat et en colonne L du planning
+ *                     (« Date recept cpts »), et se compare à la Date ARC de la colonne C.
+ * ------------------------------------------------------------------ */
+const AR_LIRE    = 'https://protoprocess.app.n8n.cloud/webhook/pp-ar-liste';
+const AR_VALIDER = 'https://protoprocess.app.n8n.cloud/webhook/pp-ar-valider';
+
+function voitLesAchats() {
+  // La production en est depuis le 02/11/2026 : une commande rattachée à une affaire est
+  // désormais visible par son responsable ET par Fred, qui la verra arriver à l'atelier.
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats' || p === 'production';
+}
+
+// Le ménage des P.O. sans affaire reste à la direction : c'est une corvée, pas la peine
+// d'en charger l'écran des autres.
+function voitLeMenagePo() { return POLE_DE[MOI] === 'direction'; }
+
+async function chargerAR() {
+  const z = document.getElementById('bloc-ar');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des accusés de réception…</div>';
+  try {
+    // Chacun ne voit que les commandes des affaires dont il est responsable au planning
+    // (colonne N). Les PO sans affaire identifiée — usinage, consommables, outillage —
+    // vont à la direction, seule en mesure de les suivre.
+    const r = await fetch(AR_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                            qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocAR(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les accusés de réception n ont pas pu être lus (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocAR(d) {
+  const avec = (d && d.avec_ar) || [];
+  const sans = (d && d.sans_ar) || [];
+  const n = avec.length + sans.length;
+  let h = entete(avec.length ? 't-crit' : 't-ok', '', 'COMMANDES FOURNISSEUR — DATE DE LIVRAISON', n, '');
+  if (!n) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Toutes les commandes ont leur date.</div>';
+    return h;
+  }
+  if (avec.length) h += avec.map(ligneAR).join('');
+  if (sans.length) {
+    h += sans.map(ligneAR).join('');
+  }
+  return h;
+}
+
+function ligneAR(a) {
+  // confiance : sure (une date collée à un mot de livraison) · floue (plusieurs dates, ou un
+  // délai en semaines) · aucune (PDF illisible, ou seulement des dates de commande et de devis)
+  const niv = a.ar_trouve ? (a.date_lue ? 'bleu' : 'orange') : (a.age_j > 5 ? 'orange' : 'gris');
+  let h = '<div class="row ' + niv + '">';
+  h += '<div class="l1"><span class="so">' + esc(a.po_name) + '</span>';
+  if (a.fournisseur) h += '<span class="sep">·</span><span class="cli">' + esc(a.fournisseur) + '</span>';
+  h += '<span class="badge b-' + niv + '">' + (a.ar_trouve ? 'AR reçu le ' + frDate(a.ar_le)
+                                                           : 'commandé il y a ' + a.age_j + ' j') + '</span></div>';
+
+  h += '<div class="l2">';
+  if (a.ar_trouve && a.date_lue) {
+    h += '<span class="pastille p-bleu">livraison lue : ' + frDate(a.date_lue) + '</span>';
+    if (a.confiance !== 'sure') h += '<span class="pastille p-orange">à vérifier</span>';
+    h += '<span class="quoi">à confirmer avant de l inscrire</span>';
+  } else if (a.ar_trouve) {
+    h += '<span class="pastille p-orange">date illisible</span>';
+    h += '<span class="quoi">l AR est là, mais la date n a pas pu en être tirée</span>';
+  } else {
+    h += '<span class="pastille p-' + niv + '">pas d AR</span>';
+    h += '<span class="quoi">Tu en as reçu un ? Si oui, livraison prévue quand ?</span>';
+  }
+  // Un PO peut servir plusieurs affaires (AB Broker en sert trois). On le dit sur la ligne :
+  // la commande est unique, donc la date l est aussi, et une seule validation suffit.
+  if (a.affaires && a.affaires.length > 1)
+    h += '<span class="pastille p-gris">' + a.affaires.length + ' affaires</span>';
+  h += '<span class="acts">';
+  h += '<input type="date" id="d-' + esc(a.po_name) + '" value="' + esc(a.date_lue || '') + '">';
+  h += '<button class="btn-p" onclick="deciderAR(\'' + esc(a.po_name) + '\',\'valider\')">Inscrire</button>';
+  h += '<button class="btn-s" onclick="deciderAR(\'' + esc(a.po_name) + '\',\'eteindre\')">Déjà reçu</button>';
+  h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
+  h += '</span></div>';
+
+  h += '<div class="detail">';
+  if (a.affaires && a.affaires.length) h += '<div class="refs">pour ' + a.affaires.map(esc).join(' · ') + '</div>';
+  else h += '<div class="refs">aucune affaire rattachée — achat hors dossier</div>';
+  if (a.piece_jointe) h += '<div class="refs">pièce jointe : ' + esc(a.piece_jointe) + '</div>';
+  if (a.extrait) h += '<div class="refs">' + esc(a.extrait) + '</div>';
+  if (a.commande_le) h += '<div class="refs">commandé le ' + frDate(a.commande_le) + '</div>';
+  // Quand plusieurs personnes portent les affaires d un même PO, elles voient toutes la ligne.
+  // Mieux vaut le dire que de laisser quelqu un chercher pourquoi elle a disparu de son écran.
+  const autres = (a.responsables || []).filter(r => r !== MOI);
+  if (autres.length)
+    h += '<div class="refs">cette commande sert aussi ' + autres.map(esc).join(' et ')
+       + ' — la première date inscrite vaut pour tout le monde</div>';
+  h += '<div class="geste">La date inscrite ici part en colonne L du planning, sur le lot en cours '
+     + 'de chaque affaire, et se compare à la date promise au client. Une case déjà remplie à la '
+     + 'main n est jamais écrasée.</div>';
+  h += '<div class="acts2"><button class="btn-s" onclick="deciderAR(\'' + esc(a.po_name) + '\',\'ignorer\')">'
+     + 'Laisser de côté</button></div>';
+  h += '</div></div>';
+  return h;
+}
+
+async function deciderAR(po, geste) {
+  const ch = document.getElementById('d-' + po);
+  const date = ch ? ch.value : '';
+  if (geste === 'valider' && !date) { toast('Il manque la date'); return; }
+  try {
+    const r = await fetch(AR_VALIDER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ po_name: po, geste: geste, date: date }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    toast(geste === 'valider' ? 'Date retenue pour ' + po : po + ' retiré de la liste');
+    chargerAR();
+  } catch (e) {
+    toast('Pas enregistré : ' + e.message);
+  }
+}
+
+/* ---------- AR client : la date promise ---------- *
+ * L AR client, c est l accusé qu ON envoie AU client avec la date promise — à ne pas
+ * confondre avec l AR fournisseur, juste au-dessus, qui est l accusé qu on REÇOIT.
+ *
+ * Ce n est pas un champ Odoo, c est un message. Et la mesure du 02/11/2026 a montré que
+ * l équipe n utilise PAS le modèle « PROTO PROCESS - Commande <SO> » : elle RÉPOND dans
+ * le fil du bon de commande du client (« Re: URGENT : Commande achat - P2700189 »).
+ * Les deux signaux comptent donc. Avec le seul modèle Odoo, le bloc annonçait 76
+ * commandes sans AR ; avec les deux, il en reste 49 — et 36 étaient MERIO et QUOBLY.
+ *
+ * Les 25 MERIO ont été sorties à l ouverture : leur AR est bien parti, hors Odoo
+ * (Olivier, 02/11/2026).
+ *
+ * Trois gestes, et aucun ne ment :
+ *   AR envoyé   la ligne ne revient plus ; c est une déclaration humaine, elle gagne
+ *               sur le balayage
+ *   En attente  on attend une date (fournisseur) avant de s engager — la ligne revient
+ *               au bout de 7 jours. Une mise en attente sans retour serait un oubli déguisé
+ *   Odoo        pour envoyer l AR depuis la commande
+ * ------------------------------------------------------------------ */
+const ARCLIENT_LIRE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-liste';
+const ARCLIENT_GESTE = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-geste';
+
+async function chargerArClient() {
+  const z = document.getElementById('bloc-arclient');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des accusés client…</div>';
+  try {
+    const r = await fetch(ARCLIENT_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                           body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                                  qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocArClient(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les accusés client n ont pas pu être lus (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocArClient(d) {
+  const l = (d && d.lignes) || [];
+  // Au-delà de 5 jours ouvrés, le client attend sa date depuis une semaine : c est le moment
+  // où le silence commence à coûter.
+  const chaud = l.some(x => Number(x.jours_ouvres) > 5);
+  let h = entete(chaud ? 't-crit' : l.length ? 't-crit' : 't-ok', '', 'AR CLIENT — DATE PROMISE', l.length, '');
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Tous les clients ont leur accusé.</div>';
+    return h;
+  }
+  return h + l.map(ligneArClient).join('');
+}
+
+function ligneArClient(x) {
+  const j = Number(x.jours_ouvres || 0);
+  const niv = j > 5 ? 'orange' : 'gris';
+  let h = '<div class="row ' + niv + '" id="ac-' + esc(x.so) + '">';
+  h += '<div class="l1"><span class="so">' + esc(x.so) + '</span>';
+  if (x.client) h += '<span class="sep">·</span><span class="cli">' + esc(x.client) + '</span>';
+  h += '<span class="badge b-' + (j > 5 ? 'orange' : 'gris') + '">' + j + ' j ouvrés</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + (j > 5 ? 'orange' : 'gris') + '">'
+     + (x.revenue ? 'attente terminée' : 'pas d accusé envoyé') + '</span>';
+  h += '<span class="quoi">confirmée le ' + frDate(x.confirme_le)
+     + (x.revenue ? ' · remise en attente le ' + frDate(x.attente_jusqu_au) : '') + '</span>';
+  h += '<span class="acts">';
+  if (x.lien_odoo) h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(x.lien_odoo) + '">Odoo</a>';
+  h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'envoye\')">AR envoyé</button>';
+  h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'attente\')">En attente</button>';
+  h += '</span></div></div>';
+  return h;
+}
+
+async function gesteArClient(so, geste) {
+  try {
+    const r = await fetch(ARCLIENT_GESTE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ so: so, geste: geste, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    toast(geste === 'envoye' ? 'AR noté pour ' + so : so + ' revient dans 7 jours');
+    const ligne = document.getElementById('ac-' + so);
+    if (ligne) { ligne.classList.add('parti'); setTimeout(chargerArClient, 450); }
+    else chargerArClient();
+  } catch (e) {
+    toast('Pas enregistré : ' + e.message);
+  }
+}
+
+/* ---------- P.O. sans affaire : à rattacher ---------- *
+ * D'où ça vient (02/11/2026) : la règle du 30/10 envoyait à la direction tout P.O. dont
+ * l'affaire était inconnue, au motif que « personne d'autre n'est en mesure de les suivre ».
+ * À l'usage, Olivier voyait 17 lignes dont 13 étrangères, sans pouvoir rien en faire.
+ *
+ * L'erreur était dans le mot : ces commandes ne sont pas « sans affaire », leur affaire est
+ * INCONNUE — parce qu'elles ont été créées à la main dans Odoo au lieu de passer par l'appli
+ * P.O. Un PCB appartient forcément à un dossier ; c'est juste que rien ne le dit nulle part.
+ * Vérifié dans Odoo le 02/11 : le champ « Document d'origine » est vide sur les 13.
+ *
+ * Donc on demande, une fois, et on retient :
+ *   un SO              -> le P.O. part chez le responsable de l'affaire, ET chez Fred
+ *   consommable de prod -> il part chez Fred et Stéphane, sans affaire
+ *
+ * Le responsable n'est jamais deviné : il est lu en colonne N du planning. Si le SO n'y est
+ * pas, ou si la colonne est vide, le service REFUSE d'écrire et le dit.
+ * ------------------------------------------------------------------ */
+const PO_LIRE      = 'https://protoprocess.app.n8n.cloud/webhook/pp-po-liste';
+const PO_RATTACHER = 'https://protoprocess.app.n8n.cloud/webhook/pp-po-rattacher';
+
+async function chargerPoRattacher() {
+  const z = document.getElementById('bloc-po-rattacher');
+  if (!z) return;
+  try {
+    const r = await fetch(PO_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets',
+                                                            version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocPoRattacher(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les P.O. à rattacher n ont pas pu être lus ('
+                + esc(e.message) + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocPoRattacher(d) {
+  const l = (d && d.pos) || [];
+  let h = entete(l.length ? 't-crit' : 't-ok', '', 'P.O. SANS AFFAIRE — À RATTACHER', l.length, '');
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Toutes les commandes savent à quelle affaire elles appartiennent.</div>';
+    return h;
+  }
+  h += '<div class="dater">Ces commandes ont été créées à la main dans Odoo : rien ne dit à quelle '
+     + 'affaire elles appartiennent. Dis-le une fois — elles partent chez leur responsable et chez Fred, '
+     + 'et ne reviennent plus ici.</div>';
+  h += l.map(lignePoRattacher).join('');
+  return h;
+}
+
+// L'identifiant du champ de saisie ne peut pas porter le tiret du nom du P.O. : on le retire.
+const idPo = po => 'so-' + String(po).replace(/[^A-Za-z0-9]/g, '');
+
+function lignePoRattacher(a) {
+  let h = '<div class="row gris">';
+  h += '<div class="l1"><span class="so">' + esc(a.po_name) + '</span>';
+  if (a.fournisseur) h += '<span class="sep">·</span><span class="cli">' + esc(a.fournisseur) + '</span>';
+  h += '<span class="badge b-gris">' + (a.ar_trouve ? 'AR reçu le ' + frDate(a.ar_le)
+                                                    : 'commandé il y a ' + a.age_j + ' j') + '</span></div>';
+  h += '<div class="l2"><span class="pastille p-gris">à rattacher</span>';
+  h += '<span class="quoi">' + (a.date_lue ? 'livraison lue : ' + frDate(a.date_lue)
+                                           : 'aucune date de livraison connue') + '</span>';
+  h += '<span class="acts">';
+  h += '<input type="text" id="' + idPo(a.po_name) + '" placeholder="SO…" autocomplete="off">';
+  h += '<button class="btn-p" onclick="rattacherPo(\'' + esc(a.po_name) + '\',\'so\')">Rattacher</button>';
+  h += '<button class="btn-s" onclick="rattacherPo(\'' + esc(a.po_name) + '\',\'conso\')">Consommable de prod</button>';
+  h += '</span></div></div>';
+  return h;
+}
+
+async function rattacherPo(po, geste) {
+  const ch = document.getElementById(idPo(po));
+  const so = ch ? ch.value.trim() : '';
+  if (geste === 'so' && !so) { toast('Il manque le SO'); return; }
+  try {
+    const r = await fetch(PO_RATTACHER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ po_name: po, geste: geste,
+                                                                 so: so, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const d = await r.json();
+    toast(d.ok ? po + ' — ' + d.message : d.message);
+    // Le service refuse plutôt que d'inventer : on ne rafraîchit que s'il a écrit.
+    if (d.ok) { chargerPoRattacher(); if (voitLesAchats()) chargerAR(); }
+  } catch (e) { toast('Pas enregistré : ' + e.message); }
+}
+
+/* ---------- divers : ce qu on me demande, ce que je demande ---------- *
+ * Deux objets dans une seule table, distingués par « pour qui » :
+ *   pour_qui ≠ de_qui  →  une demande adressée à quelqu un
+ *   pour_qui = de_qui  →  un pense-bête personnel, que personne d autre ne voit
+ *
+ * La FERMETURE PAR RÉPONSE ÉCRITE est le point central (Olivier, 30/10/2026) :
+ * l objectif n est pas qu on coche « vu », c est qu on dise ce qu on a décidé et
+ * pourquoi. C est ce qui distingue ce bloc d une liste qui se vide sans laisser
+ * de trace. Une ligne réglée reste visible deux jours, puis sort du bloc ; le fil
+ * lui-même reste en base.
+ *
+ * Garde-fou : ce bloc n accueille QUE ce qui n a pas d autre maison. Une question
+ * client va dans FabStory, un achat dans Achats PP. Sinon il devient la poubelle
+ * où l on range ce qu on ne veut pas traiter.
+ * ------------------------------------------------------------------ */
+const DV_LIRE     = 'https://protoprocess.app.n8n.cloud/webhook/pp-divers-liste';
+const DV_CREER    = 'https://protoprocess.app.n8n.cloud/webhook/pp-divers-creer';
+const DV_REPONDRE = 'https://protoprocess.app.n8n.cloud/webhook/pp-divers-repondre';
+
+let DV_FORM = false;   // le formulaire reste ouvert d un rafraîchissement à l autre
+
+async function chargerDivers() {
+  const z = document.getElementById('bloc-divers');
+  if (!z) return;
+  try {
+    const r = await fetch(DV_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets',
+                                                            version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const d = await r.json();
+    z.innerHTML = blocDivers(d);
+    // Le compteur du bandeau dit exactement ce que dit le bloc : ce qui attend un geste
+    // de MA part. Ce que j ai envoyé attend chez l autre, et ne se compte pas ici.
+    const ch = document.getElementById('chip-divers');
+    const n = ((d.on_me_demande || []).filter(x => !x.clos).length)
+            + ((d.pense_bete    || []).filter(x => !x.clos).length);
+    if (ch) ch.innerHTML = '<b>' + n + '</b> demande' + (n > 1 ? 's' : '');
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Le bloc Divers n a pas pu être lu (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function nomDe(ini) {
+  if (!ini) return '—';
+  const d = (DONNEES || []).find(x => x.initiales === ini);
+  return d ? d.nom : ini;
+}
+
+function joursDe(x) {
+  return (x.jours === null || x.jours === undefined) ? null : Number(x.jours);
+}
+
+// Le résumé de ligne reste sur une ligne : le texte entier est dans le détail.
+function court(s, n) {
+  const t = String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n - 1) + '…' : t;
+}
+
+// « Répondre » ouvre le détail sans se renommer : ce n est pas un bouton de pliage.
+function ouvrirLigne(btn) { btn.closest('.row').classList.add('ouverte'); }
+
+function etatDivers(x) {
+  const j = joursDe(x);
+  if (x.clos) return x.repondu_le ? 'répondu le ' + frDate(x.repondu_le) : 'réglé';
+  if (j === null) return 'sans échéance';
+  if (j < 0)  return 'échéance dépassée · J+' + (-j);
+  if (j === 0) return "pour aujourd hui";
+  return 'pour le ' + frDate(x.echeance);
+}
+
+function blocDivers(d) {
+  const amoi = (d && d.on_me_demande) || [];
+  const pb   = (d && d.pense_bete)    || [];
+  const moi  = (d && d.je_demande)    || [];
+  const amoiO = amoi.filter(x => !x.clos);
+  const pbO   = pb.filter(x => !x.clos);
+  // Ce que j ai envoyé et ce qui est déjà réglé ne doit pas occuper l écran : replié par défaut.
+  const reste = amoi.filter(x => x.clos).concat(pb.filter(x => x.clos)).concat(moi);
+  const depassee = x => { const j = joursDe(x); return j !== null && j < 0; };
+  const n = amoiO.length + pbO.length;
+  const cls = amoiO.some(depassee) ? 't-urg' : n ? 't-crit' : 't-ok';
+
+  let h = entete(cls, '', 'DIVERS — CE QU ON ME DEMANDE, CE QUE JE DEMANDE', n, '');
+  if (!n && !reste.length)
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien en attente, ni pour toi ni de toi.</div>';
+  h += amoiO.map(x => ligneDivers(x, false)).join('');
+  h += pbO.map(x => ligneDivers(x, false)).join('');
+  if (reste.length) {
+    h += reste.map(x => ligneDivers(x, true)).join('');
+    h += '<button class="plus" onclick="deplier(this)">Voir les ' + reste.length
+       + ' autre' + (reste.length > 1 ? 's' : '') + ' — ce que j ai envoyé, et ce qui est réglé</button>';
+  }
+  h += formDivers();
+  return h;
+}
+
+function ligneDivers(x, cache) {
+  const pb = x.nature === 'pense_bete';
+  const am = x.nature === 'on_me_demande';
+  const j  = joursDe(x);
+  const niv = x.clos ? 'vert' : (j !== null && j < 0) ? 'rouge' : am ? 'orange' : pb ? 'bleu' : 'gris';
+
+  let h = '<div class="row ' + niv + (cache ? ' cache sup' : '') + '">';
+  h += '<div class="l1"><span class="so">' + esc(x.objet) + '</span>';
+  h += '<span class="sep">·</span><span class="cli">'
+     + esc(pb ? 'pour moi' : am ? 'demandé par ' + nomDe(x.de_qui) : 'demandé à ' + nomDe(x.pour_qui))
+     + '</span>';
+  h += '<span class="badge b-' + niv + '">' + esc(etatDivers(x)) + '</span></div>';
+
+  h += '<div class="l2">';
+  h += '<span class="pastille p-' + niv + '">'
+     + (x.clos ? 'réglé' : pb ? 'pense-bête' : am ? 'on me demande' : 'je demande') + '</span>';
+  h += '<span class="quoi">' + esc(court(x.texte, 110)) + '</span>';
+  h += '<span class="acts">';
+  if (!x.clos && pb) h += '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'fait\')">C est fait</button>';
+  if (!x.clos && am) h += '<button class="btn-p" onclick="ouvrirLigne(this)">Répondre</button>';
+  if (!x.clos && !pb && !am) h += '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'relancer\')">Relancer</button>';
+  h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
+  h += '</span></div>';
+
+  h += '<div class="detail">';
+  h += '<div class="fil"><div><span class="qui">' + esc(nomDe(x.de_qui)) + '</span>'
+     + '<span class="quand">' + frDate(x.cree_le) + '</span></div>'
+     + '<div>' + esc(x.texte || '(rien de plus que l objet)') + '</div></div>';
+  if (x.reponse)
+    h += '<div class="fil rep"><div><span class="qui">' + esc(nomDe(x.repondu_par || x.pour_qui)) + '</span>'
+       + '<span class="quand">' + frDate(x.repondu_le) + '</span></div>'
+       + '<div>' + esc(x.reponse) + '</div></div>';
+  if (x.relance_le) h += '<div class="refs">relancé le ' + frDate(x.relance_le) + '</div>';
+
+  if (!x.clos && am) {
+    h += '<div class="geste">Une case cochée ne ferme rien ici : écris ce que tu as décidé, et pourquoi. '
+       + 'C est ce texte qu on relira dans trois semaines.</div>';
+    h += '<textarea id="dv-' + x.id + '" placeholder="Ta réponse…"></textarea>';
+    h += '<div class="acts2">'
+       + '<button class="btn-p" onclick="gesteDivers(' + x.id + ',\'repondre\')">Répondre et clore</button>'
+       + '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'noter\')">Répondre sans clore</button></div>';
+  }
+  if (!x.clos && !pb && !am) {
+    h += '<div class="acts2">'
+       + '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'relancer\')">Relancer</button>'
+       + '<button class="btn-s" onclick="decalerDivers(' + x.id + ')">Décaler l échéance</button>'
+       + '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'annuler\')">Annuler la demande</button></div>';
+  }
+  if (!x.clos && pb) {
+    h += '<div class="acts2">'
+       + '<button class="btn-s" onclick="decalerDivers(' + x.id + ')">Décaler l échéance</button>'
+       + '<button class="btn-s" onclick="gesteDivers(' + x.id + ',\'annuler\')">Retirer</button></div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+
+async function gesteDivers(id, geste) {
+  const z = document.getElementById('dv-' + id);
+  const rep = z ? z.value.trim() : '';
+  if ((geste === 'repondre' || geste === 'noter') && !rep) { toast('Écris ta réponse d abord'); return; }
+  try {
+    const r = await fetch(DV_REPONDRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                         body: JSON.stringify({ id: id, geste: geste, reponse: rep, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    toast(geste === 'relancer' ? 'Relance notée'
+        : geste === 'fait'     ? "C est fait"
+        : geste === 'annuler'  ? 'Retirée'
+        : geste === 'noter'    ? 'Réponse notée, la demande reste ouverte'
+        : 'Réponse enregistrée');
+    chargerDivers();
+  } catch (e) { toast('Pas enregistré : ' + e.message); }
+}
+
+async function decalerDivers(id) {
+  const v = prompt('Nouvelle échéance, au format JJ/MM/AAAA :', '');
+  if (!v) return;
+  const m = String(v).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) { toast('Format attendu : JJ/MM/AAAA'); return; }
+  try {
+    const r = await fetch(DV_REPONDRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                         body: JSON.stringify({ id: id, geste: 'decaler',
+                                                                echeance: m[3] + '-' + m[2] + '-' + m[1] }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    toast('Échéance décalée'); chargerDivers();
+  } catch (e) { toast('Pas enregistré : ' + e.message); }
+}
+
+function formDivers() {
+  if (!DV_FORM)
+    return '<button class="plus" onclick="ouvrirFormDivers()">+ Une demande à quelqu un, ou un pense-bête</button>';
+  const gens = (DONNEES || []).filter(g => g.initiales).sort((a, b) => a.nom.localeCompare(b.nom));
+  let h = '<div class="dform"><div class="ligne">';
+  h += '<label>pour</label><select id="dv-pour">';
+  h += '<option value="' + esc(MOI) + '">moi (pense-bête)</option>';
+  for (const g of gens) if (g.initiales !== MOI)
+    h += '<option value="' + esc(g.initiales) + '">' + esc(g.nom) + '</option>';
+  h += '</select>';
+  h += '<label>objet</label><input type="text" id="dv-objet" placeholder="de quoi il s agit">';
+  h += '<label>pour le</label><input type="date" id="dv-ech">';
+  h += '</div>';
+  h += '<textarea id="dv-texte" placeholder="Ce que tu demandes, et pourquoi. Sois précis : '
+     + 'c est ce texte qui sera relu dans trois semaines."></textarea>';
+  h += '<div class="ligne" style="margin:8px 0 0">';
+  h += '<button class="btn-p" onclick="creerDivers()">Envoyer</button>';
+  h += '<button class="btn-s" onclick="fermerFormDivers()">Annuler</button>';
+  h += '<span class="aide">une demande, une personne — une responsabilité partagée n est portée par personne</span>';
+  h += '</div></div>';
+  return h;
+}
+function ouvrirFormDivers() { DV_FORM = true;  chargerDivers(); }
+function fermerFormDivers() { DV_FORM = false; chargerDivers(); }
+
+async function creerDivers() {
+  const val = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+  const objet = val('dv-objet').trim();
+  if (!objet) { toast("Il manque l objet"); return; }
+  const pour = val('dv-pour') || MOI;
+  try {
+    const r = await fetch(DV_CREER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ objet: objet, texte: val('dv-texte'),
+                                                             de_qui: MOI, pour_qui: pour,
+                                                             echeance: val('dv-ech') }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    DV_FORM = false;
+    toast(pour === MOI ? 'Pense-bête noté' : 'Demande envoyée à ' + nomDe(pour));
+    chargerDivers();
+  } catch (e) { toast('Pas enregistré : ' + e.message); }
+}
+
+function chip(cl, n, lib) {
+  return '<div class="chip ' + cl + '"><b>' + n + '</b> ' + lib + '</div>';
+}
+
+function entete(cls, ico, titre, n, rep) {
+  // L en-tete entier est cliquable : il replie le bloc. Un bloc traite ne doit pas
+  // occuper l ecran de ceux qui restent.
+  let h = '<div class="shead ' + cls + '" onclick="plierBloc(this)" title="Replier ce bloc">';
+  h += '<h2>' + titre + '</h2>';
+  if (rep) h += rep;
+  h += '<span class="cpt ' + (cls === 't-urg' ? 'c-urg' : cls === 't-crit' ? 'c-crit' : 'c-ok') + '">' + n + '</span></div>';
+  return h;
+}
+
+function repartition(aff) {
+  const t = aff.length; if (!t) return '';
+  const r = aff.filter(a => a.niveau === 'rouge').length;
+  const o = aff.filter(a => a.niveau === 'orange').length;
+  const b = t - r - o;
+  return '<span class="repart">'
+    + '<span class="sp-r" style="width:' + (r/t*100) + '%"></span>'
+    + '<span class="sp-a" style="width:' + (o/t*100) + '%"></span>'
+    + '<span class="sp-b" style="width:' + (b/t*100) + '%"></span></span>';
+}
+
+function blocAffaires(d) {
+  const aff = (d && d.affaires_a_geste) || [];
+  const calmes = (d && d.affaires_calmes) || [];
+  const pire = aff.some(a => a.niveau === 'rouge') ? 't-urg'
+             : aff.length ? 't-crit' : 't-ok';
+  let h = '<section id="bloc-appro">';
+  h += entete(pire, 'ti-alert-triangle', 'CE QUI ATTEND UN GESTE', aff.length, repartition(aff));
+  // Ce bloc vient du balayage de 5h50, qui ne tourne que les jours ouvrables. Week-end, férié,
+  // lundi avant 5h50, ou matin où le balayage casse : on montre le dernier état connu, et on dit
+  // de quand il date. Un zéro qu'on ne distingue pas d'une bonne nouvelle est pire que rien.
+  const vieux = d && d.balayage_a_jour === false && d.balaye_le;
+  if (vieux)
+    h += '<div class="dater">État du <strong>' + esc(jourEtDate(d.balaye_le))
+       + '</strong> — le balayage tourne à 5h50 les jours ouvrables. Rien n\'a été relevé depuis.</div>';
+  if (!aff.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> '
+       + (vieux ? 'Rien à faire ici au dernier balayage.' : 'Rien à faire ici. Tout est à jour.')
+       + '</div>';
+  } else {
+    h += aff.map(a => ligneAffaire(a, false)).join('');
+  }
+  if (calmes.length) {
+    h += calmes.map(a => ligneAffaire(a, true)).join('');
+    h += '<button class="plus" onclick="deplier(this)">Voir les ' + calmes.length
+       + ' affaire' + (calmes.length > 1 ? 's' : '') + ' à garder à l œil ▾</button>';
+  }
+  h += '</section>';
+  return h;
+}
+
+function ligneAffaire(a, calme) {
+  const niv = calme ? 'gris' : a.niveau;
+  const b0 = (a.blocs && a.blocs[0]) || {};
+  // Le service fournit « resume » deja formule : avec un nombre pour ce qui se compte en
+  // references, sans nombre pour les faits uniques. La page ne recompose rien — sinon on
+  // relit « 1 rien de lance ».
+  const resume = a.blocs.map(b => b.resume || b.libelle).join(' · ');
+  let h = '<div class="row ' + niv + (calme ? ' cache sup' : '') + '">';
+  h += '<div class="l1"><span class="so">' + esc(a.so) + '</span>';
+  if (a.client) h += '<span class="sep">·</span><span class="cli">' + esc(a.client) + '</span>';
+  h += '<span class="badge b-' + niv + '">' + esc(a.badge) + '</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + niv + '">' + esc(b0.titre || b0.libelle || '') + '</span>';
+  // Retour en stock constate par le check Luminovo (8h et 14h) ou le balayage large.
+  // Ne se voit sans deplier que si la piece est reellement ACHETABLE : un stock partiel
+  // ne debloque pas l affaire et n a donc rien a faire sur la premiere ligne.
+  const retAch = (a.retours || []).filter(r => r.achetable);
+  if (retAch.length) {
+    h += '<span class="pastille p-vert">' + retAch.length + ' revenue'
+       + (retAch.length > 1 ? 's' : '') + ' en stock</span>';
+  }
+  h += '<span class="quoi">' + esc(resume) + '</span>';
+  h += '<span class="acts">';
+  // v1.14 : on part sur l affaire QU ON VIENT DE CLIQUER, dans un onglet a part.
+  // Avant, Achats PP s ouvrait dans cette page (tableau de bord perdu) et demandait
+  // de retaper un SO qui etait deja sous les yeux.
+  h += '<a class="btn-p" target="_blank" rel="noopener" href="' + RACINE
+     + 'achats/bom-sourcing/?onglet=achats&so=' + encodeURIComponent(a.so) + '">Je m en occupe</a>';
+  h += '<button class="btn-s" onclick="aide(event)">Aide</button>';
+  h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
+  h += '</span></div>';
+
+  h += '<div class="detail">';
+  if (a.carte) h += esc(a.carte);
+  if (a.arc) h += ' · livraison promise le ' + frDate(a.arc);
+  for (const b of (a.blocs || [])) {
+    h += '<div style="margin-top:8px">';
+    h += '<span class="pastille p-' + (b.niveau || niv) + '">' + esc(b.titre || b.libelle) + '</span>';
+    const refs = (b.refs_rouges && b.refs_rouges.length ? b.refs_rouges : b.refs) || [];
+    if (refs.length) {
+      h += refs.slice(0,3).map(r => '<div class="refs">' + esc(r) + '</div>').join('');
+      if (refs.length > 3) h += '<div class="refs">+ ' + (refs.length - 3) + ' autres</div>';
+    }
+    if (b.fournisseur) h += '<div class="refs">chez ' + esc(b.fournisseur) + '</div>';
+    if (b.jours_au_panier != null) h += '<div class="refs">au panier depuis ' + b.jours_au_panier + ' jours</div>';
+    if (b.question_depuis) h += '<div class="refs">question au client ouverte depuis le ' + frDate(b.question_depuis) + '</div>';
+    if (b.motif) h += '<div class="refs">' + esc(b.motif) + '</div>';
+    if (b.geste) h += '<div class="geste">' + esc(b.geste) + '</div>';
+    h += '</div>';
+  }
+  // Le detail dit CHEZ QUI la piece est revenue — ce que le mail Luminovo ne disait jamais.
+  if (a.retours && a.retours.length) {
+    h += '<div style="margin-top:8px">';
+    h += '<span class="pastille p-vert">retour en stock</span>';
+    for (const r of a.retours) {
+      const ou = esc(r.fournisseur || '?');
+      h += '<div class="refs">' + esc(r.mpn) + ' — ' + (r.achetable
+        ? 'commandable chez ' + ou + (r.ref_fournisseur ? ' (réf ' + esc(r.ref_fournisseur) + ')' : '')
+        : 'seulement ' + r.stock + ' chez ' + ou + ' pour ' + r.besoin + ' nécessaires')
+        + (r.vu_le ? ' · vu le ' + frDate(r.vu_le) : '') + '</div>';
+    }
+    if (retAch.length) {
+      h += '<div class="geste">Les références commandables ont déjà été remises à jour dans la feuille '
+         + 'Paniers en attente : le fournisseur et la référence y sont inscrits, la ligne est repartie '
+         + 'dans le panier.</div>';
+    } else {
+      h += '<div class="geste">Le stock trouvé ne couvre pas le besoin : rien n a été inscrit dans la '
+         + 'feuille. À toi de voir s il faut prendre ce qu il y a, chercher un équivalent, ou attendre.</div>';
+    }
+    h += '</div>';
+  }
+  h += '<div class="acts2">';
+  if (a.jeton) h += '<a class="btn-s" href="' + SOURDINE + '?j=' + esc(a.jeton) + '">C est normal, mettre en sourdine</a>';
+  // Les trois endroits ou une affaire se traite reellement. FabStory ouvre LA carte
+  // (?produit=), pas la liste. Luminovo n existe que sur un tiers des affaires.
+  if (a.lien_fabstory) h += '<a class="lien" target="_blank" href="' + esc(a.lien_fabstory) + '">FabStory</a>';
+  if (a.lien_odoo) h += '<a class="lien" target="_blank" href="' + esc(a.lien_odoo) + '">Odoo</a>';
+  if (a.lien_luminovo) h += '<a class="lien" target="_blank" href="' + esc(a.lien_luminovo) + '">Luminovo</a>';
+  h += '</div></div></div>';
+  return h;
+}
+
+function blocDevis(d) {
+  const devis = (d && d.devis) || [];
+  const cls = devis.length ? 't-crit' : 't-ok';
+  let h = '<section>';
+  h += entete(cls, 'ti-file-text', 'MES DEVIS À TRAITER', devis.length, '');
+  if (!devis.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien à faire ici. Tout est à jour.</div>';
+  } else {
+    for (const v of devis) {
+      const relance = v.type === 'devis_relance';
+      h += '<div class="row ' + (relance ? 'orange' : 'bleu') + '">';
+      h += '<div class="l1"><span class="cli">' + esc(v.client) + '</span>';
+      h += '<span class="badge b-' + (relance ? 'orange' : 'bleu') + '">' + v.jours + ' j</span></div>';
+      h += '<div class="l2"><span class="pastille p-' + (relance ? 'orange' : 'bleu') + '">'
+         + (relance ? 'sans réponse du client' : 'pas encore lu') + '</span>';
+      h += '<span class="quoi">' + esc(v.objet) + '</span>';
+      h += '<span class="acts">';
+      h += '<a class="btn-p" href="' + GMAIL + esc(v.thread_id) + '">Ouvrir le mail</a>';
+      h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
+      h += '</span></div>';
+      h += '<div class="detail">reçu le ' + frDate(v.recu_le);
+      h += '<div class="geste">' + esc(v.geste) + '</div></div></div>';
+    }
+  }
+  h += '</section>';
+  return h;
+}
+
+function outils() {
+  const pole = POLES[POLE_DE[MOI] || 'commercial_achats'];
+  let h = '<div class="outils"><h3>MES OUTILS — ' + esc(pole.nom.toUpperCase()) + '</h3><div class="tuiles">';
+  for (const k of outilsDe(MOI)) {
+    const o = OUTILS[k]; if (!o) continue;
+    h += '<a class="tuile" href="' + RACINE + o.u + '" data-appli="' + esc(k) + '">';
+    h += '<i class="ti ' + o.i + '"></i><div><div class="tt">' + esc(o.t) + '</div>';
+    h += '<div class="ts">' + esc(o.s) + '</div></div></a>';
+  }
+  h += '</div>';
+  // La ligne « autres outils » de l ancien hub : atteignable par tout le monde, sans tuile.
+  h += '<p class="autres">Autres outils :';
+  AUTRES.forEach(a => {
+    h += ' <a href="' + RACINE + a.u + '" data-appli="' + esc(a.t.toLowerCase()) + '">' + esc(a.t) + '</a>';
+  });
+  h += '</p></div>';
+  return h;
+}
+
+/* ---------- interactions ---------- */
+function plierBloc(head) {
+  head.closest('section').classList.toggle('replie');
+}
+function plier(btn) {
+  const r = btn.closest('.row');
+  const ouvert = r.classList.toggle('ouverte');
+  btn.textContent = ouvert ? 'Replier' : 'Détail';
+}
+function deplier(btn) {
+  btn.closest('section').querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
+  btn.remove();
+}
+function aide(e) {
+  e.stopPropagation();
+  alert("L aide de Claude sur une ligne arrive dans la prochaine version.\n"
+      + "En attendant, le bouton « Demander de l aide à Claude » de l appli Achats PP fait déjà le travail.");
+}
+function toast(txt) {
+  const t = document.getElementById('toast');
+  t.textContent = txt; t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 1400);
+}
+
+charger();
 </script>
 </body>
 </html>
