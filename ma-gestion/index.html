@@ -71,6 +71,17 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
    ligne chargee — bloc AR : une date et trois boutons — n entre plus sur un seul
    rang : les gestes passent alors sous le libelle au lieu de deborder. */
 .grille > section{min-width:0}
+
+/* v1.16 : la bande de courbes. Fine par construction — c'est un résultat qu'on regarde
+   une seconde, pas un tableau qu'on lit. Elle ne doit jamais repousser les blocs. */
+.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
+.courbe .ct{font-size:10px;letter-spacing:.06em;color:var(--text3);font-weight:700}
+.courbe .cv{font-size:21px;font-weight:700;color:var(--text);margin-top:2px;line-height:1.1}
+.courbe .cv span{font-size:12px;font-weight:600;color:var(--text3)}
+.courbe .cs{font-size:10.5px;color:var(--text3);margin-top:1px}
+.courbe .spark{display:block;width:100%;height:36px;margin:4px 0 1px}
 .l2{flex-wrap:wrap}
 .l2 .quoi{min-width:110px}
 
@@ -277,8 +288,16 @@ section.replie .dater{display:none}
  * même grille à deux colonnes — comme « ce qui attend un geste » et « mes devis
  * à traiter » l'étaient déjà. Un bloc pleine largeur fait traverser l'écran pour
  * lire trois mots, et repousse les suivants sous la ligne de flottaison.
+ *
+ * v1.16 (02/11/2026) : LES COURBES, en bande fine sous les compteurs (service
+ * « PP — Courbes (page) », mesures écrites par « PP — Photos du matin »). Six
+ * semaines. Deux d'entre elles sont personnelles (la pile, les devis dans les
+ * temps), la troisième est une courbe d'ÉQUIPE : passé quelques jours, le SO
+ * quitte le planning et plus rien ne dit qui le portait — 55 lignes sur 60 non
+ * attribuables sur 6 semaines. Elle est aussi montrée à la production, qui la
+ * fabrique (demande d'Olivier : « tu l'ajouteras au tableau de bord de Fred »).
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.15";
+const APP_VERSION = "1.16";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -436,6 +455,10 @@ function rendre() {
   h += '<div class="chip d" id="chip-divers"><b>0</b> demandes</div>';
   h += '</div>';
 
+  // v1.16 : la bande de courbes, juste sous les compteurs. Elle se remplit par son
+  // propre appel — une panne de ce service-là ne doit pas retarder le « à faire ».
+  if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
+
   // v1.15 : tous les blocs dans la même grille à deux colonnes. Ils se remplissent de
   // gauche à droite, chacun à sa hauteur (align-items:start) — donc l ordre ci-dessous
   // est l ordre de lecture, et une personne qui ne voit pas un bloc ne laisse pas de trou.
@@ -462,16 +485,122 @@ function rendre() {
   h += '<section id="bloc-divers"></section>';
   h += '</div>';
 
-  h += '<div class="bientot"><strong>Bientôt ici :</strong> les courbes '
-     + '(ta pile, tes devis dans les temps, tes livraisons à l heure). Les mesures ont commencé le '
-     + '29/10 — elles deviendront lisibles au fil des jours.</div>';
-
   h += outils();
   document.getElementById('app').innerHTML = h;
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
   if (voitLesAffaires()) chargerFacturer();
+  if (voitLesCourbes()) chargerCourbes();
   chargerDivers();
+}
+
+/* ---------- les courbes ---------- *
+ * Trois mesures, six semaines, en petit. C est le résultat de ce qu on fait, pas une
+ * liste de gestes : la bande reste fine et ne pousse pas les blocs sous la ligne de
+ * flottaison.
+ *
+ * MA PILE               ce qui attend un geste, jour par jour (photo de 6h10).
+ * MES DEVIS DANS LES TEMPS  départ = jour d arrivée du mail + 0,5 jour, fin = jour où le
+ *                       fil sort du bloc. Dans les temps = 2 jours ouvrés ou moins.
+ *                       La mesure a commencé le 02/11/2026 : la courbe se remplit ensuite.
+ * LIVRAISONS À L HEURE  courbe d ÉQUIPE, pas personnelle (décision Olivier du 02/11/2026) :
+ *                       passé quelques jours, le SO quitte le planning et plus rien ne dit
+ *                       qui le portait — 55 lignes sur 60 non attribuables sur 6 semaines.
+ *                       Une ligne carte est à l heure si elle est livrée au plus tard à la
+ *                       date promise de SA ligne dans Odoo. La date Odoo fait foi à l instant
+ *                       T : si elle a bougé, c est qu un report a été convenu avec le client.
+ * ------------------------------------------------------------------ */
+const COURBES = 'https://protoprocess.app.n8n.cloud/webhook/pp-courbes-liste';
+
+// Les livraisons sont un résultat de production : Fred les voit aussi (demande Olivier).
+function voitLesCourbes() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats' || p === 'production';
+}
+
+async function chargerCourbes() {
+  const z = document.getElementById('bande-courbes');
+  if (!z) return;
+  try {
+    const r = await fetch(COURBES, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                            qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = bandeCourbes(await r.json());
+  } catch (e) {
+    z.remove();   // une courbe absente ne vaut pas un message d erreur sur un écran de travail
+  }
+}
+
+/* Une courbe en SVG, sans bibliothèque : une ligne, un remplissage léger, rien d autre.
+   Un seul point ne fait pas une courbe : on affiche alors un repère plat. */
+function sparkline(vals, max, couleur) {
+  if (!vals.length) return '';
+  const L = 240, H = 46, m = max || Math.max(1, ...vals);
+  const x = i => vals.length < 2 ? L : (i / (vals.length - 1)) * L;
+  const y = v => H - 3 - (Math.max(0, Math.min(v, m)) / m) * (H - 8);
+  const pts = vals.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1));
+  const ligne = vals.length < 2
+    ? '<line x1="0" y1="' + y(vals[0]).toFixed(1) + '" x2="' + L + '" y2="' + y(vals[0]).toFixed(1)
+      + '" stroke="' + couleur + '" stroke-width="2" stroke-dasharray="3 3"/>'
+    : '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + couleur
+      + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+  const aire = vals.length < 2 ? ''
+    : '<polygon points="0,' + H + ' ' + pts.join(' ') + ' ' + L + ',' + H + '" fill="' + couleur + '" opacity=".10"/>';
+  const dernier = vals.length < 2 ? '' :
+    '<circle cx="' + x(vals.length - 1).toFixed(1) + '" cy="' + y(vals[vals.length - 1]).toFixed(1)
+    + '" r="2.6" fill="' + couleur + '"/>';
+  return '<svg class="spark" viewBox="0 0 ' + L + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true">'
+       + aire + ligne + dernier + '</svg>';
+}
+
+function carteCourbe(titre, valeur, sous, vals, max, couleur, infobulle) {
+  return '<div class="courbe"' + (infobulle ? ' title="' + esc(infobulle) + '"' : '') + '>'
+       + '<div class="ct">' + esc(titre) + '</div>'
+       + '<div class="cv">' + valeur + '</div>'
+       + sparkline(vals, max, couleur)
+       + '<div class="cs">' + esc(sous) + '</div></div>';
+}
+
+function bandeCourbes(d) {
+  const pile = (d && d.pile) || [];
+  const devis = (d && d.devis) || [];
+  const liv = (d && d.livraisons) || [];
+  let h = '';
+
+  if (voitLesAffaires()) {
+    const vals = pile.map(p => p.n);
+    const dernier = vals.length ? vals[vals.length - 1] : 0;
+    h += carteCourbe(POLE_DE[MOI] === 'direction' ? 'LA PILE DE L\u2019ÉQUIPE' : 'MA PILE',
+                     dernier + ' <span>points</span>',
+                     vals.length > 1 ? 'sur 6 semaines' : 'mesure commencée le ' + frDate(d.depuis),
+                     vals, 0, '#e07b1a',
+                     'Ce qui attend un geste, relevé chaque matin après le balayage de 5h50.');
+  }
+
+  if (voitLesAffaires()) {
+    const vals = devis.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
+    const n = devis.reduce((t, s) => t + s.n, 0);
+    const ok = devis.reduce((t, s) => t + s.ok, 0);
+    h += carteCourbe('DEVIS DANS LES TEMPS',
+                     n ? Math.round(ok / n * 100) + ' <span>%</span>' : '—',
+                     n ? n + ' demande' + (n > 1 ? 's' : '') + ' traitée' + (n > 1 ? 's' : '')
+                       : 'mesure commencée le ' + frDate(d.devis_depuis),
+                     vals, 100, '#3b7ea1',
+                     'Délai entre le mail du client et le moment où le fil sort de « mes devis à traiter ». '
+                     + 'Dans les temps = 2 jours ouvrés ou moins.');
+  }
+
+  const valsL = liv.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
+  const nL = liv.reduce((t, s) => t + s.n, 0);
+  const okL = liv.reduce((t, s) => t + s.ok, 0);
+  h += carteCourbe('LIVRAISONS À L\u2019HEURE',
+                   nL ? Math.round(okL / nL * 100) + ' <span>%</span>' : '—',
+                   nL ? nL + ' cartes livrées · toute l\u2019équipe' : 'pas encore de livraison mesurée',
+                   valsL, 100, '#5d8f4e',
+                   'Une ligne carte est à l\u2019heure si elle part au plus tard à la date promise de sa ligne '
+                   + 'dans Odoo. Chiffre d équipe, semaine par semaine.');
+  return h;
 }
 
 /* ---------- mes commandes à facturer ---------- *
