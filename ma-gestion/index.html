@@ -66,6 +66,13 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 
 .grille{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 @media (max-width:1100px){.grille{grid-template-columns:1fr}}
+/* v1.15 : TOUS les blocs sont en demi-page (demande Olivier du 02/11/2026 : un bloc
+   pleine largeur oblige l oeil a traverser l ecran pour rien). En demi-largeur une
+   ligne chargee — bloc AR : une date et trois boutons — n entre plus sur un seul
+   rang : les gestes passent alors sous le libelle au lieu de deborder. */
+.grille > section{min-width:0}
+.l2{flex-wrap:wrap}
+.l2 .quoi{min-width:110px}
 
 section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   overflow:hidden;box-shadow:0 1px 2px rgba(20,30,50,.04)}
@@ -265,8 +272,13 @@ section.replie .dater{display:none}
  *      la livraison n'est PAS un retard — la ligne reste grise, et ne s'allume
  *      qu'au-delà de 5 jours ouvrés, ou les 3 derniers jours du mois, moment où
  *      la facturation devient sensible. C'est un rappel, pas une alerte.
+ *
+ * v1.15 (02/11/2026, demande Olivier) : TOUS les blocs en demi-page, dans la
+ * même grille à deux colonnes — comme « ce qui attend un geste » et « mes devis
+ * à traiter » l'étaient déjà. Un bloc pleine largeur fait traverser l'écran pour
+ * lire trois mots, et repousse les suivants sous la ligne de flottaison.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.14";
+const APP_VERSION = "1.15";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -424,11 +436,13 @@ function rendre() {
   h += '<div class="chip d" id="chip-divers"><b>0</b> demandes</div>';
   h += '</div>';
 
+  // v1.15 : tous les blocs dans la même grille à deux colonnes. Ils se remplissent de
+  // gauche à droite, chacun à sa hauteur (align-items:start) — donc l ordre ci-dessous
+  // est l ordre de lecture, et une personne qui ne voit pas un bloc ne laisse pas de trou.
+  h += '<div class="grille">';
   if (voitLesAffaires()) {
-    h += '<div class="grille">';
     h += blocAffaires(d);
     h += blocDevis(d);
-    h += '</div>';
   }
 
   // Le bloc AR ne concerne que ceux qui achètent. Il se remplit après coup, par son propre
@@ -446,6 +460,7 @@ function rendre() {
   // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
   // maison peut être tracé. Il se remplit aussi par son propre appel.
   h += '<section id="bloc-divers"></section>';
+  h += '</div>';
 
   h += '<div class="bientot"><strong>Bientôt ici :</strong> les courbes '
      + '(ta pile, tes devis dans les temps, tes livraisons à l heure). Les mesures ont commencé le '
