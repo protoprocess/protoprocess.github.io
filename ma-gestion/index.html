@@ -115,6 +115,9 @@ section{background:var(--surface);border:1px solid var(--border);border-radius:v
 .acts{display:flex;align-items:center;gap:5px;flex-shrink:0}
 /* Champ de date du bloc AR fournisseur : meme gabarit que les boutons, pour que la ligne
    garde sa hauteur quand la date est proposee ou saisie a la main. */
+.acts input[type=text]{padding:4px 7px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:12px;font-family:var(--mono);color:var(--text);background:#fff;width:118px}
+.acts input[type=text]:focus{outline:none;border-color:var(--orange)}
 .acts input[type=date]{padding:4px 7px;border:1px solid var(--border);border-radius:var(--radius);
   font-size:11.5px;font-family:var(--sans);color:var(--text);background:#fff}
 .acts input[type=date]:focus{outline:none;border-color:var(--orange)}
@@ -240,7 +243,7 @@ section.replie .dater{display:none}
  * Les scripts partagés et le picto restent lus dans achats/shared/ : même
  * domaine, donc une seule source, aucune copie à maintenir.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.11";
+const APP_VERSION = "1.12";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Ma gestion de projets v" + APP_VERSION;
@@ -271,7 +274,7 @@ const OUTILS = {
 };
 
 const POLE_DE = { OC: 'direction', MM: 'commercial_achats', DG: 'commercial_achats',
-                  AC: 'commercial_achats', FR: 'production', JE: 'methodes' };
+                  AC: 'commercial_achats', FR: 'production', SG: 'production', JE: 'methodes' };
 
 let DONNEES = null;   // réponse du service
 let MOI = null;       // initiales choisies
@@ -389,6 +392,10 @@ function rendre() {
   // appel : la page reste lisible même si ce service-là ne répond pas.
   if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
 
+  // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
+  // l'en-tête suffit à dire combien il en reste.
+  if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
+
   // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
   // maison peut être tracé. Il se remplit aussi par son propre appel.
   h += '<section id="bloc-divers"></section>';
@@ -400,6 +407,7 @@ function rendre() {
   h += outils();
   document.getElementById('app').innerHTML = h;
   if (voitLesAchats()) chargerAR();
+  if (voitLeMenagePo()) chargerPoRattacher();
   chargerDivers();
 }
 
@@ -420,9 +428,15 @@ const AR_LIRE    = 'https://protoprocess.app.n8n.cloud/webhook/pp-ar-liste';
 const AR_VALIDER = 'https://protoprocess.app.n8n.cloud/webhook/pp-ar-valider';
 
 function voitLesAchats() {
+  // La production en est depuis le 02/11/2026 : une commande rattachée à une affaire est
+  // désormais visible par son responsable ET par Fred, qui la verra arriver à l'atelier.
   const p = POLE_DE[MOI];
-  return p === 'direction' || p === 'commercial_achats';
+  return p === 'direction' || p === 'commercial_achats' || p === 'production';
 }
+
+// Le ménage des P.O. sans affaire reste à la direction : c'est une corvée, pas la peine
+// d'en charger l'écran des autres.
+function voitLeMenagePo() { return POLE_DE[MOI] === 'direction'; }
 
 async function chargerAR() {
   const z = document.getElementById('bloc-ar');
@@ -526,6 +540,91 @@ async function deciderAR(po, geste) {
   } catch (e) {
     toast('Pas enregistré : ' + e.message);
   }
+}
+
+/* ---------- P.O. sans affaire : à rattacher ---------- *
+ * D'où ça vient (02/11/2026) : la règle du 30/10 envoyait à la direction tout P.O. dont
+ * l'affaire était inconnue, au motif que « personne d'autre n'est en mesure de les suivre ».
+ * À l'usage, Olivier voyait 17 lignes dont 13 étrangères, sans pouvoir rien en faire.
+ *
+ * L'erreur était dans le mot : ces commandes ne sont pas « sans affaire », leur affaire est
+ * INCONNUE — parce qu'elles ont été créées à la main dans Odoo au lieu de passer par l'appli
+ * P.O. Un PCB appartient forcément à un dossier ; c'est juste que rien ne le dit nulle part.
+ * Vérifié dans Odoo le 02/11 : le champ « Document d'origine » est vide sur les 13.
+ *
+ * Donc on demande, une fois, et on retient :
+ *   un SO              -> le P.O. part chez le responsable de l'affaire, ET chez Fred
+ *   consommable de prod -> il part chez Fred et Stéphane, sans affaire
+ *
+ * Le responsable n'est jamais deviné : il est lu en colonne N du planning. Si le SO n'y est
+ * pas, ou si la colonne est vide, le service REFUSE d'écrire et le dit.
+ * ------------------------------------------------------------------ */
+const PO_LIRE      = 'https://protoprocess.app.n8n.cloud/webhook/pp-po-liste';
+const PO_RATTACHER = 'https://protoprocess.app.n8n.cloud/webhook/pp-po-rattacher';
+
+async function chargerPoRattacher() {
+  const z = document.getElementById('bloc-po-rattacher');
+  if (!z) return;
+  try {
+    const r = await fetch(PO_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                     body: JSON.stringify({ source: 'ma-gestion-de-projets',
+                                                            version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocPoRattacher(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les P.O. à rattacher n ont pas pu être lus ('
+                + esc(e.message) + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocPoRattacher(d) {
+  const l = (d && d.pos) || [];
+  let h = entete(l.length ? 't-crit' : 't-ok', '', 'P.O. SANS AFFAIRE — À RATTACHER', l.length, '');
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Toutes les commandes savent à quelle affaire elles appartiennent.</div>';
+    return h;
+  }
+  h += '<div class="dater">Ces commandes ont été créées à la main dans Odoo : rien ne dit à quelle '
+     + 'affaire elles appartiennent. Dis-le une fois — elles partent chez leur responsable et chez Fred, '
+     + 'et ne reviennent plus ici.</div>';
+  h += l.map(lignePoRattacher).join('');
+  return h;
+}
+
+// L'identifiant du champ de saisie ne peut pas porter le tiret du nom du P.O. : on le retire.
+const idPo = po => 'so-' + String(po).replace(/[^A-Za-z0-9]/g, '');
+
+function lignePoRattacher(a) {
+  let h = '<div class="row gris">';
+  h += '<div class="l1"><span class="so">' + esc(a.po_name) + '</span>';
+  if (a.fournisseur) h += '<span class="sep">·</span><span class="cli">' + esc(a.fournisseur) + '</span>';
+  h += '<span class="badge b-gris">' + (a.ar_trouve ? 'AR reçu le ' + frDate(a.ar_le)
+                                                    : 'commandé il y a ' + a.age_j + ' j') + '</span></div>';
+  h += '<div class="l2"><span class="pastille p-gris">à rattacher</span>';
+  h += '<span class="quoi">' + (a.date_lue ? 'livraison lue : ' + frDate(a.date_lue)
+                                           : 'aucune date de livraison connue') + '</span>';
+  h += '<span class="acts">';
+  h += '<input type="text" id="' + idPo(a.po_name) + '" placeholder="SO…" autocomplete="off">';
+  h += '<button class="btn-p" onclick="rattacherPo(\'' + esc(a.po_name) + '\',\'so\')">Rattacher</button>';
+  h += '<button class="btn-s" onclick="rattacherPo(\'' + esc(a.po_name) + '\',\'conso\')">Consommable de prod</button>';
+  h += '</span></div></div>';
+  return h;
+}
+
+async function rattacherPo(po, geste) {
+  const ch = document.getElementById(idPo(po));
+  const so = ch ? ch.value.trim() : '';
+  if (geste === 'so' && !so) { toast('Il manque le SO'); return; }
+  try {
+    const r = await fetch(PO_RATTACHER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ po_name: po, geste: geste,
+                                                                 so: so, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const d = await r.json();
+    toast(d.ok ? po + ' — ' + d.message : d.message);
+    // Le service refuse plutôt que d'inventer : on ne rafraîchit que s'il a écrit.
+    if (d.ok) { chargerPoRattacher(); if (voitLesAchats()) chargerAR(); }
+  } catch (e) { toast('Pas enregistré : ' + e.message); }
 }
 
 /* ---------- divers : ce qu on me demande, ce que je demande ---------- *
