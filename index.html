@@ -76,7 +76,7 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 <main>
   <h1>Que veux-tu faire maintenant ?</h1>
   <div class="tiles">
-    <a class="tile" data-appli="ma-gestion" href="ma-gestion/"><i class="ti ti-layout-dashboard"></i><b>Ma gestion de projets</b><span class="sub">Ce qui attend un geste de ma part</span><span class="cpt"></span></a>
+    <a class="tile" data-appli="ma-gestion" href="ma-gestion/"><i class="ti ti-layout-dashboard"></i><b>Mon tableau de bord</b><span class="sub">Ce qui attend un geste de ma part</span><span class="cpt"></span></a>
     <a class="tile" data-appli="devis" href="commercial/devis-client/"><i class="ti ti-file-text"></i><b>Créer un devis</b><span class="sub">Dossier client jusqu'au devis Odoo</span><span class="cpt" id="cpt-devis"></span></a>
     <button class="tile" type="button" id="t-commande"><i class="ti ti-shopping-cart"></i><b>Saisir une commande</b><span class="sub">Commande client ou commande d'achat</span><span class="cpt" id="cpt-commandes"></span></button>
     <a class="tile" data-appli="fabstory" href="commercial/fabstory/"><i class="ti ti-cpu"></i><b>Suivre une fabrication</b><span class="sub">FabStory</span><span class="cpt"></span></a>
@@ -108,8 +108,10 @@ h1{font-size:26px;font-weight:500;margin:10px 0 18px;letter-spacing:-.01em}
 </div></div>
 
 <script>
-const APP_VERSION = "2.6";
+const APP_VERSION = "2.7";
 const APP_DATE = "02/11/2026";
+/* v2.7 (02/11/2026) : la tuile s'appelle « Mon tableau de bord ». L'adresse ne change pas
+   (ma-gestion/) : le mail du matin pointe dessus et la page vient d'être déplacée. */
 /* v2.6 (02/11/2026) : tuile « Ma gestion de projets » EN TÊTE, vers ma-gestion/. La page
    existait depuis le 29/10 mais n'était atteignable que par son URL : aucune porte n'y menait.
    Elle est en tête parce qu'elle répond à la question qu'on se pose en arrivant — ce qui

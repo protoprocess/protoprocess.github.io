@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Ma gestion de projets</title>
+<title>Mon tableau de bord</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <script src="../achats/shared/pp-acces.js"></script>
 <script src="../achats/shared/pp-signalement.js" defer></script>
@@ -207,7 +207,7 @@ section.replie .dater{display:none}
 <header>
   <img src="../achats/shared/picto-pp-fond-clair.png" alt="" width="24" height="24" style="object-fit:contain"
        onerror="this.style.display='none'">
-  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Ma gestion de projets</span></span>
+  <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Mon tableau de bord</span></span>
   <span class="vbadge" id="vbadge"></span>
   <span class="spacer"></span>
   <span class="score" id="zscore" style="display:none"><i class="ti ti-check"></i> traités aujourd'hui <b id="score">0</b></span>
@@ -222,7 +222,7 @@ section.replie .dater{display:none}
 
 <script>
 /* ------------------------------------------------------------------ *
- * Ma gestion de projets — page de suivi par personne.
+ * Mon tableau de bord — page de suivi par personne.
  *
  * Elle n'invente aucune règle : tout ce qu'elle affiche vient du service
  * « PP — Points a traiter », qui est aussi ce que lit le point du matin.
@@ -242,11 +242,21 @@ section.replie .dater{display:none}
  *   après  protoprocess.github.io/ma-gestion/
  * Les scripts partagés et le picto restent lus dans achats/shared/ : même
  * domaine, donc une seule source, aucune copie à maintenir.
+ *
+ * v1.13 (02/11/2026) : la page s'appelle « Mon tableau de bord ». L'adresse
+ * ne bouge pas (/ma-gestion/) : le mail du matin pointe dessus et elle vient
+ * d'être déplacée — on ne casse pas deux fois les liens dans la même journée.
+ * Arrivée de la production et des méthodes : Fred, Stéphane, Jérôme et
+ * Valérie peuvent ouvrir leur page. Les blocs qui ne pourront JAMAIS rien
+ * contenir pour eux (affaires, devis) ne s'affichent pas — la colonne
+ * Responsable du planning n'accepte que AC, DG, MM et OC, donc ces blocs
+ * resteraient vides à vie. Règle Olivier du 22/10 : ce qui ne demande aucun
+ * geste ne s'affiche pas.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.12";
+const APP_VERSION = "1.13";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
-document.title = "Ma gestion de projets v" + APP_VERSION;
+document.title = "Mon tableau de bord v" + APP_VERSION;
 
 const SERVICE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-points-a-traiter';
 const SOURDINE = 'https://protoprocess.github.io/achats/sourdine/';
@@ -273,8 +283,23 @@ const OUTILS = {
   paie:      { t: 'Paie',                  s: 'Heures et congés',                   i: 'ti-calendar',        u: 'rh/paie/' }
 };
 
+/* Qui est dans quel pôle. Une personne absente d'ici tombe sur « commercial et achats »
+   par défaut (voir outils()) — alors mieux vaut l'y écrire.
+   02/11/2026 : Jérôme est JM (et non JE), Valérie VF, toutes deux créées ce jour. */
 const POLE_DE = { OC: 'direction', MM: 'commercial_achats', DG: 'commercial_achats',
-                  AC: 'commercial_achats', FR: 'production', SG: 'production', JE: 'methodes' };
+                  AC: 'commercial_achats', FR: 'production', SG: 'production',
+                  VF: 'production', JM: 'methodes' };
+
+/* Les affaires et les devis se rattachent à un responsable lu en colonne N du planning
+   « Cmd En cours », qui n'accepte que AC, DG, MM et OC. Pour la production et les méthodes
+   ces deux blocs resteraient donc vides À VIE — ce n'est pas « rien aujourd'hui », c'est
+   « jamais rien ». On ne les affiche pas (règle Olivier du 22/10/2026 : ce qui ne demande
+   aucun geste ne s'affiche pas). Le jour où la colonne N accepte d'autres initiales, il
+   suffira d'ajouter le pôle ici. */
+function voitLesAffaires() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats';
+}
 
 let DONNEES = null;   // réponse du service
 let MOI = null;       // initiales choisies
@@ -374,19 +399,24 @@ function rendre() {
 
   const c = (d && d.compteurs) || {};
   let h = '<div class="resume">';
-  h += chip('r', c.rouge || 0, 'en danger');
-  h += chip('a', c.orange || 0, 'à surveiller');
-  h += chip('b', c.bleu || 0, 'information manquante');
-  h += chip('', c.devis || 0, 'devis à traiter');
+  // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
+  if (voitLesAffaires()) {
+    h += chip('r', c.rouge || 0, 'en danger');
+    h += chip('a', c.orange || 0, 'à surveiller');
+    h += chip('b', c.bleu || 0, 'information manquante');
+    h += chip('', c.devis || 0, 'devis à traiter');
+  }
   // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
   // Il part à zéro et se remplit quand le bloc Divers a répondu.
   h += '<div class="chip d" id="chip-divers"><b>0</b> demandes</div>';
   h += '</div>';
 
-  h += '<div class="grille">';
-  h += blocAffaires(d);
-  h += blocDevis(d);
-  h += '</div>';
+  if (voitLesAffaires()) {
+    h += '<div class="grille">';
+    h += blocAffaires(d);
+    h += blocDevis(d);
+    h += '</div>';
+  }
 
   // Le bloc AR ne concerne que ceux qui achètent. Il se remplit après coup, par son propre
   // appel : la page reste lisible même si ce service-là ne répond pas.
