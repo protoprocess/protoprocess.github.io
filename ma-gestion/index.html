@@ -252,8 +252,21 @@ section.replie .dater{display:none}
  * Responsable du planning n'accepte que AC, DG, MM et OC, donc ces blocs
  * resteraient vides à vie. Règle Olivier du 22/10 : ce qui ne demande aucun
  * geste ne s'affiche pas.
+ *
+ * v1.14 (02/11/2026, constats d'Olivier à l'usage) :
+ *   1. « Je m'en occupe » ouvrait Achats PP DANS cette page : on perdait son
+ *      tableau de bord pour y revenir ensuite. Le lien s'ouvre maintenant dans
+ *      un nouvel onglet — la page reste là, derrière.
+ *   2. il fallait RETAPER le SO une fois dans Achats PP, alors qu'on venait de
+ *      cliquer sur une ligne qui le dit. Le lien porte désormais ?so=…&onglet=achats,
+ *      et Achats PP v15.47 charge la feuille d'achat tout seul.
+ *   3. nouveau bloc « MES COMMANDES À FACTURER » (service « PP — Commandes a
+ *      facturer (page) »). Règle Olivier du 30/10 : facturer 2 ou 3 jours après
+ *      la livraison n'est PAS un retard — la ligne reste grise, et ne s'allume
+ *      qu'au-delà de 5 jours ouvrés, ou les 3 derniers jours du mois, moment où
+ *      la facturation devient sensible. C'est un rappel, pas une alerte.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.13";
+const APP_VERSION = "1.14";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -426,11 +439,15 @@ function rendre() {
   // l'en-tête suffit à dire combien il en reste.
   if (voitLeMenagePo()) h += '<section id="bloc-po-rattacher" class="replie"></section>';
 
+  // À facturer : même porte que les affaires (le responsable se lit en colonne N).
+  // Replié d'entrée — c'est un rappel, pas une urgence (règle Olivier du 30/10).
+  if (voitLesAffaires()) h += '<section id="bloc-facturer" class="replie"></section>';
+
   // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
   // maison peut être tracé. Il se remplit aussi par son propre appel.
   h += '<section id="bloc-divers"></section>';
 
-  h += '<div class="bientot"><strong>Bientôt ici :</strong> tes commandes à facturer, et les courbes '
+  h += '<div class="bientot"><strong>Bientôt ici :</strong> les courbes '
      + '(ta pile, tes devis dans les temps, tes livraisons à l heure). Les mesures ont commencé le '
      + '29/10 — elles deviendront lisibles au fil des jours.</div>';
 
@@ -438,7 +455,77 @@ function rendre() {
   document.getElementById('app').innerHTML = h;
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
+  if (voitLesAffaires()) chargerFacturer();
   chargerDivers();
+}
+
+/* ---------- mes commandes à facturer ---------- *
+ * Source : Odoo, champ natif « invoice_status = à facturer » — il reste du livré non
+ * facturé sur la commande. Rien n est recalculé ici.
+ *
+ * Règle Olivier du 30/10/2026 : facturer 2 ou 3 jours après la livraison n est PAS un
+ * retard, ça ne devient sensible qu en fin de mois. Le bloc est donc un rappel de
+ * tableau de bord : gris par défaut, ambre au-delà de 5 jours ouvrés depuis la
+ * livraison, et ambre partout les 3 derniers jours du mois.
+ *
+ * La direction voit en plus les commandes dont le planning ne dit pas le responsable
+ * (affaires anciennes, soldes) : sans ça elles ne seraient sur l écran de personne.
+ * ------------------------------------------------------------------ */
+const FACTURER = 'https://protoprocess.app.n8n.cloud/webhook/pp-facturer-liste';
+
+async function chargerFacturer() {
+  const z = document.getElementById('bloc-facturer');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des commandes à facturer…</div>';
+  try {
+    const r = await fetch(FACTURER, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                             qui: MOI, direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocFacturer(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les commandes à facturer n ont pas pu être lues (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+const euros = n => (Math.round(Number(n) || 0)).toLocaleString('fr-FR') + ' €';
+
+function blocFacturer(d) {
+  const mien = (d && d.lignes) || [];
+  const sans = (d && d.sans_responsable) || [];
+  const n = mien.length + sans.length;
+  const chaud = mien.concat(sans).some(l => l.niveau === 'orange');
+  let h = entete(chaud ? 't-crit' : 't-ok', '', 'MES COMMANDES À FACTURER', n,
+                 n ? '<span class="quoi">' + euros(d.montant_total) + ' HT</span>' : '');
+  if (!n) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien à facturer. Tout est à jour.</div>';
+    return h;
+  }
+  if (d.fin_de_mois)
+    h += '<div class="dater">Fin de mois : ce qui est livré devrait partir en facture avant la clôture.</div>';
+  h += mien.map(l => ligneFacturer(l, false)).join('');
+  if (sans.length) h += sans.map(l => ligneFacturer(l, true)).join('');
+  return h;
+}
+
+function ligneFacturer(l, orpheline) {
+  let h = '<div class="row ' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">';
+  h += '<div class="l1"><span class="so">' + esc(l.so) + '</span>';
+  if (l.client) h += '<span class="sep">·</span><span class="cli">' + esc(l.client) + '</span>';
+  h += '<span class="badge b-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">' + euros(l.montant) + '</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">'
+     + (l.livre_le ? 'livré le ' + frDate(l.livre_le) : 'livraison partielle') + '</span>';
+  h += '<span class="quoi">'
+     + (l.jours === null || l.jours === undefined ? 'reste du livré non facturé'
+        : l.jours === 0 ? 'livré aujourd hui'
+        : l.jours + ' jour' + (l.jours > 1 ? 's' : '') + ' ouvré' + (l.jours > 1 ? 's' : '') + ' depuis la livraison')
+     + (orpheline ? ' · pas de responsable au planning' : '') + '</span>';
+  h += '<span class="acts">';
+  h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(l.lien_odoo) + '">Facturer dans Odoo</a>';
+  h += '</span></div></div>';
+  return h;
 }
 
 /* ---------- commandes fournisseur : la date de livraison ---------- *
@@ -962,7 +1049,11 @@ function ligneAffaire(a, calme) {
   }
   h += '<span class="quoi">' + esc(resume) + '</span>';
   h += '<span class="acts">';
-  h += '<a class="btn-p" href="' + RACINE + 'achats/bom-sourcing/">Je m en occupe</a>';
+  // v1.14 : on part sur l affaire QU ON VIENT DE CLIQUER, dans un onglet a part.
+  // Avant, Achats PP s ouvrait dans cette page (tableau de bord perdu) et demandait
+  // de retaper un SO qui etait deja sous les yeux.
+  h += '<a class="btn-p" target="_blank" rel="noopener" href="' + RACINE
+     + 'achats/bom-sourcing/?onglet=achats&so=' + encodeURIComponent(a.so) + '">Je m en occupe</a>';
   h += '<button class="btn-s" onclick="aide(event)">Aide</button>';
   h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
   h += '</span></div>';
