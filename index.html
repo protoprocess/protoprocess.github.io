@@ -71,8 +71,10 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
    disponible et collaient aux tuiles d outils. Ils sont ramenes a une part raisonnable,
    « ce qui sonne » et le pense-bete occupent le reste, et la bande respire sous les outils. */
 .tete{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 16px;align-items:stretch}
-.tete .courbes{flex:3 1 400px;min-width:0;margin-bottom:0}
-.tete .pense{flex:1 1 250px;min-width:230px;max-width:360px;display:flex;flex-direction:column}
+/* v1.31 : les graphiques prennent plus de large, parce que l equaliseur de charge y occupe
+   deux colonnes. Sans ca la bande passait sur deux rangees et cassait la ligne d horizon. */
+.tete .courbes{flex:5 1 540px;min-width:0;margin-bottom:0}
+.tete .pense{flex:1 1 250px;min-width:230px;max-width:320px;display:flex;flex-direction:column}
 .tete .pense .shead{padding:9px 12px}
 .tete .pense .shead h2{font-size:11.5px}
 .tete .pense .vide,.tete .pense .msg{font-size:12px;padding:10px 12px}
@@ -141,7 +143,7 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .anneau .leg{display:flex;flex-direction:column;gap:3px;min-width:0}
 .anneau .leg div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);white-space:nowrap}
 .anneau .leg i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:16px}
+.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
 .courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
 .courbe .ct{font-size:10px;letter-spacing:.06em;color:var(--text3);font-weight:700}
@@ -292,6 +294,34 @@ section.replie .dater{display:none}
 /* v1.30 : la tuile d aide ne mene pas a une appli mais a Claude. Fond ambre pour la
    distinguer des portes de production sans la rendre bruyante. */
 .tuile.aide{background:var(--ambre-bg)}
+
+/* v1.31 : L EQUALISEUR DE CHARGE. Il remplace la courbe « ma pile » dans la bande.
+   Il prend DEUX colonnes de la bande : a 198 px il n y avait pas la place pour cinq
+   libelles lisibles, et c est la carte qu on regarde en premier.
+   Hauteur bloquee a 122 px, celle des cartes voisines (demande d Olivier : « garder une
+   symetrie et de la coherence dans la page »). Tout le reste en decoule : .pile fait
+   54 px, soit huit pastilles de 5 px et leurs sept interstices de 2 px. */
+.courbe.eq{grid-column:span 2}
+.eqcols{display:flex;align-items:flex-end;gap:8px;margin-top:2px}
+.eqcols .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;border-radius:var(--radius);padding:2px 0;transition:background .12s}
+.eqcols .col:hover{background:var(--surface2)}
+.eqcols .n{font-family:var(--mono);font-size:11.5px;font-weight:700;line-height:1;margin-bottom:3px}
+/* column-reverse : la premiere pastille ecrite — la plus urgente — se pose EN BAS. */
+.eqcols .pile{display:flex;flex-direction:column-reverse;gap:2px;justify-content:flex-start;
+  width:100%;max-width:34px;height:54px;overflow:hidden}
+.eqcols .pile i{display:block;height:5px;border-radius:2px;background:var(--border2);flex-shrink:0}
+.eqcols .pile i.r{background:var(--rouge-l)} .eqcols .pile i.a{background:var(--ambre-l)}
+.eqcols .pile i.b{background:var(--bleuf-l)} .eqcols .pile i.g{background:var(--border2)}
+/* La pastille du haut s estompe quand la colonne est coupee : le total au-dessus dit le vrai
+   nombre, cette pastille dit seulement « ca continue ». */
+.eqcols .pile i.tronq{opacity:.4}
+.eqcols .lib{font-size:8.5px;color:var(--text3);margin-top:5px;width:100%;text-align:center;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.eqcols .col.r .n{color:var(--rouge)} .eqcols .col.a .n{color:var(--ambre)}
+.eqcols .col.v .n{color:var(--vert)}  .eqcols .col.z .n{color:var(--text3)}
+/* Sous 820 px la bande passe a une carte par ligne : l equaliseur reprend toute la largeur. */
+@media (max-width:820px){ .courbe.eq{grid-column:span 1} }
 .tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 /* v1.25 : les tuiles d outils prennent un fond, pour se distinguer des blocs de suivi.
    Un outil est une PORTE, pas une information : il ne doit pas ressembler a une carte. */
@@ -447,7 +477,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.30";
+const APP_VERSION = "1.31";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -815,6 +845,9 @@ function rendre() {
   document.getElementById('app').innerHTML = h;
   // v1.28 : le bandeau URGENT ne peut être filtré qu une fois la personne connue.
   majUrgent();
+  // v1.31 : l équaliseur se branche sur la grille et se remplit à mesure que les blocs
+  // répondent. À poser APRÈS l écriture de #app : la grille vient d être recréée.
+  suivreLaCharge();
   if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
@@ -949,21 +982,122 @@ function carteCourbe(titre, valeur, sous, vals, max, couleur, infobulle) {
        + '<div class="cs">' + esc(sous) + '</div></div>';
 }
 
+/* ---------- v1.31 : L EQUALISEUR DE CHARGE ---------- *
+ * Demande d Olivier du 03/11/2026 au soir, en remplacement de la courbe « ma pile » :
+ * « je verrais plus un truc genre equalizer […] une pastille = un dossier […] il faut
+ * combiner delai et comptage, parce que le nombre c est bien mais le timing aussi
+ * important voire plus ».
+ *
+ *   UNE COLONNE  = un bloc de la page    -> la hauteur dit le VOLUME
+ *   UNE PASTILLE = une ligne de ce bloc  -> la couleur dit le DELAI
+ *   empilees depuis le bas, les plus urgentes en bas : la base rouge saute aux yeux.
+ *
+ * L EQUALISEUR LIT LE DOM, PAS LES DONNEES. C est volontaire, et c est tout l interet :
+ * chaque bloc rend deja ses lignes avec leur niveau (rouge, orange, bleu, gris), calcule
+ * par le service. En comptant ces lignes-la, l equaliseur ne PEUT PAS diverger de ce que
+ * la page affiche — c etait exactement le defaut de l ancienne courbe, qui mesurait autre
+ * chose dans son coin. Aucun seuil nouveau n est invente ici.
+ *
+ * Les blocs arrivent les uns apres les autres (un fetch chacun) : un MutationObserver sur
+ * la grille redessine l equaliseur a chaque bloc rempli. Il observe la GRILLE et non #app,
+ * qui contient aussi l equaliseur — il se redessinerait lui-meme sans fin.
+ *
+ * Les commandes fournisseur sont volontairement absentes (Olivier : « trop rare et inutile
+ * ici »), comme le menage des P.O. et le pense-bete, qui n est pas une charge subie.
+ * ---------------------------------------------------------------- */
+const POSTES = [
+  { bloc: 'bloc-appro',    lib: 'mon geste',    nom: 'Ce qui attend ton geste' },
+  { bloc: 'bloc-demandes', lib: 'à prendre',    nom: 'Demandes de prix à prendre' },
+  { bloc: 'bloc-devis',    lib: 'devis',        nom: 'Mes devis à traiter' },
+  { bloc: 'bloc-arclient', lib: 'AR client',    nom: 'AR client manquant' },
+  { bloc: 'bloc-facturer', lib: 'à facturer',   nom: 'Mes commandes à facturer' },
+  { bloc: 'bloc-dossiers', lib: 'mes dossiers', nom: 'Mes dossiers à préparer' }
+];
+/* Hauteur de la carte : 122 px, celle des deux autres cartes de la bande — demande d Olivier,
+   « limite en hauteur comme pour les courbes actuelles pour garder une symetrie et de la
+   coherence dans la page ». Huit pastilles de 5 px et leurs interstices tiennent dans les
+   54 px restants. Au-dela de huit dossiers la pastille du haut s estompe pour dire que la
+   colonne est coupee ; le total, lui, reste entier juste au-dessus. */
+const EQ_MAX  = 8;
+const EQ_RANG = { rouge: 0, orange: 1, bleu: 2, gris: 3, vert: 4 };
+const EQ_LET  = { rouge: 'r', orange: 'a', bleu: 'b', gris: 'g', vert: 'g' };
+
+function nivDeLigne(row) {
+  for (const n of ['rouge', 'orange', 'bleu', 'vert', 'gris'])
+    if (row.classList.contains(n)) return n;
+  return 'gris';
+}
+
+function carteCharge() {
+  // Au premier rendu les blocs sont encore vides : la carte sort avec ses colonnes a zero
+  // et se remplit ensuite. Mieux qu un trou qui apparait trois secondes plus tard.
+  return '<div class="courbe eq" id="carte-charge"'
+       + ' title="Une pastille par dossier, empilées de la plus urgente à la plus calme.">'
+       + '<div class="ct">MA CHARGE</div><div class="eqcols" id="eqcols"></div></div>';
+}
+
+function majCharge() {
+  const z = document.getElementById('eqcols');
+  if (!z) return;
+  let h = '';
+  for (const p of POSTES) {
+    const sec = document.getElementById(p.bloc);
+    if (!sec) continue;   // bloc absent pour ce pole : pas de colonne
+    // .row:not(.sup) : on ecarte les lignes que le bloc tient hors de son compte — les
+    // affaires « a garder a l oeil », les demandes deja reglees. Elles portent .sup sur la
+    // ligne elle-meme, alors que les lignes simplement repliees par capper vivent DANS un
+    // conteneur .sup et comptent, elles. Sans cette nuance l equaliseur affichait 12 la ou
+    // l en-tete du bloc affichait 11 : exactement l ecart qu on cherche a supprimer.
+    const nivs = [].map.call(sec.querySelectorAll('.row:not(.sup)'), nivDeLigne)
+                   .sort((a, b) => EQ_RANG[a] - EQ_RANG[b]);
+    const n = nivs.length;
+    // Le CHIFFRE porte la couleur de la colonne entiere : vert quand rien ne presse. C est
+    // le seul endroit de la page ou « tout va bien » se voit positivement, au lieu de se
+    // deduire d une absence de rouge.
+    const pire = n ? nivs[0] : null;
+    const cc = !n ? 'z' : pire === 'rouge' ? 'r' : pire === 'orange' ? 'a' : 'v';
+    h += '<div class="col ' + cc + '" onclick="allerVers(\'' + p.bloc + '\',\'\')"'
+       + ' title="' + esc(p.nom) + ' — ' + n + ' dossier' + (n > 1 ? 's' : '') + '">';
+    h += '<div class="n">' + n + '</div><div class="pile">';
+    nivs.slice(0, EQ_MAX).forEach((niv, i) => {
+      const coupe = n > EQ_MAX && i === EQ_MAX - 1;
+      h += '<i class="' + EQ_LET[niv] + (coupe ? ' tronq' : '') + '"></i>';
+    });
+    h += '</div><div class="lib">' + esc(p.lib) + '</div></div>';
+  }
+  z.innerHTML = h;
+  // Aucun poste pour ce pole — la production, par exemple, n a ni affaires ni devis ici :
+  // la carte disparait au lieu de montrer un cadre vide intitule « ma charge ».
+  const c = document.getElementById('carte-charge');
+  if (c) c.style.display = h ? '' : 'none';
+}
+
+/* Les blocs se remplissent chacun a leur rythme, un fetch chacun. */
+let EQ_OBS = null;
+function suivreLaCharge() {
+  const g = document.querySelector('.grille');
+  if (!g) return;
+  if (EQ_OBS) EQ_OBS.disconnect();
+  let t = null;
+  EQ_OBS = new MutationObserver(() => {
+    clearTimeout(t);
+    t = setTimeout(majCharge, 60);   // un seul redessin quand plusieurs blocs tombent ensemble
+  });
+  EQ_OBS.observe(g, { childList: true, subtree: true });
+  majCharge();
+}
+
 function bandeCourbes(d) {
   const pile = (d && d.pile) || [];
   const devis = (d && d.devis) || [];
   const liv = (d && d.livraisons) || [];
   let h = '';
 
-  if (voitLesAffaires()) {
-    const vals = pile.map(p => p.n);
-    const dernier = vals.length ? vals[vals.length - 1] : 0;
-    h += carteCourbe(POLE_DE[MOI] === 'direction' ? 'LA PILE DE L\u2019ÉQUIPE' : 'MA PILE',
-                     dernier + ' <span>points</span>',
-                     vals.length > 1 ? 'sur 6 semaines' : 'mesure commencée le ' + frDate(d.depuis),
-                     vals, 0, '#e07b1a',
-                     'Ce qui attend un geste, relevé chaque matin après le balayage de 5h50.');
-  }
+  // v1.31 : LA COURBE « MA PILE » EST REMPLACEE PAR L EQUALISEUR DE CHARGE (carteCharge).
+  // Elle comptait des couples SO x motif de l appro, releves a 6h10 : 7 points quand la page
+  // en affichait 18, et aucun moyen de rapprocher les deux. Olivier, 03/11 : « je comprend
+  // pas le chiffre ma pile ». L equaliseur compte les lignes que la page montre, en direct.
+  h += carteCharge();
 
   if (voitLesAffaires()) {
     const vals = devis.map(s => Math.round(s.ok / Math.max(1, s.n) * 100));
@@ -1047,12 +1181,16 @@ function blocFacturer(d) {
 }
 
 function ligneFacturer(l, orpheline) {
-  let h = '<div class="row ' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">';
+  // v1.31 : troisieme cran, comme pour l AR client. Au-dela de 10 jours ouvres depuis la
+  // livraison, la facture est en retard pour de bon : ce n est plus un reste a faire, c est
+  // de la tresorerie qui dort.
+  const niv = Number(l.jours) > 10 ? 'rouge' : l.niveau === 'orange' ? 'orange' : 'gris';
+  let h = '<div class="row ' + niv + '">';
   h += '<div class="l1"><span class="so">' + esc(l.so) + '</span>';
   if (l.client) h += '<span class="sep">·</span><span class="cli">' + esc(l.client) + '</span>';
-  h += '<span class="badge b-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">' + euros(l.montant) + '</span></div>';
+  h += '<span class="badge b-' + niv + '">' + euros(l.montant) + '</span></div>';
 
-  h += '<div class="l2"><span class="pastille p-' + (l.niveau === 'orange' ? 'orange' : 'gris') + '">'
+  h += '<div class="l2"><span class="pastille p-' + niv + '">'
      + (l.livre_le ? 'livré le ' + frDate(l.livre_le) : 'livraison partielle') + '</span>';
   h += '<span class="quoi">'
      + (l.jours === null || l.jours === undefined ? 'reste du livré non facturé'
@@ -1466,13 +1604,16 @@ function blocArClient(d) {
 
 function ligneArClient(x) {
   const j = Number(x.jours_ouvres || 0);
-  const niv = j > 5 ? 'orange' : 'gris';
+  // v1.31 : un TROISIEME cran. La ligne n avait que gris et ambre, si bien qu un client qui
+  // attend son accusé depuis trois semaines se lisait comme un qui attend depuis six jours.
+  // Seuil rouge : 8 jours ouvrés, soit plus de deux semaines de calendrier sans un mot.
+  const niv = j > 8 ? 'rouge' : j > 5 ? 'orange' : 'gris';
   let h = '<div class="row ' + niv + '" id="ac-' + esc(x.so) + '">';
   h += '<div class="l1"><span class="so">' + esc(x.so) + '</span>';
   if (x.client) h += '<span class="sep">·</span><span class="cli">' + esc(x.client) + '</span>';
-  h += '<span class="badge b-' + (j > 5 ? 'orange' : 'gris') + '">' + j + ' j ouvrés</span></div>';
+  h += '<span class="badge b-' + niv + '">' + j + ' j ouvrés</span></div>';
 
-  h += '<div class="l2"><span class="pastille p-' + (j > 5 ? 'orange' : 'gris') + '">'
+  h += '<div class="l2"><span class="pastille p-' + niv + '">'
      + (x.revenue ? 'attente terminée' : 'pas d accusé envoyé') + '</span>';
   h += '<span class="quoi">confirmée le ' + frDate(x.confirme_le)
      + (x.revenue ? ' · remise en attente le ' + frDate(x.attente_jusqu_au) : '') + '</span>';
