@@ -397,7 +397,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.22";
+const APP_VERSION = "1.23";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -680,6 +680,11 @@ function rendre() {
   // l ordre ci-dessous est l ordre de lecture, et un bloc qu une personne ne voit pas
   // ne laisse pas de trou.
   h += '<div class="grille">';
+  // v1.23 (03/11/2026) : les demandes de prix à prendre passent EN TÊTE.
+  // Motif : une demande que personne n a prise n apparaissait sur le tableau de personne,
+  // faute de responsable — c est ce qui a laissé dormir OCTOPUCES quatre jours et MILLIADES
+  // vingt. Elle doit être la première chose qu un commercial voit en ouvrant sa page.
+  if (voitLesDemandesDePrix()) h += '<section id="bloc-demandes"></section>';
   if (voitLesAffaires()) {
     h += blocAffaires(d);
     h += blocDevis(d);
@@ -711,6 +716,7 @@ function rendre() {
   h += '</div>';
 
   document.getElementById('app').innerHTML = h;
+  if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
   if (voitLesAffaires()) chargerFacturer();
@@ -1046,6 +1052,118 @@ function ligneDossier(x) {
   if (x.lien_projet)   h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien_projet) + '">Odoo</a>';
   h += '</span></div></div>';
   return h;
+}
+
+/* ---------- demandes de prix à prendre ---------- *
+ * D où ça vient (03/11/2026). OCTOPUCES, nouveau prospect, écrit le vendredi 30/10 à 16h01.
+ * Le mardi suivant, personne ne l avait ouvert. Enquête : la demande portait l étiquette
+ * ->Devis mais AUCUN responsable, et le bloc « mes devis à traiter » filtre par responsable.
+ * Elle n était donc sur le tableau de PERSONNE. Même cause pour MILLIADES, 20 jours.
+ *
+ * Deuxième cause, aussi vérifiée : l ancien seuil était de DEUX JOURS OUVRÉS sans lecture.
+ * Avec un objectif de réponse à 24/48 h, l alerte arrivait quand le délai était déjà brûlé.
+ *
+ * La règle, décidée par Olivier le 03/11/2026 :
+ *   sans responsable   visible chez TOUS les commerciaux et la direction
+ *                      neutre à l arrivée, ROUGE après 1 jour ouvré
+ *   avec responsable   visible chez LUI seul, ambre à 1 jour ouvré, rouge à 2
+ *   en sourdine        gris et hors alerte, MAIS rouge à 10 jours sans réponse client —
+ *                      une sourdine ne doit pas pouvoir servir à enterrer un dossier
+ *
+ * Le bouton « Je la prends » est le coeur du bloc. Sans lui, une ligne rouge affichée chez
+ * quatre personnes reste le travail de personne. Il pose l étiquette nominative dans Gmail
+ * et la ligne quitte le commun pour arriver chez celui qui a cliqué.
+ *
+ * Il ne marque JAMAIS le fil lu : un mail lu est un mail traité (règle Olivier), le marquer
+ * lu ferait disparaître la demande de toutes les listes alors que rien n a commencé.
+ *
+ * Les seuils et les niveaux sont calculés dans le workflow, pas ici : c est une règle métier,
+ * elle se change à un seul endroit.
+ * ------------------------------------------------------------------ */
+const DEMANDES        = 'https://protoprocess.app.n8n.cloud/webhook/pp-devis-a-prendre';
+const DEMANDE_PRENDRE = 'https://protoprocess.app.n8n.cloud/webhook/pp-devis-je-la-prends';
+
+// Les couleurs du service parlent métier (ambre / neutre) ; la feuille de style parle
+// en orange / bleu. On traduit ici plutôt que de renommer l un des deux.
+const NIVEAU_CSS = { rouge: 'rouge', ambre: 'orange', neutre: 'bleu', gris: 'gris' };
+
+function voitLesDemandesDePrix() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'commercial_achats';
+}
+
+async function chargerDemandes() {
+  const z = document.getElementById('bloc-demandes');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture de la boîte commerciale…</div>';
+  try {
+    const r = await fetch(DEMANDES, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ source: 'tableau-de-bord', version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocDemandes(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les demandes de prix n ont pas pu être lues (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocDemandes(d) {
+  const toutes = (d && d.lignes) || [];
+  // Une demande attribuée ne regarde que son responsable. Une demande sans responsable
+  // regarde tout le monde : c est tout l objet du bloc.
+  const l = toutes.filter(x => x.sans_responsable || x.responsable === MOI);
+  const rouges = l.filter(x => x.niveau === 'rouge').length;
+
+  let h = entete(rouges ? 't-crit' : 't-ok', '', 'DEMANDES DE PRIX À PRENDRE', l.length, '');
+  h += '<div class="msg">Objectif : <b>24 h</b> pour prendre la demande, <b>48 h</b> pour répondre.</div>';
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Aucune demande en attente.</div>';
+    return h;
+  }
+  h += capper(l.map(ligneDemande), 'demande');
+  return h;
+}
+
+function ligneDemande(x) {
+  const n = NIVEAU_CSS[x.niveau] || 'gris';
+  // Le badge dit l âge de l attente. « reçu le » reste affiché à côté : sur un fil relancé
+  // par le client, le compteur repart de la relance et masquerait l ancienneté réelle.
+  const quand = x.jours <= 0 ? "aujourd hui" : (x.jours === 1 ? 'depuis hier' : 'depuis ' + x.jours + ' j');
+
+  let h = '<div class="row ' + n + '" id="dp-' + esc(x.thread_id) + '">';
+  h += '<div class="l1"><span class="so">' + esc(court(x.objet, 48)) + '</span>';
+  if (x.client) h += '<span class="sep">·</span><span class="cli">' + esc(x.client) + '</span>';
+  h += '<span class="badge b-' + n + '">' + quand + '</span></div>';
+
+  h += '<div class="l2">';
+  h += '<span class="pastille p-' + (x.sans_responsable ? 'orange' : 'vert') + '">'
+     + (x.sans_responsable ? 'personne' : esc(x.resp_nom || x.responsable)) + '</span>';
+  if (x.sourdine) h += '<span class="pastille p-bleu">réponse client attendue</span>';
+  h += '<span class="quoi">reçu le ' + frDate(x.recu_le) + ' — ' + esc(x.geste) + '</span>';
+
+  h += '<span class="acts">';
+  if (x.sans_responsable) {
+    h += '<button class="btn-s" onclick="prendreDemande(\'' + esc(x.thread_id) + '\')">Je la prends</button>';
+  }
+  h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien) + '">Ouvrir le mail</a>';
+  h += '</span></div></div>';
+  return h;
+}
+
+async function prendreDemande(thread_id) {
+  try {
+    const r = await fetch(DEMANDE_PRENDRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                             body: JSON.stringify({ thread_id: thread_id, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const rep = await r.json();
+    if (!rep.ok) throw new Error(rep.motif || 'refusé');
+    toast('C est à toi. La demande arrive sur ton tableau.');
+    const ligne = document.getElementById('dp-' + thread_id);
+    if (ligne) { ligne.classList.add('parti'); setTimeout(chargerDemandes, 450); }
+    else chargerDemandes();
+  } catch (e) {
+    toast('Pas enregistré : ' + e.message);
+  }
 }
 
 /* ---------- commandes fournisseur : la date de livraison ---------- *
