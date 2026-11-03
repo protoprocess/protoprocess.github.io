@@ -45,6 +45,11 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .score b{color:var(--vert);font-size:15px;font-family:var(--mono)}
 
 .wrap{max-width:min(96vw,1800px);margin:0 auto;padding:20px 20px 70px}
+/* v1.24 : la page empile deux conteneurs. Celui du bandeau URGENT héritait du padding bas
+   de 70 px prévu pour la fin de page : 90 px de vide entre le bandeau et les outils. */
+.wrap-urgent{padding-bottom:0}
+.wrap-urgent.vide{padding:0}
+#app{padding-top:14px}
 
 /* choix de la personne */
 .portail{max-width:460px;margin:60px auto;background:var(--surface);border:1px solid var(--border);
@@ -67,8 +72,12 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .sonne{flex:1 1 270px;min-width:240px;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:11px 13px}
 .sonne h3{margin:0 0 9px;font-size:9.5px;letter-spacing:.06em;color:var(--text3);font-weight:700}
-.sonne .l{display:flex;align-items:center;gap:9px;padding:2px 0}
-.sonne .l b{width:22px;height:22px;border-radius:5px;background:#f1f3f6;color:var(--text3);
+/* v1.24 (03/11/2026, demande d Olivier) : la bande du haut prenait trop de hauteur.
+   Les cinq compteurs passent sur deux colonnes : la carte descend de ~160 à ~100 px, et
+   comme la bande est en align-items:stretch, les courbes se resserrent d autant. */
+.sonne .liste{display:grid;grid-template-columns:1fr 1fr;gap:1px 10px}
+.sonne .l{display:flex;align-items:center;gap:8px;padding:1px 0}
+.sonne .l b{width:20px;height:20px;border-radius:5px;background:#f1f3f6;color:var(--text3);
   font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;justify-content:center}
 .sonne .l span{font-size:12px;color:var(--text3)}
 /* Un compteur a zero reste gris : il ne demande rien. Des qu il compte, il se colore et
@@ -109,10 +118,10 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
 .courbe .ct{font-size:10px;letter-spacing:.06em;color:var(--text3);font-weight:700}
-.courbe .cv{font-size:21px;font-weight:700;color:var(--text);margin-top:2px;line-height:1.1}
+.courbe .cv{font-size:18px;font-weight:700;color:var(--text);margin-top:1px;line-height:1.1}
 .courbe .cv span{font-size:12px;font-weight:600;color:var(--text3)}
 .courbe .cs{font-size:10.5px;color:var(--text3);margin-top:1px}
-.courbe .spark{display:block;width:100%;height:36px;margin:4px 0 1px}
+.courbe .spark{display:block;width:100%;height:26px;margin:3px 0 0}
 .l2{flex-wrap:wrap}
 .l2 .quoi{min-width:110px}
 
@@ -191,7 +200,12 @@ section{background:var(--surface);border:1px solid var(--border);border-radius:v
 .shead{cursor:pointer}
 .shead h2::after{content:" ▾";color:var(--text3);font-size:10px}
 section.replie .shead h2::after{content:" ▸"}
-section.replie .row,section.replie .vide,section.replie .plus{display:none}
+/* v1.24 (03/11/2026, demande d Olivier) : replier un bloc l ALLÈGE, il ne l efface pas.
+   Les trois premières lignes restent lisibles ; seules la quatrième et les suivantes
+   disparaissent. Un bloc replié à zéro ligne obligeait à le rouvrir pour savoir ce qu il
+   contenait — le replier ne servait donc à rien. */
+section.replie > .row ~ .row ~ .row ~ .row{display:none}
+section.replie .vide,section.replie .plus,section.replie .msg{display:none}
 .plus{display:block;width:100%;text-align:center;padding:8px;background:var(--surface2);
   border:none;border-top:1px solid var(--border);color:var(--text2);font-size:11px;
   cursor:pointer;font-weight:600;font-family:var(--sans)}
@@ -280,7 +294,7 @@ section.replie .dater{display:none}
   </span>
 </header>
 
-<div class="wrap">
+<div class="wrap wrap-urgent" id="wrap-urgent">
   <div class="urgent" id="urgent" hidden>
     <i class="ti ti-alert-triangle" aria-hidden="true"></i>
     <span id="urgent-txt"></span>
@@ -397,7 +411,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.23";
+const APP_VERSION = "1.24";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -448,7 +462,9 @@ function mesure(appli, evenement, etape) {
 fetch(SB_URL + '/v_appro_urgent?select=*', { headers: { apikey: SB_KEY } })
   .then(r => r.ok ? r.json() : [])
   .then(rows => {
-    if (!rows || !rows.length) return;
+    // v1.24 : sans alerte, la bande du haut ne doit pas occuper de place du tout.
+    // Son conteneur garde sinon ses marges et repousse les outils de 90 px.
+    if (!rows || !rows.length) { document.getElementById('wrap-urgent').classList.add('vide'); return; }
     const el = document.getElementById('urgent');
     el.querySelector('#urgent-txt').textContent = 'URGENT — ' + rows.length + ' commande'
       + (rows.length > 1 ? 's' : '') + ' en stock critique (composant quasi introuvable) :';
@@ -659,7 +675,7 @@ function rendre() {
   // sur une seule bande au lieu de deux.
   h += '<div class="tete">';
   if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
-  h += '<div class="sonne"><h3>CE QUI SONNE</h3>';
+  h += '<div class="sonne"><h3>CE QUI SONNE</h3><div class="liste">';
   // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
   if (voitLesAffaires()) {
     h += sonne('r', c.rouge || 0, 'en danger');
@@ -670,7 +686,7 @@ function rendre() {
   // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
   // Il part à zéro et se remplit quand le bloc Divers a répondu.
   h += '<div class="l d" id="chip-divers"><b>0</b><span>demande</span></div>';
-  h += '</div></div>';
+  h += '</div></div></div>';
 
   // v1.20 : trois blocs par ligne, dans l ORDRE voulu par Olivier le 02/11 :
   //   ce qui attend un geste | mes devis        | AR client
@@ -680,6 +696,11 @@ function rendre() {
   // l ordre ci-dessous est l ordre de lecture, et un bloc qu une personne ne voit pas
   // ne laisse pas de trou.
   h += '<div class="grille">';
+  // v1.24 (03/11/2026, demande d Olivier) : le pense-bête passe en PLEINE LARGEUR, juste
+  // sous les graphiques. C est le seul bloc qui concerne tout le monde, et le seul où l on
+  // écrit soi-même : il mérite la ligne entière plutôt qu un tiers de colonne.
+  h += '<section id="bloc-divers" style="grid-column:1/-1"></section>';
+
   // v1.23 (03/11/2026) : les demandes de prix à prendre passent EN TÊTE.
   // Motif : une demande que personne n a prise n apparaissait sur le tableau de personne,
   // faute de responsable — c est ce qui a laissé dormir OCTOPUCES quatre jours et MILLIADES
@@ -703,10 +724,6 @@ function rendre() {
   // Il se remplit par son propre appel : si ce service-là ne répond pas, le reste de la page
   // reste lisible.
   if (voitSesDossiers()) h += '<section id="bloc-dossiers"></section>';
-
-  // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
-  // maison peut être tracé. Il se remplit aussi par son propre appel.
-  h += '<section id="bloc-divers"></section>';
 
   // Replié d'entrée : c'est un travail de rangement, pas une urgence. Le compteur de
   // l'en-tête suffit à dire combien il en reste. En dernier, et seulement pour ceux qui
@@ -1115,7 +1132,15 @@ function blocDemandes(d) {
   const rouges = l.filter(x => x.niveau === 'rouge').length;
 
   let h = entete(rouges ? 't-crit' : 't-ok', '', 'DEMANDES DE PRIX À PRENDRE', l.length, '');
-  h += '<div class="msg">Objectif : <b>24 h</b> pour prendre la demande, <b>48 h</b> pour répondre.</div>';
+  // v1.24 : l écran comptait seulement ce qui RESTE, ce qui donne « l impression de couler ».
+  // Ce qui est sorti cette semaine se lit à côté, et change complètement la lecture.
+  // Le compteur est indexé par PRÉNOM : c est ce que la mesure de déroulé enregistre.
+  const moiNom = (DONNEES.find(x => x.initiales === MOI) || {}).nom || '';
+  const faites = ((d && d.terminees_semaine) || {})[moiNom] || 0;
+  h += '<div class="msg">Objectif : <b>24 h</b> pour prendre la demande, <b>48 h</b> pour répondre'
+     + ' — <b>72/96 h</b> si le dossier comporte un PCB.'
+     + (faites ? ' <b>' + faites + '</b> devis terminé' + (faites > 1 ? 's' : '') + ' cette semaine.' : '')
+     + '</div>';
   if (!l.length) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Aucune demande en attente.</div>';
     return h;
@@ -1344,7 +1369,7 @@ function blocArClient(d) {
   // Au-delà de 5 jours ouvrés, le client attend sa date depuis une semaine : c est le moment
   // où le silence commence à coûter.
   const chaud = l.some(x => Number(x.jours_ouvres) > 5);
-  let h = entete(chaud ? 't-crit' : l.length ? 't-crit' : 't-ok', '', 'AR CLIENT — DATE PROMISE', l.length, '');
+  let h = entete(chaud ? 't-crit' : l.length ? 't-crit' : 't-ok', '', 'AR CLIENT MANQUANT', l.length, '');
   if (!l.length) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Tous les clients ont leur accusé.</div>';
     return h;
@@ -1559,7 +1584,7 @@ function blocDivers(d) {
   const n = amoiO.length + pbO.length;
   const cls = amoiO.some(depassee) ? 't-urg' : n ? 't-crit' : 't-ok';
 
-  let h = entete(cls, '', 'DIVERS — CE QU ON ME DEMANDE, CE QUE JE DEMANDE', n, '');
+  let h = entete(cls, '', 'MES DEMANDES, MON PENSE-BÊTE', n, '');
   if (!n && !reste.length)
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien en attente, ni pour toi ni de toi.</div>';
   h += amoiO.map(x => ligneDivers(x, false)).join('');
@@ -1903,12 +1928,17 @@ function outils() {
     h += '<div class="ts">' + esc(o.s) + '</div></div></a>';
   }
   h += '</div>';
-  // La ligne « autres outils » de l ancien hub : atteignable par tout le monde, sans tuile.
-  h += '<p class="autres">Autres outils :';
-  AUTRES.forEach(a => {
-    h += ' <a href="' + RACINE + a.u + '" data-appli="' + esc(a.t.toLowerCase()) + '">' + esc(a.t) + '</a>';
-  });
-  h += '</p></div>';
+  // v1.24 (03/11/2026, demande d Olivier) : la ligne « autres outils » est réservée à la
+  // DIRECTION. Elle était héritée du hub, qui montrait tout à tout le monde : Triage, Annexe
+  // devis, Tutos et surtout la PAIE se retrouvaient à portée de clic pour toute l équipe.
+  if (POLE_DE[MOI] === 'direction') {
+    h += '<p class="autres">Autres outils :';
+    AUTRES.forEach(a => {
+      h += ' <a href="' + RACINE + a.u + '" data-appli="' + esc(a.t.toLowerCase()) + '">' + esc(a.t) + '</a>';
+    });
+    h += '</p>';
+  }
+  h += '</div>';
   return h;
 }
 
