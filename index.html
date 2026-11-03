@@ -360,6 +360,10 @@ section.replie .dater{display:none}
  * « PP — AR client : page ».
  * ------------------------------------------------------------------
  *
+ * v1.21 (03/11/2026) : l anneau des livraisons a l heure est visible par TOUT LE MONDE,
+ *   methodes comprises (voir voitLesCourbes). C est un resultat collectif : le cacher a
+ *   une partie de l equipe reviendrait a dire que le chiffre n est pas le sien.
+ *
  * v1.20 (02/11/2026) : REFONTE DE LA MISE EN PAGE, apres maquette validee par Olivier.
  *   - LES OUTILS EN PREMIER. « Je trouve plus logique les outils en haut » : cette page
  *     est la page d accueil, on y arrive pour faire quelque chose, et la production (deux
@@ -393,7 +397,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.20";
+const APP_VERSION = "1.21";
 const APP_DATE    = "02/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -732,10 +736,13 @@ function rendre() {
 const COURBES = 'https://protoprocess.app.n8n.cloud/webhook/pp-courbes-liste';
 
 // Les livraisons sont un résultat de production : Fred les voit aussi (demande Olivier).
-function voitLesCourbes() {
-  const p = POLE_DE[MOI];
-  return p === 'direction' || p === 'commercial_achats' || p === 'production';
-}
+// v1.21 (03/11/2026) : la bande est ouverte A TOUT LE MONDE, methodes comprises.
+// Demande d Olivier : l anneau des livraisons a l heure est un resultat COLLECTIF (regle
+// du 02/11) — le cacher a une partie de l equipe reviendrait a dire que le chiffre
+// n est pas le sien. Les deux autres mesures restent filtrees DANS bandeCourbes par
+// voitLesAffaires() : une personne sans affaire ne voit donc que l anneau, ce qui est
+// exactement ce qu on veut.
+function voitLesCourbes() { return true; }
 
 async function chargerCourbes() {
   const z = document.getElementById('bande-courbes');
