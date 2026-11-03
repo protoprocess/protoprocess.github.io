@@ -285,6 +285,13 @@ section.replie .dater{display:none}
   border:1px solid var(--rouge-l);border-radius:5px;padding:2px 8px;color:var(--rouge);
   text-decoration:none;font-weight:600}
 .urgent .so a small{font-weight:400;color:var(--text2)}
+/* v1.30 : l attribut hidden ne suffit pas. La regle du navigateur [hidden]{display:none}
+   perd contre le display:flex ci-dessus, qui est plus specifique : le bandeau se vidait
+   mais son cadre rouge restait a l ecran, en haut a gauche, sans rien dedans. */
+.urgent[hidden]{display:none}
+/* v1.30 : la tuile d aide ne mene pas a une appli mais a Claude. Fond ambre pour la
+   distinguer des portes de production sans la rendre bruyante. */
+.tuile.aide{background:var(--ambre-bg)}
 .tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 /* v1.25 : les tuiles d outils prennent un fond, pour se distinguer des blocs de suivi.
    Un outil est une PORTE, pas une information : il ne doit pas ressembler a une carte. */
@@ -440,7 +447,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.29";
+const APP_VERSION = "1.30";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -571,6 +578,25 @@ const OUTILS = {
   controle:  { t: 'Contrôler des cartes',  s: 'Contrôle CMS et registre F07',       i: 'ti-zoom-check',         u: 'methodes-production/controle-cms/' },
   paie:      { t: 'Paie',                  s: 'Heures et congés',                   i: 'ti-calendar',           u: 'rh/paie/' }
 };
+
+/* v1.30 (03/11/2026, demande d Olivier) : LA TUILE « DEMANDER DE L AIDE ».
+   Elle ouvre un chat neuf dans le projet Claude de Proto Process, avec un prompt deja
+   ecrit qui dit QUI demande. Pourquoi les initiales dans le prompt : Claude n a aucun
+   moyen de savoir qui est en face, et son perimetre n est pas le meme selon la personne —
+   expliquer et corriger des donnees pour l equipe, toucher au code et aux workflows pour
+   Olivier seulement. Le vrai garde-fou vit dans les instructions du projet, pas ici : ce
+   texte est modifiable par celui qui l envoie. Il sert a demarrer juste, pas a proteger.
+   La tuile est hors de POLES : elle est pour tout le monde, quel que soit le pole. */
+const PROJET_CLAUDE = '019f6f80-4cd1-76bb-9d15-a5163b498d26';
+
+function lienAide() {
+  const d = (DONNEES || []).find(x => x.initiales === MOI) || {};
+  const qui = MOI ? MOI + (d.nom ? ' (' + d.nom + ')' : '') : 'un membre de l équipe';
+  const q = "C'est " + qui + ", depuis Mon tableau de bord v" + APP_VERSION + ".\n\n"
+          + "Ce qui me bloque :\n"
+          + "(sur quelle affaire ou quel écran, ce que j'attendais, ce qui s'est passé)";
+  return 'https://claude.ai/new?project=' + PROJET_CLAUDE + '&q=' + encodeURIComponent(q);
+}
 
 /* Les outils que tout le monde atteint, en petit, sous les tuiles. Repris de la ligne
    « Autres outils » de l'ancien hub : ils ne méritent pas une tuile mais ils ne doivent pas
@@ -1196,8 +1222,10 @@ function blocDemandes(d) {
   const faites = ((d && d.terminees_semaine) || {})[moiNom] || 0;
   // v1.27 : la tolérance ne vaut QUE pour un RFQ PCB, c est-à-dire un dossier qui demande
   // une consultation fabricant. Un PCB standard se chiffre dans les délais normaux.
-  h += '<div class="msg">Objectif : répondre sous <b>24 h</b>, <b>48 h</b> au maximum'
-     + ' — <b>72/96 h</b> seulement si une consultation fabricant est nécessaire (étiquette RFQ PCB).'
+  // v1.30 : phrase raccourcie (Olivier, 03/11 au soir). Elle tenait sur trois lignes en
+  // haut du bloc et repoussait les demandes elles-memes hors de vue : c est un rappel,
+  // pas une procedure.
+  h += '<div class="msg">Objectif : <b>devis sous 24/48 h</b>, sauf RFQ PCB (<b>72/96 h</b>).'
      + (faites ? ' <b>' + faites + '</b> devis terminé' + (faites > 1 ? 's' : '') + ' cette semaine.' : '')
      + '</div>';
   if (!l.length) {
@@ -1810,23 +1838,38 @@ function sonne(cl, n, lib, bloc, sel) {
 
 /* v1.29 (03/11/2026, demande d Olivier) : LE CLIC D UN COMPTEUR DE « CE QUI SONNE ».
    Trois gestes dans l ordre, et pas un de plus :
-     1. on deplie le bloc en entier — il peut etre replie, ou capper a trois lignes ;
+     1. on deplie le bloc, MAIS seulement si une ligne visee est cachee ;
      2. on l amene au centre de l ecran ;
      3. on encadre les lignes du niveau demande pendant trois secondes.
    « sel » est ce qu on ajoute a « .row » pour designer les lignes a encadrer : « .rouge »
    pour un niveau, rien du tout quand le compteur vaut le bloc entier (les devis),
    « :not(.vert) » pour ecarter les lignes deja reglees (le pense-bete).
    Le halo precedent est toujours retire d abord : deux clics de suite sur deux compteurs
-   differents ne doivent pas laisser deux zones allumees. */
+   differents ne doivent pas laisser deux zones allumees.
+
+   v1.30 (03/11/2026 au soir, retour d Olivier : « j ai 6 lignes affichees au lieu de 3 ») :
+   la v1.29 depliait TOUJOURS, et supprimait le bouton « Voir les N autres » — le bloc
+   restait a six lignes pour le reste de la visite, sans moyen de revenir en arriere.
+   Deux corrections : on ne deplie que si c est necessaire (les trois rouges sont le plus
+   souvent deja en haut du bloc), et quand on deplie le bouton devient « Replier ». */
 function allerVers(bloc, sel) {
   const el = document.getElementById(bloc);
   if (!el) return;
   document.querySelectorAll('.row.vise').forEach(r => r.classList.remove('vise'));
   el.classList.remove('replie');
-  el.querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
-  el.querySelectorAll('button.plus').forEach(b => b.remove());
-  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   const cibles = el.querySelectorAll('.row' + (sel || ''));
+  // offsetParent vaut null quand un parent est en display:none : c est le test le plus sur
+  // pour savoir si la ligne est visible, qu elle soit cachee par .cache ou par .replie.
+  const cachee = [].some.call(cibles, r => r.offsetParent === null);
+  if (cachee) {
+    el.querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
+    el.querySelectorAll('button.plus').forEach(b => {
+      if (!b.dataset.libelle) b.dataset.libelle = b.textContent;
+      b.textContent = 'Replier ▴';
+      b.setAttribute('onclick', 'replier(this)');
+    });
+  }
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   cibles.forEach(r => r.classList.add('vise'));
   setTimeout(() => cibles.forEach(r => r.classList.remove('vise')), 3100);
 }
@@ -2020,6 +2063,12 @@ function outils() {
     h += '<i class="ti ' + o.i + '"></i><div><div class="tt">' + esc(o.t) + '</div>';
     h += '<div class="ts">' + esc(o.s) + '</div></div></a>';
   }
+  // v1.30 : la derniere tuile, pour tout le monde. Elle part vers Claude et pas vers une
+  // appli : fond ambre pour qu on ne la confonde pas avec un outil de production.
+  h += '<a class="tuile aide" href="' + lienAide() + '" target="_blank" rel="noopener"'
+     + ' data-appli="aide-claude">';
+  h += '<i class="ti ti-message-circle-question"></i><div><div class="tt">Demander de l’aide</div>';
+  h += '<div class="ts">Claude, projet Proto Process</div></div></a>';
   h += '</div>';
   // v1.24 (03/11/2026, demande d Olivier) : la ligne « autres outils » est réservée à la
   // DIRECTION. Elle était héritée du hub, qui montrait tout à tout le monde : Triage, Annexe
@@ -2047,6 +2096,13 @@ function plier(btn) {
 function deplier(btn) {
   btn.closest('section').querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
   btn.remove();
+}
+/* v1.30 : le retour en arriere apres un depliage declenche par un compteur de « ce qui
+   sonne ». Le bouton reprend son libelle d origine, garde en dataset au moment du clic. */
+function replier(btn) {
+  btn.closest('section').querySelectorAll('.sup').forEach(r => r.classList.add('cache'));
+  btn.textContent = btn.dataset.libelle || 'Voir les autres ▾';
+  btn.setAttribute('onclick', 'deplier(this)');
 }
 function aide(e) {
   e.stopPropagation();
