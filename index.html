@@ -493,7 +493,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.32";
+const APP_VERSION = "1.33";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -635,13 +635,25 @@ const OUTILS = {
    La tuile est hors de POLES : elle est pour tout le monde, quel que soit le pole. */
 const PROJET_CLAUDE = '019f6f80-4cd1-76bb-9d15-a5163b498d26';
 
-function lienAide() {
+function lienAide(ligne) {
   const d = (DONNEES || []).find(x => x.initiales === MOI) || {};
   const qui = MOI ? MOI + (d.nom ? ' (' + d.nom + ')' : '') : 'un membre de l équipe';
+  // v1.33 : avec un contexte de ligne, le prompt porte deja l affaire. Sans lui, Claude
+  // ouvrait la conversation en demandant de quoi on parle — et la personne devait retaper
+  // un SO qui etait sous ses yeux.
   const q = "C'est " + qui + ", depuis Mon tableau de bord v" + APP_VERSION + ".\n\n"
-          + "Ce qui me bloque :\n"
-          + "(sur quelle affaire ou quel écran, ce que j'attendais, ce qui s'est passé)";
+          + (ligne ? ligne + "\n\nMa question :\n"
+                   : "Ce qui me bloque :\n(sur quelle affaire ou quel écran, ce que j'attendais, ce qui s'est passé)");
   return 'https://claude.ai/new?project=' + PROJET_CLAUDE + '&q=' + encodeURIComponent(q);
+}
+
+/* v1.33 : LE BOUTON « AIDE » D UNE LIGNE. Olivier, 03/11 au soir : « si pas branché pas de
+   bouton non ? » — il ouvrait une alerte disant que la fonction arriverait un jour. Il part
+   maintenant vers Claude avec l affaire dans le prompt.
+   stopPropagation : le bouton vit dans une ligne qui se plie au clic. */
+function aideLigne(e, ctx) {
+  e.stopPropagation();
+  window.open(lienAide(ctx), '_blank', 'noopener');
 }
 
 /* Les outils que tout le monde atteint, en petit, sous les tuiles. Repris de la ligne
@@ -2161,7 +2173,12 @@ function ligneAffaire(a, calme) {
   // de retaper un SO qui etait deja sous les yeux.
   h += '<a class="btn-p" target="_blank" rel="noopener" href="' + RACINE
      + 'achats/bom-sourcing/?onglet=achats&so=' + encodeURIComponent(a.so) + '">Je m en occupe</a>';
-  h += '<button class="btn-s" onclick="aide(event)">Aide</button>';
+  // Le contexte part avec le clic : SO, client, etat et motifs, tels qu ils sont a l ecran.
+  const ctx = 'Affaire ' + a.so + (a.client ? ' — ' + a.client : '')
+            + (a.carte ? ' (' + a.carte + ')' : '')
+            + ' · ' + a.badge + ' · ' + resume
+            + (a.arc ? ' · livraison promise le ' + frDate(a.arc) : '');
+  h += '<button class="btn-s" onclick="aideLigne(event,' + JSON.stringify(ctx).replace(/"/g, '&quot;') + ')">Aide</button>';
   h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
   h += '</span></div>';
 
@@ -2294,11 +2311,6 @@ function replier(btn) {
   btn.closest('section').querySelectorAll('.sup').forEach(r => r.classList.add('cache'));
   btn.textContent = btn.dataset.libelle || 'Voir les autres ▾';
   btn.setAttribute('onclick', 'deplier(this)');
-}
-function aide(e) {
-  e.stopPropagation();
-  alert("L aide de Claude sur une ligne arrive dans la prochaine version.\n"
-      + "En attendant, le bouton « Demander de l aide à Claude » de l appli Achats PP fait déjà le travail.");
 }
 function toast(txt) {
   const t = document.getElementById('toast');
