@@ -421,7 +421,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.26";
+const APP_VERSION = "1.27";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1146,8 +1146,10 @@ function blocDemandes(d) {
   // Le compteur est indexé par PRÉNOM : c est ce que la mesure de déroulé enregistre.
   const moiNom = (DONNEES.find(x => x.initiales === MOI) || {}).nom || '';
   const faites = ((d && d.terminees_semaine) || {})[moiNom] || 0;
-  h += '<div class="msg">Objectif : <b>24 h</b> pour prendre la demande, <b>48 h</b> pour répondre'
-     + ' — <b>72/96 h</b> si le dossier comporte un PCB.'
+  // v1.27 : la tolérance ne vaut QUE pour un RFQ PCB, c est-à-dire un dossier qui demande
+  // une consultation fabricant. Un PCB standard se chiffre dans les délais normaux.
+  h += '<div class="msg">Objectif : répondre sous <b>24 h</b>, <b>48 h</b> au maximum'
+     + ' — <b>72/96 h</b> seulement si une consultation fabricant est nécessaire (étiquette RFQ PCB).'
      + (faites ? ' <b>' + faites + '</b> devis terminé' + (faites > 1 ? 's' : '') + ' cette semaine.' : '')
      + '</div>';
   if (!l.length) {
