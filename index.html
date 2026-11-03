@@ -421,7 +421,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.27";
+const APP_VERSION = "1.28";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -467,23 +467,47 @@ function mesure(appli, evenement, etape) {
 }
 
 /* Bandeau URGENT : les SO en stock critique (composant quasi introuvable), un lien par SO.
-   Lecture publique de Supabase, hors du service : ce bandeau ne dépend de personne et doit
-   s afficher même avant qu on sache qui regarde. */
+   Lecture publique de Supabase, hors du service.
+
+   v1.28 (03/11/2026, demande d Olivier) : le bandeau ne montre QUE les affaires de la
+   personne. Il s affichait à tout le monde, si bien que chacun voyait des SO qui ne le
+   concernaient pas — et que personne ne se sentait visé. La direction continue de tout voir.
+
+   Le filtre se fait sur les SO que le service rend pour cette personne. Conséquence
+   assumée : une affaire en stock critique qui n apparaîtrait dans aucun de ses deux blocs
+   ne serait pas montrée. En pratique un stock critique fait toujours remonter l affaire. */
+let URGENTS = null;
 fetch(SB_URL + '/v_appro_urgent?select=*', { headers: { apikey: SB_KEY } })
   .then(r => r.ok ? r.json() : [])
-  .then(rows => {
-    // v1.24 : sans alerte, la bande du haut ne doit pas occuper de place du tout.
-    // Son conteneur garde sinon ses marges et repousse les outils de 90 px.
-    if (!rows || !rows.length) { document.getElementById('wrap-urgent').classList.add('vide'); return; }
-    const el = document.getElementById('urgent');
-    el.querySelector('#urgent-txt').textContent = 'URGENT — ' + rows.length + ' commande'
-      + (rows.length > 1 ? 's' : '') + ' en stock critique (composant quasi introuvable) :';
-    el.querySelector('#urgent-so').innerHTML = rows.map(r =>
-      '<a href="' + esc(r.report_url || (RACINE + 'achats/bom-sourcing/')) + '" target="_blank" rel="noopener">'
-      + esc(r.so) + '<small>' + r.nb_stock_critique + ' ligne'
-      + (r.nb_stock_critique > 1 ? 's' : '') + '</small></a>').join('');
-    el.hidden = false;
-  }).catch(() => {});
+  .then(rows => { URGENTS = rows || []; majUrgent(); })
+  .catch(() => { URGENTS = []; majUrgent(); });
+
+function majUrgent() {
+  const el = document.getElementById('urgent');
+  const wrap = document.getElementById('wrap-urgent');
+  if (!el || URGENTS === null) return;
+
+  let rows = URGENTS;
+  // Tant qu on ne sait pas qui regarde, on ne montre rien : mieux vaut un bandeau qui
+  // arrive une seconde plus tard qu un bandeau qui parle des affaires d un autre.
+  if (!MOI) rows = [];
+  else if (POLE_DE[MOI] !== 'direction') {
+    const d = (DONNEES || []).find(x => x.initiales === MOI);
+    const miens = new Set([].concat((d && d.affaires_a_geste) || [], (d && d.affaires_calmes) || [])
+                            .map(a => String(a.so)));
+    rows = rows.filter(r => miens.has(String(r.so)));
+  }
+
+  if (!rows.length) { el.hidden = true; wrap.classList.add('vide'); return; }
+  wrap.classList.remove('vide');
+  el.querySelector('#urgent-txt').textContent = 'URGENT — ' + rows.length + ' commande'
+    + (rows.length > 1 ? 's' : '') + ' en stock critique (composant quasi introuvable) :';
+  el.querySelector('#urgent-so').innerHTML = rows.map(r =>
+    '<a href="' + esc(r.report_url || (RACINE + 'achats/bom-sourcing/')) + '" target="_blank" rel="noopener">'
+    + esc(r.so) + '<small>' + r.nb_stock_critique + ' ligne'
+    + (r.nb_stock_critique > 1 ? 's' : '') + '</small></a>').join('');
+  el.hidden = false;
+}
 
 /* Clic sur une tuile d outil : début de déroulé. Délégation, parce que les tuiles sont
    réécrites à chaque rendu. */
@@ -742,6 +766,8 @@ function rendre() {
   h += '</div>';
 
   document.getElementById('app').innerHTML = h;
+  // v1.28 : le bandeau URGENT ne peut être filtré qu une fois la personne connue.
+  majUrgent();
   if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
   if (voitLeMenagePo()) chargerPoRattacher();
@@ -1135,9 +1161,10 @@ async function chargerDemandes() {
 
 function blocDemandes(d) {
   const toutes = (d && d.lignes) || [];
-  // Une demande attribuée ne regarde que son responsable. Une demande sans responsable
-  // regarde tout le monde : c est tout l objet du bloc.
-  const l = toutes.filter(x => x.sans_responsable || x.responsable === MOI);
+  // v1.28 (03/11/2026, demande d Olivier) : le bloc ne garde QUE les demandes sans
+  // responsable. « À prendre » veut dire à prendre : une demande déjà attribuée n est plus
+  // à prendre par personne, et elle figurait en double avec « mes devis à traiter ».
+  const l = toutes.filter(x => x.sans_responsable);
   const rouges = l.filter(x => x.niveau === 'rouge').length;
 
   let h = entete(rouges ? 't-crit' : 't-ok', '', 'DEMANDES DE PRIX À PRENDRE', l.length, '');
@@ -1795,7 +1822,7 @@ function blocAffaires(d) {
   const pire = aff.some(a => a.niveau === 'rouge') ? 't-urg'
              : aff.length ? 't-crit' : 't-ok';
   let h = '<section id="bloc-appro">';
-  h += entete(pire, 'ti-alert-triangle', 'CE QUI ATTEND UN GESTE', aff.length, repartition(aff));
+  h += entete(pire, 'ti-alert-triangle', 'CE QUI ATTEND TON GESTE', aff.length, repartition(aff));
   // Ce bloc vient du balayage de 5h50, qui ne tourne que les jours ouvrables. Week-end, férié,
   // lundi avant 5h50, ou matin où le balayage casse : on montre le dernier état connu, et on dit
   // de quand il date. Un zéro qu'on ne distingue pas d'une bonne nouvelle est pire que rien.
