@@ -67,8 +67,16 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 /* v1.20 : la tete de page. Les indicateurs a gauche, « ce qui sonne » a droite.
    Avant, les pastilles tenaient une ligne entiere et les courbes une autre : deux bandes
    pour cinq chiffres et trois petites mesures. */
-.tete{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;align-items:stretch}
-.tete .courbes{flex:999 1 560px;min-width:0;margin-bottom:0}
+/* v1.25 (03/11/2026, demande d Olivier) : les graphiques prenaient toute la largeur
+   disponible et collaient aux tuiles d outils. Ils sont ramenes a une part raisonnable,
+   « ce qui sonne » et le pense-bete occupent le reste, et la bande respire sous les outils. */
+.tete{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 16px;align-items:stretch}
+.tete .courbes{flex:3 1 400px;min-width:0;margin-bottom:0}
+.tete .pense{flex:1 1 250px;min-width:230px;max-width:360px;display:flex;flex-direction:column}
+.tete .pense .shead{padding:9px 12px}
+.tete .pense .shead h2{font-size:11.5px}
+.tete .pense .vide,.tete .pense .msg{font-size:12px;padding:10px 12px}
+.tete .pense .row{padding:8px 12px}
 .sonne{flex:1 1 270px;min-width:240px;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:11px 13px}
 .sonne h3{margin:0 0 9px;font-size:9.5px;letter-spacing:.06em;color:var(--text3);font-weight:700}
@@ -114,7 +122,7 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .anneau .leg{display:flex;flex-direction:column;gap:3px;min-width:0}
 .anneau .leg div{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);white-space:nowrap}
 .anneau .leg i{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.courbes{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin-bottom:16px}
 .courbe{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   padding:10px 13px 8px;box-shadow:0 1px 2px rgba(20,30,50,.04);overflow:hidden}
 .courbe .ct{font-size:10px;letter-spacing:.06em;color:var(--text3);font-weight:700}
@@ -259,10 +267,12 @@ section.replie .dater{display:none}
   text-decoration:none;font-weight:600}
 .urgent .so a small{font-weight:400;color:var(--text2)}
 .tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
-.tuile{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--border);
+/* v1.25 : les tuiles d outils prennent un fond, pour se distinguer des blocs de suivi.
+   Un outil est une PORTE, pas une information : il ne doit pas ressembler a une carte. */
+.tuile{display:flex;align-items:center;gap:11px;background:var(--ppblue-bg);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:13px 15px;text-decoration:none;color:var(--text);
   box-shadow:0 1px 2px rgba(20,30,50,.04)}
-.tuile:hover{border-color:var(--orange)}
+.tuile:hover{border-color:var(--orange);background:var(--ambre-bg)}
 .tuile i{font-size:20px;color:var(--orange)}
 .tuile .tt{font-size:12.5px;font-weight:600}
 .tuile .ts{font-size:11px;color:var(--text3);margin-top:1px}
@@ -411,7 +421,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.24";
+const APP_VERSION = "1.25";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -686,7 +696,11 @@ function rendre() {
   // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
   // Il part à zéro et se remplit quand le bloc Divers a répondu.
   h += '<div class="l d" id="chip-divers"><b>0</b><span>demande</span></div>';
-  h += '</div></div></div>';
+  h += '</div></div>';
+  // v1.25 (03/11/2026, demande d Olivier) : le pense-bête rejoint la bande du haut, tout à
+  // droite des graphiques. Il y gagne sa place sans prendre une ligne entière de la grille.
+  h += '<section id="bloc-divers" class="pense"></section>';
+  h += '</div>';
 
   // v1.20 : trois blocs par ligne, dans l ORDRE voulu par Olivier le 02/11 :
   //   ce qui attend un geste | mes devis        | AR client
@@ -696,11 +710,6 @@ function rendre() {
   // l ordre ci-dessous est l ordre de lecture, et un bloc qu une personne ne voit pas
   // ne laisse pas de trou.
   h += '<div class="grille">';
-  // v1.24 (03/11/2026, demande d Olivier) : le pense-bête passe en PLEINE LARGEUR, juste
-  // sous les graphiques. C est le seul bloc qui concerne tout le monde, et le seul où l on
-  // écrit soi-même : il mérite la ligne entière plutôt qu un tiers de colonne.
-  h += '<section id="bloc-divers" style="grid-column:1/-1"></section>';
-
   // v1.23 (03/11/2026) : les demandes de prix à prendre passent EN TÊTE.
   // Motif : une demande que personne n a prise n apparaissait sur le tableau de personne,
   // faute de responsable — c est ce qui a laissé dormir OCTOPUCES quatre jours et MILLIADES
