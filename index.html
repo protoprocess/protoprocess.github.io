@@ -73,8 +73,10 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .tete{display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 16px;align-items:stretch}
 /* v1.31 : les graphiques prennent plus de large, parce que l equaliseur de charge y occupe
    deux colonnes. Sans ca la bande passait sur deux rangees et cassait la ligne d horizon. */
-.tete .courbes{flex:5 1 540px;min-width:0;margin-bottom:0}
-.tete .pense{flex:1 1 250px;min-width:230px;max-width:320px;display:flex;flex-direction:column}
+/* v1.32 : « ce qui sonne » a disparu de la bande. Sa place se partage entre le pense-bete,
+   qui respire enfin, et les graphiques, ou l equaliseur occupe deux colonnes. */
+.tete .courbes{flex:5 1 600px;min-width:0;margin-bottom:0}
+.tete .pense{flex:2 1 320px;min-width:280px;max-width:440px;display:flex;flex-direction:column}
 .tete .pense .shead{padding:9px 12px}
 .tete .pense .shead h2{font-size:11.5px}
 .tete .pense .vide,.tete .pense .msg{font-size:12px;padding:10px 12px}
@@ -322,6 +324,20 @@ section.replie .dater{display:none}
 .eqcols .col.v .n{color:var(--vert)}  .eqcols .col.z .n{color:var(--text3)}
 /* Sous 820 px la bande passe a une carte par ligne : l equaliseur reprend toute la largeur. */
 @media (max-width:820px){ .courbe.eq{grid-column:span 1} }
+/* v1.32 : le pied de carte, qui reprend ce que disait « ce qui sonne ». Une seule ligne,
+   collee sous les colonnes par un filet, et qui disparait d elle-meme quand il n y a rien
+   a signaler — a la place, « rien ne presse », le seul endroit de la page qui le dise. */
+.eqleg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:7px;padding-top:6px;
+  border-top:1px solid var(--border);font-size:10.5px;color:var(--text3)}
+.eqleg .e{display:flex;align-items:center;gap:5px;cursor:pointer;border-radius:4px;
+  padding:1px 4px;margin:0 -4px}
+.eqleg .e:hover{background:var(--surface2);color:var(--text2)}
+.eqleg .e i{width:7px;height:7px;border-radius:2px;display:block;background:var(--border2)}
+.eqleg .e.r i{background:var(--rouge-l)} .eqleg .e.r{color:var(--rouge);font-weight:600}
+.eqleg .e.a i{background:var(--ambre-l)} .eqleg .e.a{color:var(--ambre);font-weight:600}
+.eqleg .e.b i{background:var(--bleuf-l)} .eqleg .e.b{color:var(--bleuf)}
+.eqleg .e.calme{cursor:default} .eqleg .e.calme i{background:var(--vert-l)}
+.eqleg .e.calme:hover{background:none;color:var(--text3)}
 .tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 /* v1.25 : les tuiles d outils prennent un fond, pour se distinguer des blocs de suivi.
    Un outil est une PORTE, pas une information : il ne doit pas ressembler a une carte. */
@@ -477,7 +493,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.31";
+const APP_VERSION = "1.32";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -786,20 +802,12 @@ function rendre() {
   // graphiques finissent à droite, ce sont un résultat, pas un geste.
   h += '<div class="tete">';
   h += '<section id="bloc-divers" class="pense"></section>';
-  h += '<div class="sonne"><h3>CE QUI SONNE</h3><div class="liste">';
-  // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
-  if (voitLesAffaires()) {
-    // v1.29 : chaque compteur dit OU aller et QUOI encadrer. Les trois niveaux pointent le
-    // bloc des affaires, le quatrieme celui des devis.
-    h += sonne('r', c.rouge || 0, 'en danger', 'bloc-appro', '.rouge');
-    h += sonne('a', c.orange || 0, 'à surveiller', 'bloc-appro', '.orange');
-    h += sonne('b', c.bleu || 0, 'information manquante', 'bloc-appro', '.bleu');
-    h += sonne('', c.devis || 0, 'devis à traiter', 'bloc-devis', '');
-  }
-  // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
-  // Il part à zéro et se remplit quand le bloc Divers a répondu.
-  h += '<div class="l d" id="chip-divers"><b>0</b><span>demande</span></div>';
-  h += '</div></div>';
+  // v1.32 (03/11/2026, demande d Olivier) : « CE QUI SONNE » EST SUPPRIME. Il disait, en
+  // global, ce que l equaliseur de charge dit colonne par colonne — « ou on trouve le moyen
+  // de dire danger / urge sur l equalizer ? ». Ses chiffres sont repris sous les colonnes,
+  // toujours cliquables ; sa place va au pense-bete et a l equaliseur, tous deux elargis.
+  // Le compteur « demande » disparait avec lui : le pense-bete porte deja le sien dans son
+  // en-tete, et le repeter a 30 cm de distance n apprenait rien.
   if (voitLesCourbes()) h += '<div class="courbes" id="bande-courbes"></div>';
   h += '</div>';
 
@@ -1033,13 +1041,15 @@ function carteCharge() {
   // et se remplit ensuite. Mieux qu un trou qui apparait trois secondes plus tard.
   return '<div class="courbe eq" id="carte-charge"'
        + ' title="Une pastille par dossier, empilées de la plus urgente à la plus calme.">'
-       + '<div class="ct">MA CHARGE</div><div class="eqcols" id="eqcols"></div></div>';
+       + '<div class="ct">MA CHARGE</div><div class="eqcols" id="eqcols"></div>'
+       + '<div class="eqleg" id="eqleg"></div></div>';
 }
 
 function majCharge() {
   const z = document.getElementById('eqcols');
   if (!z) return;
   let h = '';
+  const total = {};   // cumul par niveau, toutes colonnes confondues, pour le pied de carte
   for (const p of POSTES) {
     const sec = document.getElementById(p.bloc);
     if (!sec) continue;   // bloc absent pour ce pole : pas de colonne
@@ -1051,12 +1061,16 @@ function majCharge() {
     const nivs = [].map.call(sec.querySelectorAll('.row:not(.sup)'), nivDeLigne)
                    .sort((a, b) => EQ_RANG[a] - EQ_RANG[b]);
     const n = nivs.length;
+    nivs.forEach(x => { total[x] = (total[x] || 0) + 1; });
     // Le CHIFFRE porte la couleur de la colonne entiere : vert quand rien ne presse. C est
     // le seul endroit de la page ou « tout va bien » se voit positivement, au lieu de se
     // deduire d une absence de rouge.
     const pire = n ? nivs[0] : null;
     const cc = !n ? 'z' : pire === 'rouge' ? 'r' : pire === 'orange' ? 'a' : 'v';
-    h += '<div class="col ' + cc + '" onclick="allerVers(\'' + p.bloc + '\',\'\')"'
+    // false : un clic de COLONNE ne deplie pas le bloc. Il visait toutes les lignes, donc
+    // il depliait tout et le bloc restait a six lignes — « ce qui attend un geste toujours
+    // trop de lignes ». Il emmene au bloc et encadre ce qui est visible, rien de plus.
+    h += '<div class="col ' + cc + '" onclick="allerVers(\'' + p.bloc + '\',\'\',false)"'
        + ' title="' + esc(p.nom) + ' — ' + n + ' dossier' + (n > 1 ? 's' : '') + '">';
     h += '<div class="n">' + n + '</div><div class="pile">';
     nivs.slice(0, EQ_MAX).forEach((niv, i) => {
@@ -1066,10 +1080,46 @@ function majCharge() {
     h += '</div><div class="lib">' + esc(p.lib) + '</div></div>';
   }
   z.innerHTML = h;
+
+  // v1.32 : LE PIED DE L EQUALISEUR reprend ce que disait « ce qui sonne », mais sur
+  // TOUTES les colonnes et non sur les seules affaires. Chaque entree reste cliquable :
+  // elle encadre ses lignes partout ou elles se trouvent, et emmene a la premiere.
+  const l = document.getElementById('eqleg');
+  if (l) {
+    const parts = [];
+    [['rouge', 'en danger'], ['orange', 'ça presse'], ['bleu', 'info manque']].forEach(x => {
+      const n = total[x[0]] || 0;
+      if (!n) return;
+      parts.push('<span class="e ' + EQ_LET[x[0]] + '" onclick="viserNiveau(\'' + x[0] + '\')"'
+               + ' title="Encadrer ces ' + n + ' lignes"><i></i>' + n + ' ' + x[1] + '</span>');
+    });
+    l.innerHTML = parts.length ? parts.join('')
+      : '<span class="e calme"><i></i>rien ne presse</span>';
+  }
+
   // Aucun poste pour ce pole — la production, par exemple, n a ni affaires ni devis ici :
   // la carte disparait au lieu de montrer un cadre vide intitule « ma charge ».
   const c = document.getElementById('carte-charge');
   if (c) c.style.display = h ? '' : 'none';
+}
+
+/* v1.32 : le clic d une entree du pied de carte. Un niveau ne vit pas dans un seul bloc —
+   « en danger » se trouve aussi bien dans les affaires que dans les AR client. On encadre
+   donc partout, et on emmene a la premiere ligne trouvee. Sans deplier : le pied dit un
+   nombre, pas une liste a derouler. */
+function viserNiveau(niv) {
+  document.querySelectorAll('.row.vise').forEach(r => r.classList.remove('vise'));
+  const cibles = [];
+  for (const p of POSTES) {
+    const sec = document.getElementById(p.bloc);
+    if (!sec) continue;
+    [].forEach.call(sec.querySelectorAll('.row.' + niv + ':not(.sup)'), r => cibles.push(r));
+  }
+  if (!cibles.length) return;
+  const visible = cibles.filter(r => r.offsetParent !== null);
+  (visible[0] || cibles[0]).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  cibles.forEach(r => r.classList.add('vise'));
+  setTimeout(() => cibles.forEach(r => r.classList.remove('vise')), 3100);
 }
 
 /* Les blocs se remplissent chacun a leur rythme, un fetch chacun. */
@@ -1993,7 +2043,7 @@ function sonne(cl, n, lib, bloc, sel) {
    restait a six lignes pour le reste de la visite, sans moyen de revenir en arriere.
    Deux corrections : on ne deplie que si c est necessaire (les trois rouges sont le plus
    souvent deja en haut du bloc), et quand on deplie le bouton devient « Replier ». */
-function allerVers(bloc, sel) {
+function allerVers(bloc, sel, deplier) {
   const el = document.getElementById(bloc);
   if (!el) return;
   document.querySelectorAll('.row.vise').forEach(r => r.classList.remove('vise'));
@@ -2001,7 +2051,7 @@ function allerVers(bloc, sel) {
   const cibles = el.querySelectorAll('.row' + (sel || ''));
   // offsetParent vaut null quand un parent est en display:none : c est le test le plus sur
   // pour savoir si la ligne est visible, qu elle soit cachee par .cache ou par .replie.
-  const cachee = [].some.call(cibles, r => r.offsetParent === null);
+  const cachee = deplier !== false && [].some.call(cibles, r => r.offsetParent === null);
   if (cachee) {
     el.querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
     el.querySelectorAll('button.plus').forEach(b => {
