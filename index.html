@@ -95,6 +95,25 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .sonne .l.on.a b{background:var(--ambre-bg);color:var(--ambre)}
 .sonne .l.on.b b{background:var(--bleuf-bg);color:var(--bleuf)}
 .sonne .l.on.d b{background:var(--ppblue-bg);color:var(--ppblue)}
+/* v1.29 (03/11/2026, demande d Olivier) : UN COMPTEUR QUI COMPTE EST CLIQUABLE.
+   Avant : « 3 en danger » etait un chiffre mort — on savait qu il y avait trois affaires
+   rouges, pas lesquelles, et il fallait aller les chercher a l oeil dans un bloc replie a
+   trois lignes. « De l info mais on sait pas quoi exactement ». Le clic emmene au bloc,
+   le deplie en entier et encadre les lignes concernees.
+   Un compteur a zero n est PAS cliquable : la main du curseur dit d un coup d oeil ce qui
+   mene quelque part et ce qui ne mene nulle part. */
+.sonne .l.clic{cursor:pointer;border-radius:5px;margin:0 -4px;padding:1px 4px;
+  transition:background .12s}
+.sonne .l.clic:hover{background:var(--surface2)}
+.sonne .l.clic:hover span{text-decoration:underline;text-underline-offset:2px}
+/* La ligne visee : un halo qui s eteint tout seul. Pas de deplacement, pas de changement de
+   taille — la ligne ne doit pas bouger sous l oeil qui vient de la trouver. */
+/* Le halo est gris ardoise, et pas l une des couleurs de niveau : une ligne rouge encadree
+   d ambre se lit mal, et un encadre qui reprend la couleur du niveau n ajoute aucune
+   information. Le gris dit « c est celle-la » sur les trois fonds. */
+@keyframes vise{0%{box-shadow:0 0 0 3px rgba(22,32,52,.55)}70%{box-shadow:0 0 0 3px rgba(22,32,52,.55)}
+  100%{box-shadow:0 0 0 3px rgba(22,32,52,0)}}
+.row.vise{animation:vise 3s ease-out 1;border-radius:var(--radius);position:relative;z-index:1}
 .resume{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
 .chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius-lg);padding:9px 14px;font-size:12px;color:var(--text2)}
@@ -421,7 +440,7 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.28";
+const APP_VERSION = "1.29";
 const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -714,10 +733,12 @@ function rendre() {
   h += '<div class="sonne"><h3>CE QUI SONNE</h3><div class="liste">';
   // Les compteurs d'affaires et de devis ne sont montrés qu'à ceux qui peuvent en avoir.
   if (voitLesAffaires()) {
-    h += sonne('r', c.rouge || 0, 'en danger');
-    h += sonne('a', c.orange || 0, 'à surveiller');
-    h += sonne('b', c.bleu || 0, 'information manquante');
-    h += sonne('', c.devis || 0, 'devis à traiter');
+    // v1.29 : chaque compteur dit OU aller et QUOI encadrer. Les trois niveaux pointent le
+    // bloc des affaires, le quatrieme celui des devis.
+    h += sonne('r', c.rouge || 0, 'en danger', 'bloc-appro', '.rouge');
+    h += sonne('a', c.orange || 0, 'à surveiller', 'bloc-appro', '.orange');
+    h += sonne('b', c.bleu || 0, 'information manquante', 'bloc-appro', '.bleu');
+    h += sonne('', c.devis || 0, 'devis à traiter', 'bloc-devis', '');
   }
   // Le compteur des demandes est toujours affiché, même à zéro (décision Olivier 30/10/2026).
   // Il part à zéro et se remplit quand le bloc Divers a répondu.
@@ -1572,8 +1593,13 @@ async function chargerDivers() {
             + ((d.pense_bete    || []).filter(x => !x.clos).length);
     // v1.20 : le compteur vit maintenant dans « ce qui sonne », avec la structure
     // b + span, et se colore des qu il compte. Il faut donc poser la classe aussi.
+    // v1.29 : cliquable comme les autres des qu il compte. Le pense-bete est en haut a
+    // gauche, donc le « clic » ne fait pas vraiment defiler — mais il encadre les lignes,
+    // et c est bien ce qu on cherche : savoir LESQUELLES.
     if (ch) {
-      ch.className = 'l d' + (n > 0 ? ' on' : '');
+      ch.className = 'l d' + (n > 0 ? ' on clic' : '');
+      if (n > 0) ch.setAttribute('onclick', "allerVers('bloc-divers',':not(.vert)')");
+      else ch.removeAttribute('onclick');
       ch.innerHTML = '<b>' + n + '</b><span>demande' + (n > 1 ? 's' : '') + '</span>';
     }
   } catch (e) {
@@ -1773,9 +1799,36 @@ function chip(cl, n, lib) {
 /* v1.20 : une ligne de « ce qui sonne ». A zero elle reste grise et muette ; des qu elle
    compte, elle se colore. Cinq compteurs empiles se lisent d un coup d oeil, cinq
    pastilles cote a cote non. */
-function sonne(cl, n, lib) {
-  return '<div class="l ' + cl + (n > 0 ? ' on' : '') + '"><b>' + n + '</b><span>'
-       + esc(lib) + '</span></div>';
+function sonne(cl, n, lib, bloc, sel) {
+  // v1.29 : le compteur devient un lien vers ses lignes des qu il compte quelque chose.
+  const actif = n > 0 && bloc;
+  return '<div class="l ' + cl + (n > 0 ? ' on' : '') + (actif ? ' clic' : '') + '"'
+       + (actif ? ' onclick="allerVers(\'' + bloc + '\',\'' + (sel || '') + '\')"'
+                + ' title="Voir ' + (n > 1 ? 'ces ' + n + ' lignes' : 'cette ligne') + '"' : '')
+       + '><b>' + n + '</b><span>' + esc(lib) + '</span></div>';
+}
+
+/* v1.29 (03/11/2026, demande d Olivier) : LE CLIC D UN COMPTEUR DE « CE QUI SONNE ».
+   Trois gestes dans l ordre, et pas un de plus :
+     1. on deplie le bloc en entier — il peut etre replie, ou capper a trois lignes ;
+     2. on l amene au centre de l ecran ;
+     3. on encadre les lignes du niveau demande pendant trois secondes.
+   « sel » est ce qu on ajoute a « .row » pour designer les lignes a encadrer : « .rouge »
+   pour un niveau, rien du tout quand le compteur vaut le bloc entier (les devis),
+   « :not(.vert) » pour ecarter les lignes deja reglees (le pense-bete).
+   Le halo precedent est toujours retire d abord : deux clics de suite sur deux compteurs
+   differents ne doivent pas laisser deux zones allumees. */
+function allerVers(bloc, sel) {
+  const el = document.getElementById(bloc);
+  if (!el) return;
+  document.querySelectorAll('.row.vise').forEach(r => r.classList.remove('vise'));
+  el.classList.remove('replie');
+  el.querySelectorAll('.sup').forEach(r => r.classList.remove('cache'));
+  el.querySelectorAll('button.plus').forEach(b => b.remove());
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const cibles = el.querySelectorAll('.row' + (sel || ''));
+  cibles.forEach(r => r.classList.add('vise'));
+  setTimeout(() => cibles.forEach(r => r.classList.remove('vise')), 3100);
 }
 
 /* v1.20 : trois lignes par bloc, le reste derriere « Voir les N autres ». Demande
@@ -1931,7 +1984,9 @@ function ligneAffaire(a, calme) {
 function blocDevis(d) {
   const devis = (d && d.devis) || [];
   const cls = devis.length ? 't-crit' : 't-ok';
-  let h = '<section>';
+  // v1.29 : le bloc porte un identifiant pour que le compteur « devis a traiter » de
+  // « ce qui sonne » puisse y emmener.
+  let h = '<section id="bloc-devis">';
   h += entete(cls, 'ti-file-text', 'MES DEVIS À TRAITER', devis.length, '');
   if (!devis.length) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> Rien à faire ici. Tout est à jour.</div>';
