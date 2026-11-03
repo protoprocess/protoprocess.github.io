@@ -397,8 +397,8 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.21";
-const APP_DATE    = "02/11/2026";
+const APP_VERSION = "1.22";
+const APP_DATE    = "03/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -694,6 +694,11 @@ function rendre() {
   // appel : la page reste lisible même si ce service-là ne répond pas.
   if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
 
+  // v1.22 : les dossiers à préparer, pour le pôle méthodes. Demande de Jérôme du 03/11/2026.
+  // Il se remplit par son propre appel : si ce service-là ne répond pas, le reste de la page
+  // reste lisible.
+  if (voitSesDossiers()) h += '<section id="bloc-dossiers"></section>';
+
   // Le bloc Divers concerne tout le monde : c est le seul endroit où ce qui n a pas d autre
   // maison peut être tracé. Il se remplit aussi par son propre appel.
   h += '<section id="bloc-divers"></section>';
@@ -711,6 +716,7 @@ function rendre() {
   if (voitLesAffaires()) chargerFacturer();
   if (voitLesAffaires()) chargerArClient();
   if (voitLesCourbes()) chargerCourbes();
+  if (voitSesDossiers()) chargerDossiers();
   chargerDivers();
 }
 
@@ -950,6 +956,94 @@ function ligneFacturer(l, orpheline) {
      + (orpheline ? ' · pas de responsable au planning' : '') + '</span>';
   h += '<span class="acts">';
   h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(l.lien_odoo) + '">Facturer dans Odoo</a>';
+  h += '</span></div></div>';
+  return h;
+}
+
+/* ---------- mes dossiers à préparer (pôle méthodes) ---------- *
+ * Demandé par Jérôme le 03/11/2026, en lecture seule.
+ *
+ * CE QUI S AFFICHE : les lignes du planning PP MYGPAO (onglet « Cmd En cours ») dont la
+ * colonne M « Prog. / Dossier » vaut AF, VERIF ou MODIF. La ligne sort d elle-même dès que
+ * Jérôme passe cette colonne à MY+EX, OK REFAB ou OK MODIF — aucun bouton « c est fait » ici :
+ * il aurait fallu écrire dans le planning de tout le monde pour un geste qu il fait déjà.
+ *
+ * POURQUOI LA DATE ARC ET PAS LE PLANNING ATELIER. On avait d abord retenu « la première case
+ * MY donne l ordre, puisque c est la prod qui arbitre selon les composants reçus ». Le premier
+ * passage sur les vraies lignes l a démenti le 03/11 : sur 35 dossiers à faire, AUCUN ne portait
+ * de case MY. Fred ne programme la prod qu une fois le dossier prêt — le MY arrive donc APRÈS
+ * Jérôme et ne pouvait rien classer. L ordre vient de la date ARC (colonne C), seule colonne
+ * renseignée presque partout. MY et TR restent affichés quand ils existent : ils disent ce qui
+ * suit, pas ce qui presse.
+ *
+ * Les trois liens (projet Odoo, FabStory, Luminovo) sont repris tels quels des cellules A, F
+ * et E du planning : aucune adresse n est reconstruite ici.
+ *
+ * Le niveau d urgence et les seuils sont calculés dans le workflow, pas ici : c est une règle
+ * métier, elle se change à un seul endroit.
+ * ------------------------------------------------------------------ */
+const DOSSIERS = 'https://protoprocess.app.n8n.cloud/webhook/pp-dossiers-methodes';
+
+function voitSesDossiers() { return POLE_DE[MOI] === 'methodes'; }
+
+async function chargerDossiers() {
+  const z = document.getElementById('bloc-dossiers');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture du planning…</div>';
+  try {
+    const r = await fetch(DOSSIERS, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocDossiers(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les dossiers à préparer n ont pas pu être lus (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocDossiers(d) {
+  const l = (d && d.dossiers) || [];
+  const chaud = (d && d.nb_rouge) > 0;
+  let h = entete(chaud ? 't-crit' : 't-ok', '', 'MES DOSSIERS À PRÉPARER', l.length, '');
+  if (!l.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Aucun dossier en attente. Tout est à jour.</div>';
+    return h;
+  }
+  h += capper(l.map(ligneDossier), 'dossier');
+  return h;
+}
+
+function ligneDossier(x) {
+  const n = x.niveau || 'gris';
+  // Le badge dit la date promise au client et ce qu il reste pour y arriver. Une date
+  // dépassée se dit en clair : la laisser en « dans -3 j » obligerait à faire le calcul.
+  let quand;
+  if (x.jours === null || x.jours === undefined) quand = esc(x.date_arc_brut || 'pas de date');
+  else if (x.jours < 0)  quand = 'en retard de ' + (-x.jours) + ' j';
+  else if (x.jours === 0) quand = "aujourd hui";
+  else if (x.jours === 1) quand = 'demain';
+  else quand = 'dans ' + x.jours + ' j';
+
+  let h = '<div class="row ' + n + '">';
+  h += '<div class="l1"><span class="so">' + esc(x.so) + '</span>';
+  if (x.client) h += '<span class="sep">·</span><span class="cli">' + esc(x.client) + '</span>';
+  h += '<span class="badge b-' + n + '">' + (x.date_arc ? 'ARC ' + frDate(x.date_arc) + ' — ' : '') + quand + '</span></div>';
+
+  h += '<div class="l2"><span class="pastille p-' + (x.type === 'AF' ? 'bleu' : x.type === 'MODIF' ? 'orange' : 'vert') + '">'
+     + esc(x.type) + '</span>';
+
+  // Ce qui aide à décider quoi prendre : la carte, puis ce que la prod a déjà posé.
+  const bouts = [];
+  if (x.carte) bouts.push(court(x.carte, 42));
+  if (x.my) bouts.push('MY le ' + frDate(x.my));
+  else if (x.tr) bouts.push('TRAD le ' + frDate(x.tr));
+  if (x.date_recept_cpts) bouts.push('cpts ' + esc(x.date_recept_cpts));
+  h += '<span class="quoi">' + bouts.join(' · ') + '</span>';
+
+  h += '<span class="acts">';
+  if (x.lien_fabstory) h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien_fabstory) + '">FabStory</a>';
+  if (x.lien_luminovo) h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien_luminovo) + '">Luminovo</a>';
+  if (x.lien_projet)   h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien_projet) + '">Odoo</a>';
   h += '</span></div></div>';
   return h;
 }
