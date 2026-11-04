@@ -342,6 +342,37 @@ section.replie .dater{display:none}
 .eqleg .e.b i{background:var(--bleuf-l)} .eqleg .e.b{color:var(--bleuf)}
 .eqleg .e.calme{cursor:default} .eqleg .e.calme i{background:var(--vert-l)}
 .eqleg .e.calme:hover{background:none;color:var(--text3)}
+/* v1.35 : l entrée « en sourdine ». Grise et sans relief : ce ne sont pas des lignes qui
+   pèsent, ce sont celles qu on a décidé de ne plus voir. Mais elle reste sous les yeux —
+   une sourdine qu on ne voit nulle part, personne ne pense à la réveiller. */
+.eqleg .e.s i{background:var(--border2)} .eqleg .e.s{color:var(--text3)}
+
+/* ---------- v1.35 : LE BLOC « EN SOURDINE » ---------- *
+   Pleine largeur, en bas de page, en gris : demande d Olivier du 04/11/2026. Hors de la
+   grille à trois colonnes parce qu il ne concurrence rien — on l atteint en descendant,
+   ou par la pastille de l équaliseur. */
+section.sourdine{margin-top:16px;background:var(--surface2)}
+section.sourdine .shead{background:#f1f3f6}
+.t-gris h2{color:var(--text2)}
+.c-gris{background:#eef1f5;color:var(--text2)}
+section.sourdine .row{background:transparent}
+
+/* la fenêtre de mise en sourdine */
+.mfond{position:fixed;inset:0;background:rgba(20,28,45,.42);z-index:200;
+  display:flex;align-items:center;justify-content:center;padding:20px}
+.mbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:20px 22px;width:min(100%,470px);box-shadow:0 8px 28px rgba(20,30,50,.18)}
+.mbox h3{margin:0 0 3px;font-size:14px}
+.mbox .msub{margin:0 0 10px;font-size:12px;color:var(--text2);font-family:var(--mono)}
+.mbox .maide{margin:0 0 14px;font-size:11.5px;color:var(--text3);line-height:1.6}
+.mbox label{display:block;font-size:11px;color:var(--text3);font-weight:600;margin:0 0 4px}
+.mbox select,.mbox textarea{width:100%;padding:7px 9px;border:1px solid var(--border);
+  border-radius:var(--radius);font-size:12.5px;font-family:var(--sans);color:var(--text);
+  background:#fff;margin-bottom:12px}
+.mbox textarea{min-height:62px;resize:vertical}
+.mbox select:focus,.mbox textarea:focus{outline:none;border-color:var(--orange)}
+.mbox .merr{font-size:11.5px;color:var(--rouge);min-height:16px;margin-bottom:6px}
+.mbox .macts{display:flex;gap:8px;justify-content:flex-end}
 .tuiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 /* v1.25 : les tuiles d outils prennent un fond, pour se distinguer des blocs de suivi.
    Un outil est une PORTE, pas une information : il ne doit pas ressembler a une carte. */
@@ -497,13 +528,18 @@ section.replie .dater{display:none}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.34";
-const APP_DATE    = "03/11/2026";
+const APP_VERSION = "1.35";
+const APP_DATE    = "04/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
 const SERVICE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-points-a-traiter';
 const SOURDINE = 'https://protoprocess.github.io/achats/sourdine/';
+/* v1.35 : la porte du TABLEAU DE BORD pour poser ou réveiller une sourdine.
+   SOURDINE ci-dessus reste la page publique à jeton, ouverte depuis le mail du matin ;
+   les deux cohabitent et écrivent dans la même table. La différence : d ici on sait QUI
+   clique, donc on peut exiger une justification et proposer un réveil. */
+const SOURDINE_BORD = 'https://protoprocess.app.n8n.cloud/webhook/pp-sourdine-bord';
 const GMAIL    = 'https://mail.google.com/mail/u/0/#inbox/';
 const RACINE   = 'https://protoprocess.github.io/';
 const CLE_MOI  = 'pp_ma_gestion_qui';
@@ -877,6 +913,11 @@ function rendre() {
 
   h += '</div>';
 
+  // v1.35 : LE BLOC « EN SOURDINE », pleine largeur, tout en bas. Hors de la grille :
+  // ce ne sont pas des gestes à faire, c est ce qu on a mis de côté. Il se remplit par son
+  // propre appel et disparaît quand il n y a rien — un cadre gris vide n apprend rien.
+  h += '<section id="bloc-sourdine" class="sourdine" style="display:none"></section>';
+
   document.getElementById('app').innerHTML = h;
   // v1.28 : le bandeau URGENT ne peut être filtré qu une fois la personne connue.
   majUrgent();
@@ -890,7 +931,26 @@ function rendre() {
   if (voitLesAffaires()) chargerArClient();
   if (voitLesCourbes()) chargerCourbes();
   if (voitSesDossiers()) chargerDossiers();
+  chargerSourdines();
   chargerDivers();
+}
+
+/* v1.35 : relire le service et redessiner, sans repasser par « Qui es-tu ? ».
+   Utilisé après une mise en sourdine ou un réveil : l affaire sort ou rentre dans les
+   blocs, et c est le service qui le sait — pas la page. */
+async function rafraichir() {
+  try {
+    const r = await fetch(SERVICE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION })
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const l = Array.isArray(data) ? data : (data.responsables || data.data || []);
+    DONNEES = Array.isArray(l) ? l : [l];
+    rendre();
+  } catch (e) {}
 }
 
 /* ---------- les courbes ---------- *
@@ -1120,6 +1180,13 @@ function majCharge() {
       parts.push('<span class="e ' + EQ_LET[x[0]] + '" onclick="viserNiveau(\'' + x[0] + '\')"'
                + ' title="Encadrer ces ' + n + ' lignes"><i></i>' + n + ' ' + x[1] + '</span>');
     });
+    // v1.35 : la sourdine se dit ici, en gris, à côté des trois niveaux. Elle ne compte pas
+    // comme une charge — c est le contraire : ce sont les lignes qu on a décidé de ne plus
+    // voir. Mais elle reste sous les yeux : une sourdine invisible, personne ne la réveille.
+    const dort = mesSourdines().length;
+    if (dort) parts.push('<span class="e s" onclick="allerVers(\'bloc-sourdine\',\'\',false)"'
+      + ' title="Voir les affaires en sourdine"><i></i>' + dort + ' en sourdine</span>');
+
     l.innerHTML = parts.length ? parts.join('')
       : '<span class="e calme"><i></i>rien ne presse</span>';
   }
@@ -1366,6 +1433,204 @@ function ligneDossier(x) {
   if (x.lien_projet)   h += '<a class="btn-s" target="_blank" rel="noopener" href="' + esc(x.lien_projet) + '">Odoo</a>';
   h += '</span></div></div>';
   return h;
+}
+
+/* ---------- v1.35 : LES AFFAIRES EN SOURDINE ---------- *
+ * D où ça vient (04/11/2026). Maura, sur IP2I SO2609-516 : « une question existe, on attend
+ * la réponse du client, mais je peux pas te dire d arrêter de faire sonner cette alerte ».
+ *
+ * La sourdine EXISTAIT pourtant depuis septembre — table ecarts_assumes. Mais elle n était
+ * posable que par un lien du mail du matin, elle ne disait ni qui l avait posée ni pourquoi
+ * de façon exploitable, et une fois posée l affaire disparaissait sans laisser de trace à
+ * l écran : impossible de la réveiller. Elle a servi TROIS fois en deux mois.
+ *
+ * Ce que la v1.35 ajoute, décidé par Olivier le 04/11/2026 :
+ *   JUSTIFICATION OBLIGATOIRE  un motif choisi dans une liste ET une précision en clair.
+ *                              La liste pour compter plus tard pourquoi les lignes dorment,
+ *                              le texte pour dire le cas précis. L un sans l autre ne suffit
+ *                              pas : un texte libre seul n est comptable par personne.
+ *   QUI                        posée par le responsable de la ligne, Olivier sur toutes.
+ *   RÉVEIL                     à la réponse du client, à J+X, ou à la main.
+ *                              Pas de réveil forcé automatique.
+ *   VISIBILITÉ                 un bloc gris en bas de page et une pastille dans l équaliseur.
+ *
+ * La page n écrit pas en base elle-même : ecarts_assumes est protégée et n accepte pas la clé
+ * publique. Tout passe par le workflow, qui revérifie le motif et la précision — un contrôle
+ * d écran seul se contourne en rechargeant la page.
+ *
+ * v1.35 garde la granularité par AFFAIRE. La sourdine par LIGNE affichée, voulue par Olivier,
+ * attend la v1.36 : elle demande de toucher v_appro_a_traiter, partagée avec le filet qualité
+ * et le mail du matin.
+ * ------------------------------------------------------------------ */
+const MOTIFS_SOURDINE = [
+  ['question_client',   'Question client en attente'],
+  ['ar_fournisseur',    'Attente AR ou date fournisseur'],
+  ['ref_sans_solution', 'Réf. indisponible sans solution'],
+  ['fourniture_client', 'Attente fourniture client'],
+  ['decision_interne',  'Attente décision interne'],
+  ['autre',             'Autre']
+];
+const LIB_SOURDINE = {};
+MOTIFS_SOURDINE.forEach(m => { LIB_SOURDINE[m[0]] = m[1]; });
+
+let SOURDINES = null;
+let SD_CTX = null;
+
+/* Lecture directe de Supabase, et pas du service : une affaire en sourdine a justement
+   disparu de ce que le service rend. Sans cette lecture-là, elle serait invisible. */
+async function chargerSourdines() {
+  const z = document.getElementById('bloc-sourdine');
+  if (!z) return;
+  try {
+    const r = await fetch(SB_URL + '/v_sourdines_actives?select=*', { headers: { apikey: SB_KEY } });
+    SOURDINES = r.ok ? (await r.json() || []) : [];
+  } catch (e) { SOURDINES = []; }
+  const l = mesSourdines();
+  z.innerHTML = l.length ? blocSourdine(l) : '';
+  z.style.display = l.length ? '' : 'none';
+  majCharge();
+}
+
+/* Même porte que le reste de la page : chacun voit les siennes, la direction voit tout.
+   On retient aussi celles qu on a posées soi-même sur l affaire d un autre — sinon on perd
+   de vue un silence qu on a demandé. */
+function mesSourdines() {
+  const l = SOURDINES || [];
+  if (!MOI) return [];
+  if (POLE_DE[MOI] === 'direction') return l;
+  return l.filter(s => s.responsable === MOI || s.pose_par === MOI);
+}
+
+function blocSourdine(l) {
+  let h = '<div class="shead t-gris" onclick="plierBloc(this)" title="Replier ce bloc">';
+  h += '<h2>EN SOURDINE</h2>';
+  h += '<span class="cpt c-gris">' + l.length + '</span></div>';
+  h += '<div class="msg">Ces affaires ne remontent plus dans les blocs du dessus. '
+     + 'Elles reviennent d elles-mêmes à leur échéance — ou tout de suite si tu les réveilles.</div>';
+  h += l.map(ligneSourdine).join('');
+  return h;
+}
+
+function ligneSourdine(s) {
+  const j = Number(s.jours_restants);
+  const quand = j <= 0 ? 'revient demain'
+              : j === 1 ? 'revient demain'
+              : 'revient dans ' + j + ' jours';
+  let h = '<div class="row gris" id="sd-' + esc(s.so) + '">';
+  h += '<div class="l1"><span class="so">' + esc(s.so) + '</span>';
+  if (s.client) h += '<span class="sep">·</span><span class="cli">' + esc(s.client) + '</span>';
+  if (s.carte) h += '<span class="sep">·</span><span class="cli">' + esc(s.carte) + '</span>';
+  h += '<span class="badge b-gris">' + esc(quand) + '</span></div>';
+
+  h += '<div class="l2">';
+  // Le motif codifié en pastille, la précision en clair à côté : on lit la catégorie d un
+  // coup d oeil, et le cas précis sans avoir à déplier.
+  h += '<span class="pastille p-gris">'
+     + esc(LIB_SOURDINE[s.motif_code] || 'posée avant la v1.35') + '</span>';
+  const par = s.pose_par ? ' — ' + esc(nomDe(s.pose_par) || s.pose_par) : '';
+  h += '<span class="quoi">' + esc(s.detail || s.motif || '') + par + '</span>';
+  h += '<span class="acts">';
+  h += '<button class="btn-s" onclick="reveiller(\'' + esc(s.so) + '\')">Réveiller</button>';
+  h += '</span></div></div>';
+  return h;
+}
+
+/* ---- poser ---- */
+function ouvrirSourdine(ctx) {
+  SD_CTX = typeof ctx === 'string' ? JSON.parse(ctx) : (ctx || {});
+  fermerSourdine();
+  const a = SD_CTX;
+  let h = '<div class="mfond" id="m-sourdine" onclick="if(event.target===this)fermerSourdine()">';
+  h += '<div class="mbox">';
+  h += '<h3>Mettre en sourdine</h3>';
+  h += '<p class="msub">' + esc(a.so) + (a.client ? ' — ' + esc(a.client) : '') + '</p>';
+  h += '<p class="maide">Cette affaire cessera de remonter dans tes blocs. Dis pourquoi : '
+     + 'le motif servira à savoir, plus tard, ce qui fait dormir les lignes.</p>';
+  h += '<label for="sd-motif">Motif</label>';
+  h += '<select id="sd-motif"><option value="">— choisir —</option>'
+     + MOTIFS_SOURDINE.map(m => '<option value="' + m[0] + '">' + m[1] + '</option>').join('')
+     + '</select>';
+  h += '<label for="sd-detail">Précision</label>';
+  h += '<textarea id="sd-detail" placeholder="Ce qu on attend exactement, et de qui."></textarea>';
+  h += '<label for="sd-jours">Elle revient</label>';
+  h += '<select id="sd-jours">'
+     + '<option value="3">dans 3 jours</option>'
+     + '<option value="5" selected>dans 5 jours</option>'
+     + '<option value="7">dans 7 jours</option>'
+     + '<option value="14">dans 14 jours</option></select>';
+  h += '<div class="merr" id="sd-err"></div>';
+  h += '<div class="macts">';
+  h += '<button class="btn-s" onclick="fermerSourdine()">Annuler</button>';
+  h += '<button class="btn-p" id="sd-ok" onclick="poserSourdine()">Mettre en sourdine</button>';
+  h += '</div></div></div>';
+  const d = document.createElement('div');
+  d.innerHTML = h;
+  document.body.appendChild(d.firstChild);
+  const m = document.getElementById('sd-motif');
+  if (m) m.focus();
+}
+
+function fermerSourdine() {
+  const m = document.getElementById('m-sourdine');
+  if (m) m.remove();
+}
+
+async function poserSourdine() {
+  const a = SD_CTX || {};
+  const motif_code = (document.getElementById('sd-motif') || {}).value || '';
+  const detail = ((document.getElementById('sd-detail') || {}).value || '').trim();
+  const jours = Number((document.getElementById('sd-jours') || {}).value || 5);
+  const err = document.getElementById('sd-err');
+  // Les deux champs sont exigés ici ET dans le workflow : ici pour le dire tout de suite,
+  // là-bas parce que c est le seul contrôle qu on ne peut pas contourner.
+  if (!motif_code) { err.textContent = 'Choisis un motif.'; return; }
+  if (detail.length < 3) { err.textContent = 'Écris une précision : ce qu on attend, et de qui.'; return; }
+  const b = document.getElementById('sd-ok');
+  b.disabled = true;
+  b.textContent = 'Enregistrement…';
+  err.textContent = '';
+  try {
+    const r = await fetch(SOURDINE_BORD, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'poser', so: a.so, qui: MOI,
+        motif_code: motif_code, detail: detail, jours: jours,
+        responsable: a.responsable || MOI, client: a.client || '',
+        carte: a.carte || '', libelle: a.libelle || ''
+      })
+    });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const rep = await r.json();
+    if (!rep.ok) throw new Error(rep.motif || 'refusé');
+    fermerSourdine();
+    toast('En sourdine. Elle revient le ' + frDate(rep.jusqu_au) + '.');
+    const ligne = document.getElementById('aff-' + a.so);
+    if (ligne) ligne.classList.add('parti');
+    setTimeout(rafraichir, 500);
+  } catch (e) {
+    b.disabled = false;
+    b.textContent = 'Mettre en sourdine';
+    err.textContent = 'Ça n a pas été enregistré (' + e.message + ').';
+  }
+}
+
+/* ---- réveiller ---- */
+async function reveiller(so) {
+  const ligne = document.getElementById('sd-' + so);
+  try {
+    const r = await fetch(SOURDINE_BORD, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reveiller', so: so, qui: MOI })
+    });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const rep = await r.json();
+    if (!rep.ok) throw new Error(rep.motif || 'refusé');
+    toast('Réveillée. L affaire revient dans tes blocs.');
+    if (ligne) ligne.classList.add('parti');
+    setTimeout(rafraichir, 500);
+  } catch (e) {
+    toast('Le réveil n a pas abouti (' + e.message + ').');
+  }
 }
 
 /* ---------- demandes de prix à prendre ---------- *
@@ -2167,7 +2432,9 @@ function ligneAffaire(a, calme) {
   // references, sans nombre pour les faits uniques. La page ne recompose rien — sinon on
   // relit « 1 rien de lance ».
   const resume = a.blocs.map(b => b.resume || b.libelle).join(' · ');
-  let h = '<div class="row ' + niv + (calme ? ' cache sup' : '') + '">';
+  // v1.35 : la ligne porte un identifiant, pour pouvoir la faire sortir de l écran quand on
+  // vient de la mettre en sourdine, sans attendre le rechargement complet.
+  let h = '<div class="row ' + niv + (calme ? ' cache sup' : '') + '" id="aff-' + esc(a.so) + '">';
   h += '<div class="l1"><span class="so">' + esc(a.so) + '</span>';
   if (a.client) h += '<span class="sep">·</span><span class="cli">' + esc(a.client) + '</span>';
   h += '<span class="badge b-' + niv + '">' + esc(a.badge) + '</span></div>';
@@ -2237,7 +2504,13 @@ function ligneAffaire(a, calme) {
     h += '</div>';
   }
   h += '<div class="acts2">';
-  if (a.jeton) h += '<a class="btn-s" href="' + SOURDINE + '?j=' + esc(a.jeton) + '">C est normal, mettre en sourdine</a>';
+  // v1.35 : le bouton ouvre la fenêtre de mise en sourdine au lieu de partir vers la page à
+  // jeton. Pourquoi : d ici on sait qui clique, donc on peut demander POURQUOI — ce que le
+  // lien du mail ne pouvait pas faire. La page à jeton reste en place pour le mail du matin.
+  h += '<button class="btn-s" onclick=\'ouvrirSourdine('
+     + JSON.stringify({ so: a.so, client: a.client || '', carte: a.carte || '',
+                        libelle: resume, responsable: MOI }).replace(/'/g, '&#39;')
+     + ')\'>C est normal, mettre en sourdine</button>';
   // Les trois endroits ou une affaire se traite reellement. FabStory ouvre LA carte
   // (?produit=), pas la liste. Luminovo n existe que sur un tiers des affaires.
   if (a.lien_fabstory) h += '<a class="lien" target="_blank" href="' + esc(a.lien_fabstory) + '">FabStory</a>';
