@@ -528,7 +528,7 @@ section.sourdine .row{background:transparent}
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.35.1";
+const APP_VERSION = "1.36";
 const APP_DATE    = "04/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1340,6 +1340,10 @@ function ligneFacturer(l, orpheline) {
      + (l.jours === null || l.jours === undefined ? 'reste du livré non facturé'
         : l.jours === 0 ? 'livré aujourd hui'
         : l.jours + ' jour' + (l.jours > 1 ? 's' : '') + ' ouvré' + (l.jours > 1 ? 's' : '') + ' depuis la livraison')
+     // v1.36 : le montant affiché ne couvre QUE les lignes entièrement livrées. S il reste
+     // des lignes à livrer sur la même commande, on le dit : sinon on croit facturer tout.
+     + (l.partiel ? ' · ' + l.nb_en_attente + ' ligne' + (l.nb_en_attente > 1 ? 's' : '')
+                  + ' encore à livrer sur cette commande' : '')
      + (orpheline ? ' · pas de responsable au planning' : '') + '</span>';
   h += '<span class="acts">';
   h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(l.lien_odoo) + '">Facturer dans Odoo</a>';
@@ -1473,6 +1477,23 @@ const MOTIFS_SOURDINE = [
 const LIB_SOURDINE = {};
 MOTIFS_SOURDINE.forEach(m => { LIB_SOURDINE[m[0]] = m[1]; });
 
+/* v1.36 : ce que dit la LIGNE mise en sourdine. Une affaire peut en avoir plusieurs, et
+   « SO2602-085 en sourdine » ne suffit plus : il faut savoir laquelle de ses alertes dort.
+   Un type inconnu s affiche tel quel plutôt que de disparaître. */
+const LIB_TYPE_LIGNE = {
+  achats_non_lances:    'achats non lancés',
+  consultation:         'consultation en cours',
+  en_attente:           'références en attente',
+  oubli:                'oubli',
+  pcb_client_sans_date: 'PCB client sans date',
+  pcb_non_lance:        'PCB non lancé',
+  pcb_sans_date:        'PCB sans date',
+  sans_feuille:         'pas de feuille achat',
+  sans_solution:        'référence sans solution',
+  se_sans_date:         'sous-ensemble sans date',
+  so_non_confirme:      'commande non confirmée'
+};
+
 let SOURDINES = null;
 let SD_CTX = null;
 
@@ -1516,7 +1537,9 @@ function ligneSourdine(s) {
   const quand = j <= 0 ? 'revient demain'
               : j === 1 ? 'revient demain'
               : 'revient dans ' + j + ' jours';
-  let h = '<div class="row gris" id="sd-' + esc(s.so) + '">';
+  // v1.36 : une même affaire peut avoir plusieurs lignes en sourdine, chacune sur son type.
+  // L identifiant de la ligne les distingue, sinon elles se marcheraient dessus à l écran.
+  let h = '<div class="row gris" id="sd-' + esc(s.so + '-' + (s.type_ligne || 'tout')) + '">';
   h += '<div class="l1"><span class="so">' + esc(s.so) + '</span>';
   if (s.client) h += '<span class="sep">·</span><span class="cli">' + esc(s.client) + '</span>';
   if (s.carte) h += '<span class="sep">·</span><span class="cli">' + esc(s.carte) + '</span>';
@@ -1527,10 +1550,16 @@ function ligneSourdine(s) {
   // coup d oeil, et le cas précis sans avoir à déplier.
   h += '<span class="pastille p-gris">'
      + esc(LIB_SOURDINE[s.motif_code] || 'posée avant la v1.35') + '</span>';
+  // v1.36 : quelle alerte dort. Sans type, c est toute l affaire — les sourdines d avant.
+  h += '<span class="pastille p-gris">'
+     + esc(s.type_ligne ? (LIB_TYPE_LIGNE[s.type_ligne] || s.type_ligne) : 'toute l affaire')
+     + '</span>';
   const par = s.pose_par ? ' — ' + esc(nomDe(s.pose_par) || s.pose_par) : '';
   h += '<span class="quoi">' + esc(s.detail || s.motif || '') + par + '</span>';
   h += '<span class="acts">';
-  h += '<button class="btn-s" onclick="reveiller(\'' + esc(s.so) + '\')">Réveiller</button>';
+  h += '<button class="btn-s" onclick=\'reveiller('
+     + JSON.stringify({ so: s.so, type_ligne: s.type_ligne || null }).replace(/'/g, '&#39;')
+     + ')\'>Réveiller</button>';
   h += '</span></div></div>';
   return h;
 }
@@ -1540,12 +1569,19 @@ function ouvrirSourdine(ctx) {
   SD_CTX = typeof ctx === 'string' ? JSON.parse(ctx) : (ctx || {});
   fermerSourdine();
   const a = SD_CTX;
+  // v1.36 : le même geste sert maintenant au bloc AR CLIENT (a.cible === 'arclient').
+  // Avant, « En attente » y était un simple clic qui repoussait de 7 jours sans un mot —
+  // trop facile pour un geste qui fait disparaître un client qui attend sa date.
+  const arc = a.cible === 'arclient';
   let h = '<div class="mfond" id="m-sourdine" onclick="if(event.target===this)fermerSourdine()">';
   h += '<div class="mbox">';
-  h += '<h3>Mettre en sourdine</h3>';
+  h += '<h3>' + (arc ? 'Mettre l accusé en attente' : 'Mettre en sourdine') + '</h3>';
   h += '<p class="msub">' + esc(a.so) + (a.client ? ' — ' + esc(a.client) : '') + '</p>';
-  h += '<p class="maide">Cette affaire cessera de remonter dans tes blocs. Dis pourquoi : '
-     + 'le motif servira à savoir, plus tard, ce qui fait dormir les lignes.</p>';
+  h += '<p class="maide">' + (arc
+       ? 'Le client attend toujours sa date. Dis ce qu on attend avant de s engager : '
+       + 'la ligne reviendra, et on saura pourquoi elle a dormi.'
+       : 'Cette affaire cessera de remonter dans tes blocs. Dis pourquoi : '
+       + 'le motif servira à savoir, plus tard, ce qui fait dormir les lignes.') + '</p>';
   h += '<label for="sd-motif">Motif</label>';
   h += '<select id="sd-motif"><option value="">— choisir —</option>'
      + MOTIFS_SOURDINE.map(m => '<option value="' + m[0] + '">' + m[1] + '</option>').join('')
@@ -1553,15 +1589,18 @@ function ouvrirSourdine(ctx) {
   h += '<label for="sd-detail">Précision</label>';
   h += '<textarea id="sd-detail" placeholder="Ce qu on attend exactement, et de qui."></textarea>';
   h += '<label for="sd-jours">Elle revient</label>';
+  // Le défaut reste celui que la personne connaît : 5 jours pour une sourdine, 7 pour un
+  // accusé client, comme avant la v1.36.
   h += '<select id="sd-jours">'
      + '<option value="3">dans 3 jours</option>'
-     + '<option value="5" selected>dans 5 jours</option>'
-     + '<option value="7">dans 7 jours</option>'
+     + '<option value="5"' + (arc ? '' : ' selected') + '>dans 5 jours</option>'
+     + '<option value="7"' + (arc ? ' selected' : '') + '>dans 7 jours</option>'
      + '<option value="14">dans 14 jours</option></select>';
   h += '<div class="merr" id="sd-err"></div>';
   h += '<div class="macts">';
   h += '<button class="btn-s" onclick="fermerSourdine()">Annuler</button>';
-  h += '<button class="btn-p" id="sd-ok" onclick="poserSourdine()">Mettre en sourdine</button>';
+  h += '<button class="btn-p" id="sd-ok" onclick="poserSourdine()">'
+     + (arc ? 'Mettre en attente' : 'Mettre en sourdine') + '</button>';
   h += '</div></div></div>';
   const d = document.createElement('div');
   d.innerHTML = h;
@@ -1585,42 +1624,61 @@ async function poserSourdine() {
   // là-bas parce que c est le seul contrôle qu on ne peut pas contourner.
   if (!motif_code) { err.textContent = 'Choisis un motif.'; return; }
   if (detail.length < 3) { err.textContent = 'Écris une précision : ce qu on attend, et de qui.'; return; }
+  const arc = a.cible === 'arclient';
   const b = document.getElementById('sd-ok');
   b.disabled = true;
   b.textContent = 'Enregistrement…';
   err.textContent = '';
   try {
-    const r = await fetch(SOURDINE_BORD, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'poser', so: a.so, qui: MOI,
-        motif_code: motif_code, detail: detail, jours: jours,
-        responsable: a.responsable || MOI, client: a.client || '',
-        carte: a.carte || '', libelle: a.libelle || ''
-      })
-    });
+    // v1.36 : deux destinations pour un seul geste. L AR client garde son propre circuit
+    // (il sait gérer « attente terminée » et la date de retour) ; il reçoit en plus le motif
+    // et la précision, désormais exigés des deux côtés.
+    const r = arc
+      ? await fetch(ARCLIENT_GESTE, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ so: a.so, geste: 'attente', qui: MOI,
+                                 motif_code: motif_code, detail: detail, jours: jours })
+        })
+      : await fetch(SOURDINE_BORD, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'poser', so: a.so, qui: MOI,
+            motif_code: motif_code, detail: detail, jours: jours,
+            type_ligne: a.type_ligne || null,
+            responsable: a.responsable || MOI, client: a.client || '',
+            carte: a.carte || '', libelle: a.libelle || ''
+          })
+        });
     if (!r.ok) throw new Error('réponse ' + r.status);
     const rep = await r.json();
     if (!rep.ok) throw new Error(rep.motif || 'refusé');
     fermerSourdine();
-    toast('En sourdine. Elle revient le ' + frDate(rep.jusqu_au) + '.');
-    const ligne = document.getElementById('aff-' + a.so);
+    toast(arc
+      ? a.so + ' revient le ' + frDate(rep.jusqu_au) + '.'
+      : 'En sourdine. Elle revient le ' + frDate(rep.jusqu_au) + '.');
+    const ligne = document.getElementById((arc ? 'ac-' : 'aff-') + a.so);
     if (ligne) ligne.classList.add('parti');
-    setTimeout(rafraichir, 500);
+    setTimeout(arc ? chargerArClient : rafraichir, 500);
   } catch (e) {
     b.disabled = false;
-    b.textContent = 'Mettre en sourdine';
+    b.textContent = arc ? 'Mettre en attente' : 'Mettre en sourdine';
     err.textContent = 'Ça n a pas été enregistré (' + e.message + ').';
   }
 }
 
 /* ---- réveiller ---- */
-async function reveiller(so) {
-  const ligne = document.getElementById('sd-' + so);
+/* v1.36 : on réveille UNE ligne. L argument peut encore être un SO seul (ancien appel) :
+   dans ce cas c est la sourdine d affaire qui se réveille, comme avant. */
+async function reveiller(cible) {
+  const c = typeof cible === 'string' ? { so: cible, type_ligne: null }
+          : (typeof cible === 'object' && cible) ? cible : {};
+  const so = c.so;
+  const ligne = document.getElementById('sd-' + so + '-' + (c.type_ligne || 'tout'));
   try {
     const r = await fetch(SOURDINE_BORD, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'reveiller', so: so, qui: MOI })
+      body: JSON.stringify({ action: 'reveiller', so: so,
+                             type_ligne: c.type_ligne || null, qui: MOI })
     });
     if (!r.ok) throw new Error('réponse ' + r.status);
     const rep = await r.json();
@@ -1962,7 +2020,13 @@ function ligneArClient(x) {
   h += '<span class="acts">';
   if (x.lien_odoo) h += '<a class="btn-p" target="_blank" rel="noopener" href="' + esc(x.lien_odoo) + '">Odoo</a>';
   h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'envoye\')">AR envoyé</button>';
-  h += '<button class="btn-s" onclick="gesteArClient(\'' + esc(x.so) + '\',\'attente\')">En attente</button>';
+  // v1.36 : « En attente » passe par la fenêtre de sourdine — motif et précision obligatoires.
+  // Un clic sec qui repoussait de 7 jours sans un mot était trop facile pour un geste qui
+  // fait disparaître de l écran un client qui attend sa date.
+  h += '<button class="btn-s" onclick=\'ouvrirSourdine('
+     + JSON.stringify({ cible: 'arclient', so: x.so, client: x.client || '',
+                        responsable: MOI }).replace(/'/g, '&#39;')
+     + ')\'>En attente</button>';
   h += '</span></div></div>';
   return h;
 }
@@ -2460,6 +2524,12 @@ function ligneAffaire(a, calme) {
   // un geste qu on veut voir utilise, et qui restait invisible tant qu on n avait pas deplie.
   // Sa place est ici, parce que c est l alternative au geste principal — soit je m en occupe,
   // soit j explique pourquoi on attend.
+  // v1.36 : la sourdine posée ICI porte encore sur toute l affaire, et c est voulu.
+  // La base et le service savent désormais taire UNE ligne (ecarts_assumes.type_ligne),
+  // mais ce bouton est au niveau de l affaire, qui regroupe plusieurs blocs — un par type.
+  // Pour taire « pas de feuille achat » sans taire « date ? », il faut d abord décider
+  // où vit le geste : un bouton dans chaque bloc, ou le choix du bloc dans la fenêtre.
+  // Tant que ce n est pas tranché, on ne transmet pas de type : comportement v1.35.
   h += '<button class="btn-s" onclick=\'ouvrirSourdine('
      + JSON.stringify({ so: a.so, client: a.client || '', carte: a.carte || '',
                         libelle: resume, responsable: MOI }).replace(/'/g, '&#39;')
@@ -2541,7 +2611,7 @@ function blocDevis(d) {
          + (relance ? 'sans réponse du client' : 'pas encore lu') + '</span>';
       h += '<span class="quoi">' + esc(v.objet) + '</span>';
       h += '<span class="acts">';
-      h += '<a class="btn-p" href="' + GMAIL + esc(v.thread_id) + '">Ouvrir le mail</a>';
+      h += '<a class="btn-p" target="_blank" rel="noopener" href="' + GMAIL + esc(v.thread_id) + '">Ouvrir le mail</a>';
       h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
       h += '</span></div>';
       h += '<div class="detail">reçu le ' + frDate(v.recu_le);
@@ -2557,7 +2627,9 @@ function outils() {
   let h = '<div class="outils"><h3>MES OUTILS — ' + esc(pole.nom.toUpperCase()) + '</h3><div class="tuiles">';
   for (const k of outilsDe(MOI)) {
     const o = OUTILS[k]; if (!o) continue;
-    h += '<a class="tuile" href="' + RACINE + o.u + '" data-appli="' + esc(k) + '">';
+    // v1.36 : nouvel onglet, comme tous les boutons de la page. On ne perd jamais le
+    // tableau de bord en ouvrant une appli.
+    h += '<a class="tuile" target="_blank" rel="noopener" href="' + RACINE + o.u + '" data-appli="' + esc(k) + '">';
     h += '<i class="ti ' + o.i + '"></i><div><div class="tt">' + esc(o.t) + '</div>';
     h += '<div class="ts">' + esc(o.s) + '</div></div></a>';
   }
@@ -2574,7 +2646,8 @@ function outils() {
   if (POLE_DE[MOI] === 'direction') {
     h += '<p class="autres">Autres outils :';
     AUTRES.forEach(a => {
-      h += ' <a href="' + RACINE + a.u + '" data-appli="' + esc(a.t.toLowerCase()) + '">' + esc(a.t) + '</a>';
+      h += ' <a target="_blank" rel="noopener" href="' + RACINE + a.u + '" data-appli="'
+         + esc(a.t.toLowerCase()) + '">' + esc(a.t) + '</a>';
     });
     h += '</p>';
   }
