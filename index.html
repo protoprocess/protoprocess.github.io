@@ -2455,6 +2455,15 @@ function ligneAffaire(a, calme) {
   // de retaper un SO qui etait deja sous les yeux.
   h += '<a class="btn-p" target="_blank" rel="noopener" href="' + RACINE
      + 'achats/bom-sourcing/?onglet=achats&so=' + encodeURIComponent(a.so) + '">Je m en occupe</a>';
+  // v1.35 : LA MISE EN SOURDINE EST SUR LA LIGNE, juste apres le geste principal.
+  // Elle etait derriere « Détail », la ou vivait l ancien lien a jeton : un clic de trop pour
+  // un geste qu on veut voir utilise, et qui restait invisible tant qu on n avait pas deplie.
+  // Sa place est ici, parce que c est l alternative au geste principal — soit je m en occupe,
+  // soit j explique pourquoi on attend.
+  h += '<button class="btn-s" onclick=\'ouvrirSourdine('
+     + JSON.stringify({ so: a.so, client: a.client || '', carte: a.carte || '',
+                        libelle: resume, responsable: MOI }).replace(/'/g, '&#39;')
+     + ')\'>Mettre en sourdine</button>';
   // Le contexte part avec le clic : SO, client, etat et motifs, tels qu ils sont a l ecran.
   const ctx = 'Affaire ' + a.so + (a.client ? ' — ' + a.client : '')
             + (a.carte ? ' (' + a.carte + ')' : '')
@@ -2504,13 +2513,6 @@ function ligneAffaire(a, calme) {
     h += '</div>';
   }
   h += '<div class="acts2">';
-  // v1.35 : le bouton ouvre la fenêtre de mise en sourdine au lieu de partir vers la page à
-  // jeton. Pourquoi : d ici on sait qui clique, donc on peut demander POURQUOI — ce que le
-  // lien du mail ne pouvait pas faire. La page à jeton reste en place pour le mail du matin.
-  h += '<button class="btn-s" onclick=\'ouvrirSourdine('
-     + JSON.stringify({ so: a.so, client: a.client || '', carte: a.carte || '',
-                        libelle: resume, responsable: MOI }).replace(/'/g, '&#39;')
-     + ')\'>C est normal, mettre en sourdine</button>';
   // Les trois endroits ou une affaire se traite reellement. FabStory ouvre LA carte
   // (?produit=), pas la liste. Luminovo n existe que sur un tiers des affaires.
   if (a.lien_fabstory) h += '<a class="lien" target="_blank" href="' + esc(a.lien_fabstory) + '">FabStory</a>';
