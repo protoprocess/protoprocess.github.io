@@ -42,6 +42,9 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 /* v1.37 : « mis à jour 10:30 », discret, à côté de la version. La page se relit toute seule
    toutes les 10 min ; l heure dit de quand datent les chiffres sans que personne ait à recharger. */
 .maj{font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:6px}
+.btn-maj{background:transparent;border:1px solid var(--border);color:var(--text3);font-size:10px;
+  border-radius:20px;padding:2px 8px;cursor:pointer;margin-left:4px;min-width:84px}
+.btn-maj:hover{color:var(--text2);background:var(--surface2)}
 .dater.retour{background:var(--vert-bg);color:var(--vert)}
 .moi{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);
   border-radius:20px;padding:4px 6px 4px 12px;font-size:12px}
@@ -407,7 +410,8 @@ section.sourdine .row{background:transparent}
        onerror="this.style.display='none'">
   <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Mon tableau de bord</span></span>
   <span class="vbadge" id="vbadge"></span>
-  <span class="maj" id="maj" title="La page se relit toute seule toutes les 10 minutes"></span>
+  <span class="maj" id="maj" title="Pense-bête relu toutes les 10 min, affaires à 8h15 et 14h15, toute la page toutes les heures — quand l'onglet est à l'écran"></span>
+  <button class="btn-maj" id="btn-maj" onclick="rafraichirBouton(this)" title="Tout relire maintenant (au plus une fois par quart d'heure)"><i class="ti ti-refresh"></i> Rafraîchir</button>
   <span class="spacer"></span>
   <span class="score" id="zscore" style="display:none"><i class="ti ti-check"></i> traités aujourd'hui <b id="score">0</b></span>
   <span class="moi" id="zmoi" style="display:none">
@@ -544,8 +548,16 @@ section.sourdine .row{background:transparent}
  *   - la page SE RELIT TOUTE SEULE toutes les 10 min (affaires, pense-bete, tout), avec
  *     « mis a jour HH:MM » a cote de la version. Jamais pendant qu on ecrit ni fenetre ouverte.
  * Le check Luminovo tourne a 8h et 14h (+ mardi/vendredi 7h) : la page le suit a 10 min pres.
+ *
+ * v1.38 (06/11/2026) : LE RAFRAICHISSEMENT PASSE A TROIS VITESSES (quota n8n).
+ * Olivier, le matin meme : « toutes les 10 minutes = 50/jour mais x 20 jours x 10 personnes
+ * a terme !? ». Et c etait pire : une relecture complete = 7 a 10 executions n8n, un service
+ * par bloc. Pense-bete 10 min, affaires et demandes a 8h15 et 14h15 (juste apres le check
+ * Luminovo), toute la page toutes les heures, onglet a l ecran seulement. Bouton « Rafraichir »
+ * dans l en-tete, bride a une fois par quart d heure : « a jour il y a 3 min » sinon.
+ * Au pire ~110 executions par jour et par personne au lieu de 340.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.37";
+const APP_VERSION = "1.38";
 const APP_DATE    = "06/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -972,18 +984,26 @@ async function rafraichir() {
   } catch (e) {}
 }
 
-/* v1.37 (06/11/2026) : LA PAGE SE RELIT TOUTE SEULE, toutes les 10 minutes.
-   Constat d Olivier : un retour en stock relevé à 14h, ou un mot posé dans le pense-bête par
-   un collègue, ne se voyait qu en rechargeant la page — et personne ne recharge. rendre()
-   redessine TOUT (affaires, pense-bête, AR, devis…), donc rafraichir() suffit.
-   Trois garde-fous, parce qu un redessin efface ce qui est en cours :
-   - on ne touche à rien si quelqu un est en train d ÉCRIRE (champ ou textarea actif) ;
-   - on ne touche à rien si une fenêtre (sourdine, demande…) est ouverte ;
-   - on ne relit pas un onglet caché : on le fait au retour, s il a plus de 10 min. */
-const RAFRAICHIR_MS = 10 * 60 * 1000;
+/* v1.37 (06/11/2026) : LA PAGE SE RELIT TOUTE SEULE. Constat d Olivier : un retour en stock
+   relevé à 14h, ou un mot posé dans le pense-bête par un collègue, ne se voyait qu en
+   rechargeant la page — et personne ne recharge.
+   v1.38 (06/11/2026) : TROIS VITESSES, parce que chaque relecture complète coûte 7 à 10
+   exécutions n8n (un service par bloc) et que le palier est de 50 000 par mois. La v1.37
+   relisait tout toutes les 10 min : au pire 340 exécutions par jour et par personne, 68 000
+   par mois à dix. Décision Olivier : relire chaque bloc au rythme où SA SOURCE change.
+     pense-bête         toutes les 10 min     (les collègues écrivent à tout moment)
+     affaires + demandes 8h15 et 14h15        (juste après le check Luminovo de 8h et 14h)
+     toute la page       toutes les heures
+     bouton Rafraîchir   tout relire, bridé : au plus une fois par 15 min
+   Et toujours : onglet caché = rien ; au retour, on rattrape ce qui est dû. Jamais pendant
+   qu on écrit, jamais fenêtre ouverte. Au pire ~110 exécutions/jour/personne. */
+const RYTHME = { divers: 10 * 60 * 1000, page: 60 * 60 * 1000, bouton: 15 * 60 * 1000 };
+const RDV_AFFAIRES = ['08:15', '14:15'];
 let DERNIERE_MAJ = Date.now();
+let DERNIER_DIVERS = Date.now();
+let DERNIER_BOUTON = 0;
 function marquerMaj() {
-  DERNIERE_MAJ = Date.now();
+  DERNIERE_MAJ = Date.now(); DERNIER_DIVERS = Date.now(); DERNIERES_AFFAIRES = Date.now();
   const z = document.getElementById('maj');
   if (z) z.textContent = 'mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
@@ -993,15 +1013,73 @@ function peutRafraichir() {
   const f = document.activeElement;
   if (f && (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT' || f.isContentEditable)) return false;
   if (document.querySelector('.mfond')) return false;
+  // Un brouillon tapé puis laissé là (réponse au pense-bête, demande en cours) ne doit pas
+  // disparaître sous un redessin, même si le curseur n y est plus.
+  if ([...document.querySelectorAll('textarea')].some(t => t.value.trim())) return false;
   return true;
 }
-function rafraichirSiPossible() {
-  if (Date.now() - DERNIERE_MAJ < RAFRAICHIR_MS - 5000) return;
-  if (!peutRafraichir()) return;
-  rafraichir();
+/* Rendez-vous de la journée (8h15, 14h15) : un rendez-vous est dû s il est passé depuis la
+   dernière relecture complète ou partielle des affaires. */
+let DERNIERES_AFFAIRES = Date.now();
+function rdvAffairesDu() {
+  const now = new Date();
+  return RDV_AFFAIRES.some(hm => {
+    const [h, m] = hm.split(':').map(Number);
+    const t = new Date(now); t.setHours(h, m, 0, 0);
+    return t <= now && t.getTime() > DERNIERES_AFFAIRES;
+  });
 }
-setInterval(rafraichirSiPossible, 60 * 1000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) rafraichirSiPossible(); });
+/* Relit SEULEMENT le service des affaires et redessine les deux blocs qu il nourrit
+   (ce qui attend ton geste, mes devis) + les demandes de prix. Le reste ne bouge pas. */
+async function rafraichirAffaires() {
+  try {
+    const r = await fetch(SERVICE, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION })
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const l = Array.isArray(data) ? data : (data.responsables || data.data || []);
+    DONNEES = Array.isArray(l) ? l : [l];
+    DERNIERES_AFFAIRES = Date.now();
+    const d = DONNEES.find(x => x.initiales === MOI);
+    const tmp = document.createElement('div');
+    for (const [id, html] of [['bloc-appro', blocAffaires(d)], ['bloc-devis', blocDevis(d)]]) {
+      const z = document.getElementById(id); if (!z) continue;
+      const replie = z.classList.contains('replie');
+      tmp.innerHTML = html; const n = tmp.firstElementChild;
+      if (replie) n.classList.add('replie');
+      z.replaceWith(n);
+    }
+    if (voitLesDemandesDePrix()) chargerDemandes();
+    majUrgent();
+  } catch (e) {}
+}
+function tic() {
+  if (!peutRafraichir()) return;
+  const now = Date.now();
+  if (now - DERNIERE_MAJ >= RYTHME.page - 5000) { rafraichir(); DERNIERES_AFFAIRES = now; return; }
+  if (rdvAffairesDu()) { rafraichirAffaires(); }
+  if (now - DERNIER_DIVERS >= RYTHME.divers - 5000) { DERNIER_DIVERS = now; chargerDivers(); }
+}
+setInterval(tic, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tic(); });
+/* Le bouton : tout relire, mais au plus une fois par 15 min. Quelqu un qui clique trois fois
+   de suite voit « à jour il y a 1 min » et ne coûte rien de plus. */
+function rafraichirBouton(btn) {
+  const now = Date.now();
+  const reste = RYTHME.bouton - (now - Math.max(DERNIER_BOUTON, DERNIERE_MAJ));
+  if (reste > 0) {
+    const il_y_a = Math.max(1, Math.round((now - DERNIERE_MAJ) / 60000));
+    btn.textContent = 'à jour il y a ' + il_y_a + ' min';
+    setTimeout(() => { btn.innerHTML = '<i class="ti ti-refresh"></i> Rafraîchir'; }, 2500);
+    return;
+  }
+  if (document.querySelector('.mfond')) return;
+  DERNIER_BOUTON = now;
+  btn.innerHTML = '<i class="ti ti-loader"></i> …';
+  rafraichir().then(() => { btn.innerHTML = '<i class="ti ti-refresh"></i> Rafraîchir'; });
+}
 
 /* ---------- les courbes ---------- *
  * Trois mesures, six semaines, en petit. C est le résultat de ce qu on fait, pas une
