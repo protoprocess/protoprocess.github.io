@@ -39,6 +39,10 @@ header{background:var(--surface);height:52px;display:flex;align-items:center;gap
 .vbadge{font-size:10px;color:var(--text3);border:1px solid var(--border);
   border-radius:20px;padding:2px 9px;font-family:var(--mono)}
 .spacer{flex:1}
+/* v1.37 : « mis à jour 10:30 », discret, à côté de la version. La page se relit toute seule
+   toutes les 10 min ; l heure dit de quand datent les chiffres sans que personne ait à recharger. */
+.maj{font-size:10px;color:var(--text3);font-family:var(--mono);margin-left:6px}
+.dater.retour{background:var(--vert-bg);color:var(--vert)}
 .moi{display:flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);
   border-radius:20px;padding:4px 6px 4px 12px;font-size:12px}
 .moi .nom{color:var(--text);font-weight:600}
@@ -403,6 +407,7 @@ section.sourdine .row{background:transparent}
        onerror="this.style.display='none'">
   <span class="logo-text"><span class="lt">PROTO PROCESS</span><span class="ls">/</span><span class="lo">Mon tableau de bord</span></span>
   <span class="vbadge" id="vbadge"></span>
+  <span class="maj" id="maj" title="La page se relit toute seule toutes les 10 minutes"></span>
   <span class="spacer"></span>
   <span class="score" id="zscore" style="display:none"><i class="ti ti-check"></i> traités aujourd'hui <b id="score">0</b></span>
   <span class="moi" id="zmoi" style="display:none">
@@ -527,9 +532,21 @@ section.sourdine .row{background:transparent}
  * ce qui l attend, lui — un compteur collectif a cote d un decompte personnel se
  * contredirait. Le bloc « A toi de jouer » n est pas repris non plus : il avait ete
  * retire du hub des la v2.1, il n existait plus.
+ *
+ * v1.37 (06/11/2026) : LES RETOURS EN STOCK LUMINOVO REMONTENT ENFIN ICI.
+ * Constat d Olivier : deux mails orange « back in stock » (5M2210ZF256C4N, TPS7A2033PDBVR)
+ * et rien sur le tableau de bord. La chaine marchait (feuille ecrite a 7h), mais le retour
+ * ne pesait pas dans le classement, l affaire IP2I etait tue par la regle des 5 jours et par
+ * une sourdine, et le flag « achetable » retombait a faux au second passage.
+ * Corrige cote base (vue v_appro_a_traiter) et service (v1.11). Cote page :
+ *   - la pastille verte dit LA PIECE, CHEZ QUI, COMBIEN — plus « 1 revenue en stock » ;
+ *   - compteur « N retours en stock a commander » en tete du bloc ;
+ *   - la page SE RELIT TOUTE SEULE toutes les 10 min (affaires, pense-bete, tout), avec
+ *     « mis a jour HH:MM » a cote de la version. Jamais pendant qu on ecrit ni fenetre ouverte.
+ * Le check Luminovo tourne a 8h et 14h (+ mardi/vendredi 7h) : la page le suit a 10 min pres.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.36";
-const APP_DATE    = "04/11/2026";
+const APP_VERSION = "1.37";
+const APP_DATE    = "06/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -778,6 +795,7 @@ async function charger() {
     DONNEES = Array.isArray(data) ? data : (data.responsables || data.data || []);
     if (!Array.isArray(DONNEES)) DONNEES = [DONNEES];
     demarrer();
+    marquerMaj();
   } catch (e) {
     app.innerHTML = '<div class="msg err"><strong>La lecture n a pas abouti.</strong><br>'
       + esc(e.message) + '<br><br>Si le code d accès vient d être saisi, recharge la page. '
@@ -950,8 +968,40 @@ async function rafraichir() {
     const l = Array.isArray(data) ? data : (data.responsables || data.data || []);
     DONNEES = Array.isArray(l) ? l : [l];
     rendre();
+    marquerMaj();
   } catch (e) {}
 }
+
+/* v1.37 (06/11/2026) : LA PAGE SE RELIT TOUTE SEULE, toutes les 10 minutes.
+   Constat d Olivier : un retour en stock relevé à 14h, ou un mot posé dans le pense-bête par
+   un collègue, ne se voyait qu en rechargeant la page — et personne ne recharge. rendre()
+   redessine TOUT (affaires, pense-bête, AR, devis…), donc rafraichir() suffit.
+   Trois garde-fous, parce qu un redessin efface ce qui est en cours :
+   - on ne touche à rien si quelqu un est en train d ÉCRIRE (champ ou textarea actif) ;
+   - on ne touche à rien si une fenêtre (sourdine, demande…) est ouverte ;
+   - on ne relit pas un onglet caché : on le fait au retour, s il a plus de 10 min. */
+const RAFRAICHIR_MS = 10 * 60 * 1000;
+let DERNIERE_MAJ = Date.now();
+function marquerMaj() {
+  DERNIERE_MAJ = Date.now();
+  const z = document.getElementById('maj');
+  if (z) z.textContent = 'mis à jour ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+function peutRafraichir() {
+  if (!MOI || !DONNEES) return false;
+  if (document.hidden) return false;
+  const f = document.activeElement;
+  if (f && (f.tagName === 'TEXTAREA' || f.tagName === 'INPUT' || f.isContentEditable)) return false;
+  if (document.querySelector('.mfond')) return false;
+  return true;
+}
+function rafraichirSiPossible() {
+  if (Date.now() - DERNIERE_MAJ < RAFRAICHIR_MS - 5000) return;
+  if (!peutRafraichir()) return;
+  rafraichir();
+}
+setInterval(rafraichirSiPossible, 60 * 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) rafraichirSiPossible(); });
 
 /* ---------- les courbes ---------- *
  * Trois mesures, six semaines, en petit. C est le résultat de ce qu on fait, pas une
@@ -2473,6 +2523,15 @@ function blocAffaires(d) {
   if (vieux)
     h += '<div class="dater">État du <strong>' + esc(jourEtDate(d.balaye_le))
        + '</strong> — le balayage tourne à 5h50 les jours ouvrables. Rien n\'a été relevé depuis.</div>';
+  // v1.37 : LE COMPTEUR DES RETOURS EN STOCK, en tete du bloc. Le check Luminovo (8h et 14h)
+  // envoyait un mail orange que personne ne reliait a une affaire ; le service compte
+  // maintenant les pieces redevenues commandables (compteurs.retours_achetables) et les
+  // affaires concernees montent en orange avec le badge EN STOCK. Ici on dit combien, en vert :
+  // c est une bonne nouvelle qui demande un geste, pas une alerte.
+  const nbRet = Number((d && d.compteurs && d.compteurs.retours_achetables) || 0);
+  if (nbRet)
+    h += '<div class="dater retour"><i class="ti ti-package"></i> <strong>' + nbRet + ' retour'
+       + (nbRet > 1 ? 's' : '') + ' en stock à commander</strong> — pièce, fournisseur et stock sur la ligne.</div>';
   if (!aff.length) {
     h += '<div class="vide"><i class="ti ti-circle-check"></i> '
        + (vieux ? 'Rien à faire ici au dernier balayage.' : 'Rien à faire ici. Tout est à jour.')
@@ -2508,9 +2567,18 @@ function ligneAffaire(a, calme) {
   // Ne se voit sans deplier que si la piece est reellement ACHETABLE : un stock partiel
   // ne debloque pas l affaire et n a donc rien a faire sur la premiere ligne.
   const retAch = (a.retours || []).filter(r => r.achetable);
+  // v1.37 (06/11/2026, demande d Olivier) : la pastille DIT LA PIECE, CHEZ QUI ET COMBIEN
+  // (« 5M2210ZF256C4N revenu chez MOUSER (120 pcs, besoin 10) »), au lieu de « 1 revenue en
+  // stock ». La ligne porte deja le client et la carte : avec la piece, on sait quoi commander
+  // sans deplier. Le service (v1.11) fournit retours_texte deja formule ; a defaut, on compose.
   if (retAch.length) {
-    h += '<span class="pastille p-vert">' + retAch.length + ' revenue'
-       + (retAch.length > 1 ? 's' : '') + ' en stock</span>';
+    const textes = (a.retours_texte && a.retours_texte.length) ? a.retours_texte
+      : retAch.map(r => r.mpn + ' revenu chez ' + (r.fournisseur || '?')
+          + (r.stock != null ? ' (' + r.stock + ' pcs' + (r.besoin != null ? ', besoin ' + r.besoin : '') + ')' : ''));
+    h += '<span class="pastille p-vert" title="' + esc(textes.join('\n')) + '">'
+       + '<i class="ti ti-package"></i> ' + esc(textes[0])
+       + (textes.length > 1 ? ' + ' + (textes.length - 1) + ' autre' + (textes.length > 2 ? 's' : '') : '')
+       + '</span>';
   }
   h += '<span class="quoi">' + esc(resume) + '</span>';
   h += '<span class="acts">';
