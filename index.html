@@ -557,7 +557,21 @@ section.sourdine .row{background:transparent}
  * dans l en-tete, bride a une fois par quart d heure : « a jour il y a 3 min » sinon.
  * Au pire ~110 executions par jour et par personne au lieu de 340.
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.38";
+/* --- v1.39 (06/11/2026) : LA MARQUE D ACCUEIL SURVIT AU NOUVEL ONGLET -------------
+ * La v1.36 (04/11) a passe les tuiles en target="_blank" rel="noopener". Un onglet
+ * ouvert ainsi ne recoit AUCUNE copie du sessionStorage de l onglet d origine : la
+ * marque pp_accueil_url restait derriere. Consequences, invisibles jusqu au 06/11 :
+ *   - le bouton « Accueil » a disparu des 6 applis qui chargent retour-accueil.js
+ *     (commande, devis-client, fabstory, appro-v2, po-odoo, bom-sourcing) ;
+ *   - le pop-up du deroule de l appli Commande ne s ouvrait plus.
+ * La marque est desormais ecrite AUSSI dans localStorage, qui lui est partage par
+ * tous les onglets de l origine. sessionStorage est conserve : les applis lisent
+ * la session d abord, le local en secours, donc rien a changer ailleurs si une
+ * appli n est pas a jour.
+ * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
+ * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
+ * ------------------------------------------------------------------ */
+const APP_VERSION = "1.39";
 const APP_DATE    = "06/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -580,10 +594,13 @@ const SB_KEY = 'sb_publishable_2-umPRDkyFtqcHhaqWAMoA_5IerFc0O';
 
 /* ---------- repris de l ancien hub (v1.19) ---------- */
 
-/* Marque « arrivé par l accueil » : lue par achats/shared/retour-accueil.js dans chaque
-   appli, qui s en sert pour afficher le bouton de retour. Sans elle, les applis perdent
-   le chemin du retour. */
+/* Marque « arrivé par l accueil » : lue par shared/retour-accueil.js dans chaque
+   appli, qui s en sert pour afficher le bouton de retour, et par shared/deroule.js.
+   Sans elle, les applis perdent le chemin du retour.
+   v1.39 : ecrite dans les DEUX stockages. sessionStorage ne franchit pas un onglet
+   ouvert en rel="noopener", localStorage si. */
 try { sessionStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch (e) {}
+try { localStorage.setItem('pp_accueil_url', location.origin + location.pathname); } catch (e) {}
 
 /* Session : regroupe les mesures d un même passage (accueil puis appli). */
 let SESSION = null;
