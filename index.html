@@ -571,7 +571,7 @@ section.sourdine .row{background:transparent}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.39";
+const APP_VERSION = "1.40";
 const APP_DATE    = "06/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -948,6 +948,10 @@ function rendre() {
   // appel : la page reste lisible même si ce service-là ne répond pas.
   if (voitLesAchats()) h += '<section id="bloc-ar"></section>';
 
+  // v1.40 : les pièces annoncées en retard par le fournisseur. Même principe que le bloc
+  // AR — son propre appel, pour que la page reste lisible si ce service-là ne répond pas.
+  if (voitLesBackorders()) h += '<section id="bloc-backorder"></section>';
+
   // v1.22 : les dossiers à préparer, pour le pôle méthodes. Demande de Jérôme du 03/11/2026.
   // Il se remplit par son propre appel : si ce service-là ne répond pas, le reste de la page
   // reste lisible.
@@ -973,6 +977,7 @@ function rendre() {
   suivreLaCharge();
   if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
+  if (voitLesBackorders()) chargerBackorder();
   if (voitLeMenagePo()) chargerPoRattacher();
   if (voitLesAffaires()) chargerFacturer();
   if (voitLesAffaires()) chargerArClient();
@@ -1991,6 +1996,21 @@ function voitLesAchats() {
 // à qui ils sont. Maura et Dorian n'ont pas à les porter.
 function voitLeMenagePo() { return POLE_DE[MOI] === 'direction' || MOI === 'FR'; }
 
+/* v1.40 (17/11/2026) : les pièces que le fournisseur a annoncées en retard.
+   Tout le monde en voit, mais pas la même chose : la production et la direction voient
+   toutes les lignes, parce que les pièces finissent chez eux et que c'est la réception
+   qui bute dessus ; un commercial ne voit que ses affaires (colonne N du planning),
+   parce que c'est lui qui cherchera un équivalent ou préviendra le client. Le tri est
+   fait par le service : les retards d'abord. */
+function voitLesBackorders() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'production' || p === 'commercial_achats';
+}
+function voitTousLesBackorders() {
+  const p = POLE_DE[MOI];
+  return p === 'direction' || p === 'production';
+}
+
 async function chargerAR() {
   const z = document.getElementById('bloc-ar');
   if (!z) return;
@@ -2132,6 +2152,68 @@ async function chargerArClient() {
     z.innerHTML = '<div class="msg err">Les accusés client n ont pas pu être lus (' + esc(e.message)
                 + '). Le reste de la page est à jour.</div>';
   }
+}
+
+/* ------------------------------------------------------------------
+ * v1.40 (17/11/2026) — PIÈCES EN ATTENTE CHEZ LE FOURNISSEUR
+ * Source : Suivi N3, lignes au statut « Backorder » — c'est-à-dire celles où le
+ * fournisseur a annoncé un retard et où rien n'est parti depuis. Croisé avec le
+ * planning pour ne garder que les affaires encore en cours, et pour savoir à qui
+ * la ligne appartient.
+ * Le rouge est réservé à une date promise dépassée : c'est le seul cas où un
+ * engagement est rompu. Une date lointaine mais tenue reste neutre.
+ * ------------------------------------------------------------------ */
+const BACKORDER_LIRE = 'https://protoprocess.app.n8n.cloud/webhook/pp-backorder-liste';
+
+async function chargerBackorder() {
+  const z = document.getElementById('bloc-backorder');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des pièces en attente…</div>';
+  try {
+    const r = await fetch(BACKORDER_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION,
+                                                                   qui: MOI, tout: voitTousLesBackorders(),
+                                                                   direction: POLE_DE[MOI] === 'direction' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocBackorder(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les pièces en attente n ont pas pu être lues (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocBackorder(d) {
+  const lignes = (d && d.lignes) || [];
+  const retards = (d && d.nb_retard) || 0;
+  let h = entete(retards ? 't-crit' : 't-ok', '', 'PIÈCES EN ATTENTE CHEZ LE FOURNISSEUR', lignes.length, '');
+  if (!lignes.length) {
+    h += '<div class="vide"><i class="ti ti-circle-check"></i> Aucune pièce annoncée en retard.</div>';
+    return h;
+  }
+  h += capper(lignes.map(ligneBackorder), 'pièce');
+  return h;
+}
+
+function ligneBackorder(b) {
+  // Rouge : la date promise est passée et la pièce n'est toujours pas là.
+  // Orange : pas de date du tout — on ne sait pas quand, et personne ne le saura sans appeler.
+  // Gris : une date annoncée, encore devant nous.
+  const niv = b.retard_j > 0 ? 'rouge' : (b.date_lisible ? 'gris' : 'orange');
+  let h = '<div class="row ' + niv + '">';
+  h += '<div class="l1"><span class="so">' + esc(b.so) + '</span>';
+  if (b.client) h += '<span class="sep">·</span><span class="cli">' + esc(b.client) + '</span>';
+  h += '<span class="badge b-' + niv + '">'
+     + (b.retard_j > 0 ? 'promis le ' + esc(b.date_annoncee) + ' — ' + b.retard_j + ' j de retard'
+                       : (b.date_lisible ? 'annoncé le ' + esc(b.date_annoncee) : 'sans date annoncée'))
+     + '</span></div>';
+  h += '<div class="l2">';
+  h += '<span class="pastille p-' + (niv === 'rouge' ? 'rouge' : 'bleu') + '">'
+     + esc(b.mpn || b.ipn || '?') + (b.qte ? ' × ' + esc(b.qte) : '') + '</span>';
+  if (b.fournisseur) h += '<span class="pastille p-gris">' + esc(b.fournisseur) + '</span>';
+  h += '<span class="quoi">' + esc(b.carte || '') + (b.arc && b.arc !== 'NA' ? ' — client attendu le ' + esc(b.arc) : '') + '</span>';
+  h += '</div>';
+  h += '</div>';
+  return h;
 }
 
 function blocArClient(d) {
