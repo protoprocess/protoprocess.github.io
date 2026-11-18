@@ -571,8 +571,8 @@ section.sourdine .row{background:transparent}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.40";
-const APP_DATE    = "06/11/2026";
+const APP_VERSION = "1.41";
+const APP_DATE    = "18/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -950,6 +950,15 @@ function rendre() {
 
   // v1.40 : les pièces annoncées en retard par le fournisseur. Même principe que le bloc
   // AR — son propre appel, pour que la page reste lisible si ce service-là ne répond pas.
+  // v1.41 (18/11/2026, décision Olivier) : AVANT les pièces en attente, celles qui demandent
+  // une décision. Une pièce que le fournisseur annonce APRÈS la date ARC de l affaire met la
+  // carte en retard : on annule et on re-source, ou on attend. Le système ne tranche pas tout
+  // seul, parce qu il ne sait pas distinguer un reliquat SUBI (stock affiché faux) d un
+  // reliquat CHOISI (pièce commandée en sachant qu elle n est pas en stock).
+  // Réservé à ceux qui voient toutes les lignes : annuler une commande n est pas un geste
+  // de commercial.
+  if (voitTousLesBackorders()) h += '<section id="bloc-arbitrage"></section>';
+
   if (voitLesBackorders()) h += '<section id="bloc-backorder"></section>';
 
   // v1.22 : les dossiers à préparer, pour le pôle méthodes. Demande de Jérôme du 03/11/2026.
@@ -977,6 +986,7 @@ function rendre() {
   suivreLaCharge();
   if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
+  if (voitTousLesBackorders()) chargerArbitrage();
   if (voitLesBackorders()) chargerBackorder();
   if (voitLeMenagePo()) chargerPoRattacher();
   if (voitLesAffaires()) chargerFacturer();
@@ -2214,6 +2224,101 @@ function ligneBackorder(b) {
   h += '</div>';
   h += '</div>';
   return h;
+}
+
+/* ------------------------------------------------------------------
+ * v1.41 (18/11/2026) — BACKORDER À ARBITRER
+ * Le fournisseur annonce la pièce APRÈS la date ARC de l affaire : la carte part en
+ * retard. Deux issues, et c est un humain qui choisit (décision Olivier du 18/11) :
+ *   « À annuler »  → demande d annulation au fournisseur, la ligne repart dans la
+ *                    sheet Paniers en attente pour être re-sourcée, et elle sort d ici.
+ *   « On attend »  → la ligne dort jusqu à la date annoncée, puis revient si la pièce
+ *                    n est pas arrivée. Une promesse non tenue redevient une décision.
+ * Pourquoi pas d automatisme : rien, dans nos données, ne dit si le reliquat a été SUBI
+ * (stock affiché faux — Farnell et RS surtout) ou CHOISI (pièce commandée en sachant
+ * qu elle n est pas en stock). Seul un humain le sait.
+ * Le responsable de l affaire est affiché pour être consulté, pas pour décider : la
+ * colonne Responsable du planning dit qui suit la carte, pas qui a passé la commande,
+ * que rien ne trace aujourd hui.
+ * ------------------------------------------------------------------ */
+const ARBITRAGE_LIRE   = 'https://protoprocess.app.n8n.cloud/webhook/pp-backorder-a-decider';
+const ARBITRAGE_DECIDE = 'https://protoprocess.app.n8n.cloud/webhook/pp-backorder-arbitrage';
+
+async function chargerArbitrage() {
+  const z = document.getElementById('bloc-arbitrage');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture des décisions à prendre…</div>';
+  try {
+    const r = await fetch(ARBITRAGE_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ source: 'ma-gestion-de-projets',
+                                                                   version: APP_VERSION, qui: MOI,
+                                                                   filtre: 'tout' }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const d = await r.json();
+    // Un cadre vide n apprend rien : le bloc disparaît quand il n y a rien à décider.
+    if (!d || !d.lignes || !d.lignes.length) { z.style.display = 'none'; z.innerHTML = ''; return; }
+    z.style.display = '';
+    z.innerHTML = blocArbitrage(d);
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">Les décisions à prendre n ont pas pu être lues ('
+                + esc(e.message) + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocArbitrage(d) {
+  const lignes = d.lignes || [];
+  let h = entete('t-crit', '', 'BACKORDER À ARBITRER — ANNULER OU ATTENDRE', lignes.length, '');
+  h += capper(lignes.map(ligneArbitrage), 'décision');
+  return h;
+}
+
+function ligneArbitrage(a) {
+  // Toujours en rouge : par construction, ces lignes arrivent après le besoin de l affaire.
+  let h = '<div class="row rouge" id="arb-' + a.id + '">';
+  h += '<div class="l1"><span class="so">' + esc(a.so) + '</span>';
+  if (a.responsable) h += '<span class="sep">·</span><span class="cli">affaire suivie par '
+                        + esc(a.responsable) + '</span>';
+  h += '<span class="badge b-rouge">annoncé le ' + esc(a.annonce || '?')
+     + ' pour un besoin le ' + esc(a.besoin || '?') + ' — ' + a.ecart_jours + ' j de trop</span>';
+  h += '</div>';
+  h += '<div class="l2">';
+  h += '<span class="pastille p-rouge">' + esc(a.ref) + (a.qte ? ' × ' + esc(a.qte) : '') + '</span>';
+  if (a.fournisseur) h += '<span class="pastille p-gris">' + esc(a.fournisseur) + '</span>';
+  if (a.num_commande) h += '<span class="pastille p-gris">cmd ' + esc(a.num_commande) + '</span>';
+  h += '</div>';
+  h += '<div class="l2" style="margin-top:6px;gap:8px">';
+  h += '<button class="btn-p" onclick="deciderBackorder(' + a.id + ',\'annuler\',this)"'
+     + ' title="Demande au fournisseur d annuler ce reliquat, et remet la pièce dans les Paniers en attente">'
+     + 'À annuler</button>';
+  h += '<button class="btn-s" onclick="deciderBackorder(' + a.id + ',\'attendre\',this)"'
+     + ' title="On garde la commande. La ligne revient ici à la date annoncée si la pièce n est pas arrivée">'
+     + 'On attend</button>';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+async function deciderBackorder(id, action, bouton) {
+  // Le clic est engageant quand il s agit d annuler : un mail part chez le fournisseur.
+  if (action === 'annuler'
+      && !confirm('Envoyer la demande d annulation au fournisseur et remettre la pièce en attente ?')) return;
+  const zone = bouton.parentNode;
+  zone.innerHTML = '<span class="quoi"><i class="ti ti-loader"></i> …</span>';
+  try {
+    const r = await fetch(ARBITRAGE_DECIDE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ id: id, action: action, qui: MOI,
+                                                                     source: 'ma-gestion-de-projets',
+                                                                     version: APP_VERSION }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    zone.innerHTML = '<span class="quoi">' + esc(d.message || 'Fait.') + '</span>';
+    // La ligne a changé de camp : on relit la liste, et le bloc des pièces en attente aussi,
+    // puisqu une annulation l en retire.
+    setTimeout(function () { chargerArbitrage(); if (voitLesBackorders()) chargerBackorder(); }, 2500);
+  } catch (e) {
+    zone.innerHTML = '<span class="quoi err">Rien n a été fait (' + esc(e.message)
+                   + '). Réessaie, ou dis-le à Olivier.</span>';
+  }
 }
 
 function blocArClient(d) {
