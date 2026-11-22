@@ -381,6 +381,15 @@ section.charge{margin-top:16px}
 .tcharge .petit{font-size:11px;color:var(--text3)}
 .tcharge tr.gris td{color:var(--text3)}
 .tcharge .autreq{color:var(--text3);font-style:italic}
+/* v1.44 : file CMS a fenetres. Orange pour une date menacee : jamais de rouge (decision Olivier). */
+.ch-orange{color:var(--ambre)}
+.chsynth .c.ch-or{background:var(--ambre-bg)} .chsynth .c.ch-or .v{color:var(--ambre)}
+.chsynth .v .petit{font-size:11px;font-weight:400;color:var(--text3);font-family:inherit}
+.chsem{display:flex;gap:8px;align-items:flex-end;padding:6px 14px 2px}
+.chsem .w{display:flex;flex-direction:column;align-items:center;width:44px}
+.chsem .bar{width:24px;height:54px;background:var(--surface2);border-radius:3px;display:flex;align-items:flex-end;overflow:hidden}
+.chsem .bar i{display:block;width:100%;background:var(--bleuf-l)}
+.chsem .lb{font-size:10px;color:var(--text3);line-height:1.3}
 
 /* la fenêtre de mise en sourdine */
 .mfond{position:fixed;inset:0;background:rgba(20,28,45,.42);z-index:200;
@@ -589,7 +598,7 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.43";
+const APP_VERSION = "1.44";
 const APP_DATE    = "22/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1593,37 +1602,53 @@ async function chargerChargeCms() {
 function heures(x) { return (Math.round(Number(x || 0) * 10) / 10).toString().replace('.', ',') + ' h'; }
 
 function blocChargeCms(d) {
+  // v1.44 (22/11/2026, lot B) : la FILE CMS A FENETRES. Lignes dans l ordre de passage calcule par n8n
+  // (au plus tard le plus proche parmi les affaires dont le PCB est la) ; colonne « Marge » = jours
+  // ouvres entre la fin de CMS prevue et l au plus tard (date client - TRAD - 1 j). Orange si negatif.
   const l = (d && d.lignes) || [];
   const s = (d && d.synthese) || {};
+  const sem = (d && d.semaines) || [];
   let h = entete('t-ok', '', 'CHARGE CMS', l.length, '');
   h += '<div class="chsynth">'
-     + '<div class="c"><div class="l">Pose CMS à venir</div><div class="v">' + heures(s.pose_cms_h) + '</div></div>'
-     + '<div class="c"><div class="l">Soit, à 7 h par jour</div><div class="v">'
-     + String(s.jours || 0).replace('.', ',') + ' j</div></div>'
-     + '<div class="c"><div class="l">Préparation CMS à venir</div><div class="v">' + heures(s.prepa_cms_h) + '</div></div>'
+     + '<div class="c"><div class="l">Pose CMS à venir</div><div class="v">' + heures(s.pose_cms_h)
+     + ' <span class="petit">' + String(s.jours || 0).replace('.', ',') + ' j</span></div></div>'
+     + '<div class="c"><div class="l">CMS occupé jusqu au</div><div class="v">' + esc(s.cms_occupe_jusqu_au || '—') + '</div></div>'
+     + '<div class="c' + (s.nb_menacees ? ' ch-or' : '') + '"><div class="l">Dates client menacées</div><div class="v">' + (s.nb_menacees || 0)
+     + (s.nb_depassees ? ' <span class="petit">dont ' + s.nb_depassees + ' déjà dépassée' + (s.nb_depassees > 1 ? 's' : '') + '</span>' : '') + '</div></div>'
+     + '<div class="c"><div class="l">Préparation CMS</div><div class="v">' + heures(s.prepa_cms_h) + '</div></div>'
      + '<div class="c"><div class="l">Amorce feeders (hors machine)</div><div class="v">' + heures(s.amorce_feeders_h) + '</div></div>'
      + '</div>';
-  let note = 'Temps Luminovo × 1,2. ';
-  if (s.nb_sans_temps) note += s.nb_sans_temps + ' affaire' + (s.nb_sans_temps > 1 ? 's' : '') + ' sans temps Luminovo. ';
-  if (s.nb_autre_quantite) note += s.nb_autre_quantite + ' temps lu' + (s.nb_autre_quantite > 1 ? 's' : '')
-                                 + ' sur une autre quantité, hors cumul. ';
-  if (s.nb_estimes) note += s.nb_estimes + ' temps estimé' + (s.nb_estimes > 1 ? 's' : '')
-                          + ' avec un panneau de 1 (panneau absent dans Luminovo).';
+  // charge par semaine : 35 h = une semaine pleine
+  if (sem.length) {
+    h += '<div class="chsem">';
+    sem.slice(0, 10).forEach(w => {
+      const pc = Math.min(100, Math.round(w.heures / 35 * 100));
+      h += '<div class="w" title="Semaine du ' + esc(w.lundi) + ' : ' + heures(w.heures) + ' de pose sur 35 h">'
+         + '<div class="bar"><i style="height:' + pc + '%"></i></div>'
+         + '<div class="lb">' + esc(w.semaine) + '</div><div class="lb">' + Math.round(w.heures) + ' h</div></div>';
+    });
+    h += '</div>';
+  }
+  let note = 'Temps Luminovo × 1,2 · 1 ligne, 7 h par jour ouvré · ordre de passage = date client moins TRAD, dès que le PCB est là. ';
+  if (s.nb_sans_temps) note += s.nb_sans_temps + ' affaire' + (s.nb_sans_temps > 1 ? 's' : '') + ' sans temps, non placée' + (s.nb_sans_temps > 1 ? 's' : '') + '. ';
+  if (s.nb_sans_date_client) note += s.nb_sans_date_client + ' sans date client, en fin de file. ';
+  if (s.nb_estimes) note += s.nb_estimes + ' temps estimé' + (s.nb_estimes > 1 ? 's' : '') + ' (panneau absent dans Luminovo). ';
   h += '<div class="chnote">' + esc(note) + '</div>';
   if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h; }
-  h += '<table class="tcharge"><tr><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
-     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th></tr>';
+  h += '<table class="tcharge"><tr><th>#</th><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
+     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th><th>Marge</th></tr>';
   l.forEach((x, i) => {
     const t = x.temps;
-    const cls = (i >= 10 ? 'sup cache ' : '') + (t ? '' : 'gris');
+    const cls = (i >= 15 ? 'sup cache ' : '') + (t ? '' : 'gris');
     h += '<tr class="' + cls.trim() + '">';
+    h += '<td class="n petit">' + (x.rang || '') + '</td>';
     h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span></td>';
     h += '<td>' + esc(x.carte) + '</td>';
     h += '<td class="n">' + esc(x.qte || '') + (x.nb_lots > 1 ? '<br><span class="petit">' + x.nb_lots + ' lots</span>' : '') + '</td>';
     if (!t) {
-      h += '<td colspan="4" class="petit">temps inconnu</td>';
+      h += '<td colspan="4" class="petit">temps inconnu — non placée dans la file</td>';
     } else {
-      const alerte = t.incomplet ? ' <i class="ti ti-alert-triangle" title="Temps incomplet : Luminovo n a pas pu tout calculer (facteur de panneau à remplir dans le scénario)"></i>' : '';
+      const alerte = t.incomplet ? ' <i class="ti ti-alert-triangle" title="Temps incomplet : Luminovo n a pas pu tout calculer"></i>' : '';
       const estime = t.estime ? ' <span class="autreq" title="Panneau absent dans Luminovo : temps par carte calculé avec un panneau de 1">estimé</span>' : '';
       const autre = t.approx ? ' <span class="autreq" title="Pas de scénario à cette quantité dans Luminovo : temps du scénario « ' + esc(t.scenario || '') + ' »">(Qté ' + esc(t.qte_scenario) + ')</span>' : '';
       h += '<td class="n">' + heures(t.prepa_cms_h) + '</td>';
@@ -1633,10 +1658,16 @@ function blocChargeCms(d) {
     }
     h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
     h += '<td>' + esc(x.appro || '') + '</td>';
+    let m = '<span class="petit">—</span>';
+    if (x.marge_j !== null && x.marge_j !== undefined) {
+      m = '<b class="' + (x.menacee ? 'ch-orange' : '') + '">' + (x.marge_j > 0 ? '+' : '') + x.marge_j + ' j</b>';
+    }
+    if (x.date_client) m += '<br><span class="petit">livr. ' + esc(x.date_client) + (x.date_depassee ? ' (passée)' : '') + '</span>';
+    h += '<td class="n">' + m + '</td>';
     h += '</tr>';
   });
   h += '</table>';
-  if (l.length > 10) h += '<button class="plus" onclick="deplier(this)">Voir les ' + (l.length - 10) + ' autres affaires ▾</button>';
+  if (l.length > 15) h += '<button class="plus" onclick="deplier(this)">Voir les ' + (l.length - 15) + ' autres affaires ▾</button>';
   return h;
 }
 
