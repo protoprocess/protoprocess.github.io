@@ -589,7 +589,7 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.42";
+const APP_VERSION = "1.43";
 const APP_DATE    = "22/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1568,6 +1568,9 @@ const DOSSIERS = 'https://protoprocess.app.n8n.cloud/webhook/pp-dossiers-methode
  * CMS : 1 ligne, 1 personne, 7 h par jour. Lignes rangees par demarrage possible (PCB + 1 j,
  * sinon date client - 10 j) — ces dates ne s affichent pas (decision Olivier du 22/11).
  * Calcul fait cote n8n (workflow « PP — Charge CMS (page) »), la page ne fait qu afficher.
+ * v1.43 (22/11/2026, decisions Olivier) : une ligne par SO + carte (lots additionnes, « N lots ») ;
+ * colonne AMORCE FEEDERS (chargement des bandes, hors machine : affichee, hors cumul) ; temps recalcule
+ * avec un panneau de 1 faute de panneau dans Luminovo marque « estimé ».
  * ========================================================================== */
 const CHARGE_CMS = 'https://protoprocess.app.n8n.cloud/webhook/pp-charge-cms';
 function voitLaChargeCms() { const p = POLE_DE[MOI]; return p === 'direction' || p === 'production'; }
@@ -1598,29 +1601,34 @@ function blocChargeCms(d) {
      + '<div class="c"><div class="l">Soit, à 7 h par jour</div><div class="v">'
      + String(s.jours || 0).replace('.', ',') + ' j</div></div>'
      + '<div class="c"><div class="l">Préparation CMS à venir</div><div class="v">' + heures(s.prepa_cms_h) + '</div></div>'
+     + '<div class="c"><div class="l">Amorce feeders (hors machine)</div><div class="v">' + heures(s.amorce_feeders_h) + '</div></div>'
      + '</div>';
   let note = 'Temps Luminovo × 1,2. ';
   if (s.nb_sans_temps) note += s.nb_sans_temps + ' affaire' + (s.nb_sans_temps > 1 ? 's' : '') + ' sans temps Luminovo. ';
   if (s.nb_autre_quantite) note += s.nb_autre_quantite + ' temps lu' + (s.nb_autre_quantite > 1 ? 's' : '')
-                                 + ' sur une autre quantité, hors cumul.';
+                                 + ' sur une autre quantité, hors cumul. ';
+  if (s.nb_estimes) note += s.nb_estimes + ' temps estimé' + (s.nb_estimes > 1 ? 's' : '')
+                          + ' avec un panneau de 1 (panneau absent dans Luminovo).';
   h += '<div class="chnote">' + esc(note) + '</div>';
   if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h; }
   h += '<table class="tcharge"><tr><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
-     + '<th>Pose CMS</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th></tr>';
+     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th></tr>';
   l.forEach((x, i) => {
     const t = x.temps;
     const cls = (i >= 10 ? 'sup cache ' : '') + (t ? '' : 'gris');
     h += '<tr class="' + cls.trim() + '">';
     h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span></td>';
     h += '<td>' + esc(x.carte) + '</td>';
-    h += '<td class="n">' + esc(x.qte || '') + '</td>';
+    h += '<td class="n">' + esc(x.qte || '') + (x.nb_lots > 1 ? '<br><span class="petit">' + x.nb_lots + ' lots</span>' : '') + '</td>';
     if (!t) {
-      h += '<td colspan="3" class="petit">temps inconnu</td>';
+      h += '<td colspan="4" class="petit">temps inconnu</td>';
     } else {
       const alerte = t.incomplet ? ' <i class="ti ti-alert-triangle" title="Temps incomplet : Luminovo n a pas pu tout calculer (facteur de panneau à remplir dans le scénario)"></i>' : '';
+      const estime = t.estime ? ' <span class="autreq" title="Panneau absent dans Luminovo : temps par carte calculé avec un panneau de 1">estimé</span>' : '';
       const autre = t.approx ? ' <span class="autreq" title="Pas de scénario à cette quantité dans Luminovo : temps du scénario « ' + esc(t.scenario || '') + ' »">(Qté ' + esc(t.qte_scenario) + ')</span>' : '';
       h += '<td class="n">' + heures(t.prepa_cms_h) + '</td>';
-      h += '<td class="n">' + heures(t.pose_cms_h) + alerte + autre + '</td>';
+      h += '<td class="n">' + heures(t.pose_cms_h) + alerte + estime + autre + '</td>';
+      h += '<td class="n petit">' + heures(t.amorce_feeders_h) + '</td>';
       h += '<td class="n">' + heures(t.montage_trad_h) + '</td>';
     }
     h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
