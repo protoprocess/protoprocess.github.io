@@ -364,6 +364,24 @@ section.sourdine .shead{background:#f1f3f6}
 .c-gris{background:#eef1f5;color:var(--text2)}
 section.sourdine .row{background:transparent}
 
+/* ---------- v1.42 : LE BLOC « CHARGE CMS » (tableau de bord de Fred) ---------- *
+   Decisions d Olivier des 20 et 22/11/2026 : apres les autres blocs, sur toute la largeur
+   (une grille a trois colonnes n a pas la place pour huit colonnes de tableau), pas de rouge,
+   pas de dates de demarrage ni de fin a l ecran. */
+section.charge{margin-top:16px}
+.chsynth{display:flex;flex-wrap:wrap;gap:10px;padding:10px 14px 4px}
+.chsynth .c{background:var(--surface2);border-radius:var(--radius);padding:7px 12px;min-width:150px}
+.chsynth .l{font-size:11px;color:var(--text3)}
+.chsynth .v{font-size:18px;font-weight:600;font-family:var(--mono)}
+.chnote{font-size:11px;color:var(--text3);padding:2px 14px 8px}
+.tcharge{width:100%;border-collapse:collapse;font-size:12px}
+.tcharge th{text-align:left;font-weight:600;color:var(--text3);font-size:11px;padding:6px 8px;border-bottom:1px solid var(--border)}
+.tcharge td{padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.tcharge td.n{font-family:var(--mono);white-space:nowrap}
+.tcharge .petit{font-size:11px;color:var(--text3)}
+.tcharge tr.gris td{color:var(--text3)}
+.tcharge .autreq{color:var(--text3);font-style:italic}
+
 /* la fenêtre de mise en sourdine */
 .mfond{position:fixed;inset:0;background:rgba(20,28,45,.42);z-index:200;
   display:flex;align-items:center;justify-content:center;padding:20px}
@@ -571,8 +589,8 @@ section.sourdine .row{background:transparent}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.41";
-const APP_DATE    = "18/11/2026";
+const APP_VERSION = "1.42";
+const APP_DATE    = "22/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -973,6 +991,11 @@ function rendre() {
 
   h += '</div>';
 
+  // v1.42 (22/11/2026, decisions Olivier) : LE BLOC « CHARGE CMS », pleine largeur, APRES les
+  // autres blocs. Production et direction seulement. Son propre appel : la page reste lisible
+  // si ce service ne repond pas.
+  if (voitLaChargeCms()) h += '<section id="bloc-charge" class="charge"></section>';
+
   // v1.35 : LE BLOC « EN SOURDINE », pleine largeur, tout en bas. Hors de la grille :
   // ce ne sont pas des gestes à faire, c est ce qu on a mis de côté. Il se remplit par son
   // propre appel et disparaît quand il n y a rien — un cadre gris vide n apprend rien.
@@ -993,6 +1016,7 @@ function rendre() {
   if (voitLesAffaires()) chargerArClient();
   if (voitLesCourbes()) chargerCourbes();
   if (voitSesDossiers()) chargerDossiers();
+  if (voitLaChargeCms()) chargerChargeCms();
   chargerSourdines();
   chargerDivers();
 }
@@ -1534,6 +1558,79 @@ function ligneFacturer(l, orpheline) {
  * métier, elle se change à un seul endroit.
  * ------------------------------------------------------------------ */
 const DOSSIERS = 'https://protoprocess.app.n8n.cloud/webhook/pp-dossiers-methodes';
+
+/* ============================================================================
+ * v1.42 (22/11/2026) — CHARGE CMS (tableau de bord de Fred, chantier 274)
+ * Une ligne par affaire du planning dont le CMS n est pas commence (etape APPRO, OK PR FAB,
+ * PREP ou PREP OK). Temps lus dans Luminovo par le workflow « PP — Temps de fab Luminovo »,
+ * multiplies par 1,2 (decision Olivier) : preparation CMS, pose CMS, montage TRAD. En plus :
+ * la date PCB (colonne J) et l avancement des appros (colonne K). Le cumul porte sur la POSE
+ * CMS : 1 ligne, 1 personne, 7 h par jour. Lignes rangees par demarrage possible (PCB + 1 j,
+ * sinon date client - 10 j) — ces dates ne s affichent pas (decision Olivier du 22/11).
+ * Calcul fait cote n8n (workflow « PP — Charge CMS (page) »), la page ne fait qu afficher.
+ * ========================================================================== */
+const CHARGE_CMS = 'https://protoprocess.app.n8n.cloud/webhook/pp-charge-cms';
+function voitLaChargeCms() { const p = POLE_DE[MOI]; return p === 'direction' || p === 'production'; }
+
+async function chargerChargeCms() {
+  const z = document.getElementById('bloc-charge');
+  if (!z) return;
+  z.innerHTML = '<div class="msg"><i class="ti ti-loader"></i> Lecture du planning et des temps Luminovo…</div>';
+  try {
+    const r = await fetch(CHARGE_CMS, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    z.innerHTML = blocChargeCms(await r.json());
+  } catch (e) {
+    z.innerHTML = '<div class="msg err">La charge CMS n a pas pu être lue (' + esc(e.message)
+                + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function heures(x) { return (Math.round(Number(x || 0) * 10) / 10).toString().replace('.', ',') + ' h'; }
+
+function blocChargeCms(d) {
+  const l = (d && d.lignes) || [];
+  const s = (d && d.synthese) || {};
+  let h = entete('t-ok', '', 'CHARGE CMS', l.length, '');
+  h += '<div class="chsynth">'
+     + '<div class="c"><div class="l">Pose CMS à venir</div><div class="v">' + heures(s.pose_cms_h) + '</div></div>'
+     + '<div class="c"><div class="l">Soit, à 7 h par jour</div><div class="v">'
+     + String(s.jours || 0).replace('.', ',') + ' j</div></div>'
+     + '<div class="c"><div class="l">Préparation CMS à venir</div><div class="v">' + heures(s.prepa_cms_h) + '</div></div>'
+     + '</div>';
+  let note = 'Temps Luminovo × 1,2. ';
+  if (s.nb_sans_temps) note += s.nb_sans_temps + ' affaire' + (s.nb_sans_temps > 1 ? 's' : '') + ' sans temps Luminovo. ';
+  if (s.nb_autre_quantite) note += s.nb_autre_quantite + ' temps lu' + (s.nb_autre_quantite > 1 ? 's' : '')
+                                 + ' sur une autre quantité, hors cumul.';
+  h += '<div class="chnote">' + esc(note) + '</div>';
+  if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h; }
+  h += '<table class="tcharge"><tr><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
+     + '<th>Pose CMS</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th></tr>';
+  l.forEach((x, i) => {
+    const t = x.temps;
+    const cls = (i >= 10 ? 'sup cache ' : '') + (t ? '' : 'gris');
+    h += '<tr class="' + cls.trim() + '">';
+    h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span></td>';
+    h += '<td>' + esc(x.carte) + '</td>';
+    h += '<td class="n">' + esc(x.qte || '') + '</td>';
+    if (!t) {
+      h += '<td colspan="3" class="petit">temps inconnu</td>';
+    } else {
+      const alerte = t.incomplet ? ' <i class="ti ti-alert-triangle" title="Temps incomplet : Luminovo n a pas pu tout calculer (facteur de panneau à remplir dans le scénario)"></i>' : '';
+      const autre = t.approx ? ' <span class="autreq" title="Pas de scénario à cette quantité dans Luminovo : temps du scénario « ' + esc(t.scenario || '') + ' »">(Qté ' + esc(t.qte_scenario) + ')</span>' : '';
+      h += '<td class="n">' + heures(t.prepa_cms_h) + '</td>';
+      h += '<td class="n">' + heures(t.pose_cms_h) + alerte + autre + '</td>';
+      h += '<td class="n">' + heures(t.montage_trad_h) + '</td>';
+    }
+    h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
+    h += '<td>' + esc(x.appro || '') + '</td>';
+    h += '</tr>';
+  });
+  h += '</table>';
+  if (l.length > 10) h += '<button class="plus" onclick="deplier(this)">Voir les ' + (l.length - 10) + ' autres affaires ▾</button>';
+  return h;
+}
 
 function voitSesDossiers() { return POLE_DE[MOI] === 'methodes'; }
 
