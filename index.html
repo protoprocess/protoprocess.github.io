@@ -598,8 +598,8 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.44";
-const APP_DATE    = "22/11/2026";
+const APP_VERSION = "1.45";
+const APP_DATE    = "23/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -1580,6 +1580,8 @@ const DOSSIERS = 'https://protoprocess.app.n8n.cloud/webhook/pp-dossiers-methode
  * v1.43 (22/11/2026, decisions Olivier) : une ligne par SO + carte (lots additionnes, « N lots ») ;
  * colonne AMORCE FEEDERS (chargement des bandes, hors machine : affichee, hors cumul) ; temps recalcule
  * avec un panneau de 1 faute de panneau dans Luminovo marque « estimé ».
+ * v1.45 (23/11/2026, decision Olivier) : colonne Amorce = « incluse » quand le scenario est de l ancien
+ * modele Luminovo (amorce comprise dans la pose CMS) ; drapeau temps.amorce_incluse pose par n8n v1.5.2.
  * ========================================================================== */
 const CHARGE_CMS = 'https://protoprocess.app.n8n.cloud/webhook/pp-charge-cms';
 function voitLaChargeCms() { const p = POLE_DE[MOI]; return p === 'direction' || p === 'production'; }
@@ -1653,7 +1655,10 @@ function blocChargeCms(d) {
       const autre = t.approx ? ' <span class="autreq" title="Pas de scénario à cette quantité dans Luminovo : temps du scénario « ' + esc(t.scenario || '') + ' »">(Qté ' + esc(t.qte_scenario) + ')</span>' : '';
       h += '<td class="n">' + heures(t.prepa_cms_h) + '</td>';
       h += '<td class="n">' + heures(t.pose_cms_h) + alerte + estime + autre + '</td>';
-      h += '<td class="n petit">' + heures(t.amorce_feeders_h) + '</td>';
+      // v1.45 (23/11/2026, decision Olivier) : scenario de l ancien modele Luminovo = amorce comprise dans la pose CMS.
+      h += '<td class="n petit">' + (t.amorce_incluse
+           ? '<span class="autreq" title="Ancien modèle Luminovo : l amorce est comprise dans la pose CMS">incluse</span>'
+           : heures(t.amorce_feeders_h)) + '</td>';
       h += '<td class="n">' + heures(t.montage_trad_h) + '</td>';
     }
     h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
