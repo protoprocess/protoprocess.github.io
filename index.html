@@ -391,6 +391,13 @@ section.charge{margin-top:16px}
 .chsem .bar i{display:block;width:100%;background:var(--bleuf-l)}
 .chsem .lb{font-size:10px;color:var(--text3);line-height:1.3}
 
+/* v1.47 : prod en attente (bloc Charge CMS). Gris : ces affaires sont sorties de la file. */
+.tcharge .bt-att{padding:2px 7px;font-size:11px;background:var(--surface);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;white-space:nowrap}
+.tcharge .bt-att:hover{border-color:var(--orange);color:var(--orange)}
+.ch-att{margin:14px 14px 4px;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--text3);text-transform:uppercase}
+.tcharge.att{background:var(--surface2)} .tcharge.att td{color:var(--text2)}
+.ch-rep{font-size:10.5px;color:var(--ambre);font-style:italic}
+
 /* la fenêtre de mise en sourdine */
 .mfond{position:fixed;inset:0;background:rgba(20,28,45,.42);z-index:200;
   display:flex;align-items:center;justify-content:center;padding:20px}
@@ -400,7 +407,7 @@ section.charge{margin-top:16px}
 .mbox .msub{margin:0 0 10px;font-size:12px;color:var(--text2);font-family:var(--mono)}
 .mbox .maide{margin:0 0 14px;font-size:11.5px;color:var(--text3);line-height:1.6}
 .mbox label{display:block;font-size:11px;color:var(--text3);font-weight:600;margin:0 0 4px}
-.mbox select,.mbox textarea{width:100%;padding:7px 9px;border:1px solid var(--border);
+.mbox select,.mbox textarea,.mbox input[type=date]{width:100%;padding:7px 9px;border:1px solid var(--border);
   border-radius:var(--radius);font-size:12.5px;font-family:var(--sans);color:var(--text);
   background:#fff;margin-bottom:12px}
 .mbox textarea{min-height:62px;resize:vertical}
@@ -598,7 +605,7 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.46";
+const APP_VERSION = "1.47";
 const APP_DATE    = "23/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1582,8 +1589,19 @@ const DOSSIERS = 'https://protoprocess.app.n8n.cloud/webhook/pp-dossiers-methode
  * avec un panneau de 1 faute de panneau dans Luminovo marque « estimé ».
  * v1.45 (23/11/2026, decision Olivier) : colonne Amorce = « incluse » quand le scenario est de l ancien
  * modele Luminovo (amorce comprise dans la pose CMS) ; drapeau temps.amorce_incluse pose par n8n v1.5.2.
+ * v1.47 (23/11/2026, decisions Olivier) : bouton « En attente » (Fred et Olivier), bloc gris des prods en attente,
+ * pastille « reprise le » ; calcul cote n8n Charge CMS v1.7, ecriture par « PP — Prod en attente » v1.0.
  * ========================================================================== */
 const CHARGE_CMS = 'https://protoprocess.app.n8n.cloud/webhook/pp-charge-cms';
+/* v1.47 (23/11/2026, decisions Olivier) : mettre une prod en attente jusqu au xxx. L affaire sort de la file CMS,
+   du cumul et des dates menacees, et passe dans le bloc gris « En attente ». Elle revient a la date choisie
+   (pastille « reprise le »), ou avant avec [Reprendre]. Un PCB « EC ... » sans date y va tout seul et revient
+   des que la colonne J du planning porte une date. Reserve a Fred et Olivier (controle aussi cote n8n). */
+const PROD_ATTENTE = 'https://protoprocess.app.n8n.cloud/webhook/pp-prod-attente';
+const MOTIFS_ATTENTE = [['pcb_non_recu', 'PCB non reçu'], ['fournitures_client', 'Fournitures client non reçues'],
+  ['reponse_client', 'Attente réponse client'], ['composants_manquants', 'Composants manquants'], ['autre', 'Autre']];
+const peutMettreEnAttente = () => MOI === 'FR' || MOI === 'OC';
+let CH_LIGNES = [], ATT_CTX = null;
 function voitLaChargeCms() { const p = POLE_DE[MOI]; return p === 'direction' || p === 'production'; }
 
 async function chargerChargeCms() {
@@ -1609,9 +1627,14 @@ function blocChargeCms(d) {
   // v1.44 (22/11/2026, lot B) : la FILE CMS A FENETRES. Lignes dans l ordre de passage calcule par n8n
   // (au plus tard le plus proche parmi les affaires dont le PCB est la) ; colonne « Marge » = jours
   // ouvres entre la fin de CMS prevue et l au plus tard (date client - TRAD - 1 j). Orange si negatif.
-  const l = (d && d.lignes) || [];
+  // v1.47 : les affaires en attente sont rendues a part (bloc gris sous le tableau)
+  const tout = (d && d.lignes) || [];
+  CH_LIGNES = tout;
+  const l = tout.filter(x => !x.attente);
+  const att = tout.filter(x => x.attente);
   const s = (d && d.synthese) || {};
   const sem = (d && d.semaines) || [];
+  const peut = peutMettreEnAttente();
   let h = entete('t-ok', '', 'CHARGE CMS', l.length, '');
   h += '<div class="chsynth">'
      + '<div class="c"><div class="l">Pose CMS à venir</div><div class="v">' + heures(s.pose_cms_h)
@@ -1639,16 +1662,18 @@ function blocChargeCms(d) {
   if (s.nb_estimes) note += s.nb_estimes + ' temps estimé' + (s.nb_estimes > 1 ? 's' : '') + ' (panneau absent dans Luminovo). ';
   note += 'Un lot n est coupé qu entre ses faces, ou en cours de face si les feeders des deux lots tiennent ensemble (80 % des réf. CMS, 100 feeders). ';
   if (s.nb_sans_ref_cms) note += s.nb_sans_ref_cms + ' sans nombre de réf. CMS : jamais coupée' + (s.nb_sans_ref_cms > 1 ? 's' : '') + ' en cours de face. ';
+  if (s.nb_en_attente) note += s.nb_en_attente + ' en attente, hors file (voir en bas). ';
   h += '<div class="chnote">' + esc(note) + '</div>';
-  if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h; }
+  if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h + blocAttente(att, peut); }
   h += '<table class="tcharge"><tr><th>#</th><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
-     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th><th>Coupé</th><th>Marge</th></tr>';
+     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th><th>Coupé</th><th>Marge</th>' + (peut ? '<th></th>' : '') + '</tr>';
   l.forEach((x, i) => {
     const t = x.temps;
     const cls = (i >= 15 ? 'sup cache ' : '') + (t ? '' : 'gris');
     h += '<tr class="' + cls.trim() + '">';
     h += '<td class="n petit">' + (x.rang || '') + '</td>';
-    h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span></td>';
+    h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span>'
+       + (x.reprise_le ? '<br><span class="ch-rep" title="Mise en attente jusqu au ' + esc(x.reprise_le) + ' : revenue dans la file, à re-décider">reprise le ' + esc(x.reprise_le) + '</span>' : '') + '</td>';
     h += '<td>' + esc(x.carte) + '</td>';
     h += '<td class="n">' + esc(x.qte || '') + (x.nb_lots > 1 ? '<br><span class="petit">' + x.nb_lots + ' lots</span>' : '') + '</td>';
     if (!t) {
@@ -1678,11 +1703,99 @@ function blocChargeCms(d) {
     }
     if (x.date_client) m += '<br><span class="petit">livr. ' + esc(x.date_client) + (x.date_depassee ? ' (passée)' : '') + '</span>';
     h += '<td class="n">' + m + '</td>';
+    if (peut) h += '<td><button class="bt-att" title="Sortir cette prod de la file CMS jusqu à une date" onclick="ouvrirAttente(' + tout.indexOf(x) + ')">⏸ En attente</button></td>';
     h += '</tr>';
   });
   h += '</table>';
   if (l.length > 15) h += '<button class="plus" onclick="deplier(this)">Voir les ' + (l.length - 15) + ' autres affaires ▾</button>';
-  return h;
+  return h + blocAttente(att, peut);
+}
+
+/* v1.47 : le bloc gris des prods en attente, sous le tableau. Toujours visible : une attente qu on ne voit
+   nulle part, personne ne pense à la reprendre. */
+function blocAttente(att, peut) {
+  if (!att.length) return '';
+  let h = '<div class="ch-att">En attente — hors file CMS (' + att.length + ')</div>';
+  h += '<table class="tcharge att"><tr><th>Affaire</th><th>Carte</th><th>Qté</th><th>Pose CMS</th><th>PCB</th>'
+     + '<th>Motif</th><th>Reprise</th><th>Livr.</th>' + (peut ? '<th></th>' : '') + '</tr>';
+  att.forEach(x => {
+    const a = x.attente, t = x.temps;
+    h += '<tr>';
+    h += '<td><b>' + esc(x.so) + '</b><br><span class="petit">' + esc(x.client) + '</span></td>';
+    h += '<td>' + esc(x.carte) + '</td>';
+    h += '<td class="n">' + esc(x.qte || '') + '</td>';
+    h += '<td class="n">' + (t ? heures(t.pose_cms_h) : '<span class="petit">—</span>') + '</td>';
+    h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
+    h += '<td>' + esc(a.motif) + (a.precision && !a.auto ? '<br><span class="petit">' + esc(a.precision) + '</span>' : '') + '</td>';
+    h += '<td class="n">' + (a.auto ? '<span class="petit" title="Revient seule dès que la colonne J du planning porte une date ou « 100% »">date PCB au planning</span>'
+         : esc(a.jusqu_au) + '<br><span class="petit">par ' + esc(a.pose_par) + '</span>') + '</td>';
+    h += '<td class="n petit">' + esc(x.date_client || '—') + (x.date_depassee ? ' (passée)' : '') + '</td>';
+    if (peut) h += '<td>' + (a.auto
+         ? '<button class="bt-att" title="Le PCB est là mais le planning n est pas à jour : la mettre en attente avec une date, ou mettre à jour la colonne J" onclick="ouvrirAttente(' + CH_LIGNES.indexOf(x) + ')">⏸ Dater</button>'
+         : '<button class="bt-att" onclick="reprendreAttente(' + CH_LIGNES.indexOf(x) + ')">▶ Reprendre</button>') + '</td>';
+    h += '</tr>';
+  });
+  return h + '</table>';
+}
+
+function ouvrirAttente(i) {
+  const x = CH_LIGNES[i]; if (!x) return;
+  fermerAttente();
+  ATT_CTX = x;
+  const j7 = new Date(); j7.setDate(j7.getDate() + 7);
+  const min = new Date(); min.setDate(min.getDate() + 1);
+  const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  let h = '<div class="mfond" id="m-attente" onclick="if(event.target===this)fermerAttente()"><div class="mbox">';
+  h += '<h3>Mettre la prod en attente</h3>';
+  h += '<p class="msub">' + esc(x.so) + ' — ' + esc(x.carte) + '</p>';
+  h += '<p class="maide">Elle sort de la file CMS et de la charge jusqu à la date choisie, puis revient avec une pastille « reprise le ». Tu peux la reprendre avant.</p>';
+  h += '<label for="at-date">Jusqu au</label><input type="date" id="at-date" min="' + iso(min) + '" value="' + iso(j7) + '">';
+  h += '<label for="at-motif">Motif</label><select id="at-motif"><option value="">— choisir —</option>'
+     + MOTIFS_ATTENTE.map(m => '<option value="' + m[0] + '">' + m[1] + '</option>').join('') + '</select>';
+  h += '<label for="at-prec">Précision</label><textarea id="at-prec" placeholder="Facultatif, obligatoire pour « Autre »."></textarea>';
+  h += '<div class="merr" id="at-err"></div><div class="macts">';
+  h += '<button class="btn-s" onclick="fermerAttente()">Annuler</button>';
+  h += '<button class="btn-p" id="at-ok" onclick="poserAttente()">Mettre en attente</button></div></div></div>';
+  const d = document.createElement('div'); d.innerHTML = h; document.body.appendChild(d.firstChild);
+}
+function fermerAttente() { const m = document.getElementById('m-attente'); if (m) m.remove(); }
+
+async function envoyerAttente(corps) {
+  const r = await fetch(PROD_ATTENTE, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corps) });
+  if (!r.ok) throw new Error('réponse ' + r.status);
+  const rep = await r.json();
+  if (!rep.ok) throw new Error(rep.motif || 'refusé');
+  return rep;
+}
+
+async function poserAttente() {
+  const x = ATT_CTX || {};
+  const jusqu_au = (document.getElementById('at-date') || {}).value || '';
+  const motif_code = (document.getElementById('at-motif') || {}).value || '';
+  const precision = ((document.getElementById('at-prec') || {}).value || '').trim();
+  const err = document.getElementById('at-err');
+  if (!jusqu_au) { err.textContent = 'Choisis une date de reprise.'; return; }
+  if (!motif_code) { err.textContent = 'Choisis un motif.'; return; }
+  if (motif_code === 'autre' && precision.length < 3) { err.textContent = 'Pour « Autre », écris une précision.'; return; }
+  const b = document.getElementById('at-ok'); b.disabled = true; b.textContent = 'Enregistrement…'; err.textContent = '';
+  try {
+    const rep = await envoyerAttente({ action: 'poser', so: x.so, carte: x.carte, qui: MOI, jusqu_au, motif_code, precision, version: APP_VERSION });
+    fermerAttente();
+    toast(x.so + ' en attente jusqu au ' + frDate(rep.jusqu_au) + '.');
+    chargerChargeCms();
+  } catch (e) {
+    b.disabled = false; b.textContent = 'Mettre en attente';
+    err.textContent = 'Ça n a pas été enregistré (' + e.message + ').';
+  }
+}
+
+async function reprendreAttente(i) {
+  const x = CH_LIGNES[i]; if (!x) return;
+  try {
+    await envoyerAttente({ action: 'reprendre', so: x.so, carte: x.carte, qui: MOI, version: APP_VERSION });
+    toast(x.so + ' revient dans la file CMS.');
+    chargerChargeCms();
+  } catch (e) { toast('Pas repris (' + e.message + ').'); }
 }
 
 function voitSesDossiers() { return POLE_DE[MOI] === 'methodes'; }
