@@ -598,7 +598,7 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.45";
+const APP_VERSION = "1.46";
 const APP_DATE    = "23/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
@@ -1604,6 +1604,8 @@ async function chargerChargeCms() {
 function heures(x) { return (Math.round(Number(x || 0) * 10) / 10).toString().replace('.', ',') + ' h'; }
 
 function blocChargeCms(d) {
+  // v1.46 (23/11/2026, decisions Olivier) : regle de coupure d un lot (file CMS v1.6) : entre faces toujours,
+  // au milieu d une face seulement si les feeders tiennent. Colonne « Coupé » quand un lot est fait en plusieurs fois.
   // v1.44 (22/11/2026, lot B) : la FILE CMS A FENETRES. Lignes dans l ordre de passage calcule par n8n
   // (au plus tard le plus proche parmi les affaires dont le PCB est la) ; colonne « Marge » = jours
   // ouvres entre la fin de CMS prevue et l au plus tard (date client - TRAD - 1 j). Orange si negatif.
@@ -1635,10 +1637,12 @@ function blocChargeCms(d) {
   if (s.nb_sans_temps) note += s.nb_sans_temps + ' affaire' + (s.nb_sans_temps > 1 ? 's' : '') + ' sans temps, non placée' + (s.nb_sans_temps > 1 ? 's' : '') + '. ';
   if (s.nb_sans_date_client) note += s.nb_sans_date_client + ' sans date client, en fin de file. ';
   if (s.nb_estimes) note += s.nb_estimes + ' temps estimé' + (s.nb_estimes > 1 ? 's' : '') + ' (panneau absent dans Luminovo). ';
+  note += 'Un lot n est coupé qu entre ses faces, ou en cours de face si les feeders des deux lots tiennent ensemble (80 % des réf. CMS, 100 feeders). ';
+  if (s.nb_sans_ref_cms) note += s.nb_sans_ref_cms + ' sans nombre de réf. CMS : jamais coupée' + (s.nb_sans_ref_cms > 1 ? 's' : '') + ' en cours de face. ';
   h += '<div class="chnote">' + esc(note) + '</div>';
   if (!l.length) { h += '<div class="vide">Aucune affaire en attente de CMS.</div>'; return h; }
   h += '<table class="tcharge"><tr><th>#</th><th>Affaire</th><th>Carte</th><th>Qté</th><th>Prépa CMS</th>'
-     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th><th>Marge</th></tr>';
+     + '<th>Pose CMS</th><th>Amorce</th><th>Montage TRAD</th><th>PCB</th><th>Appro</th><th>Coupé</th><th>Marge</th></tr>';
   l.forEach((x, i) => {
     const t = x.temps;
     const cls = (i >= 15 ? 'sup cache ' : '') + (t ? '' : 'gris');
@@ -1654,7 +1658,8 @@ function blocChargeCms(d) {
       const estime = t.estime ? ' <span class="autreq" title="Panneau absent dans Luminovo : temps par carte calculé avec un panneau de 1">estimé</span>' : '';
       const autre = t.approx ? ' <span class="autreq" title="Pas de scénario à cette quantité dans Luminovo : temps du scénario « ' + esc(t.scenario || '') + ' »">(Qté ' + esc(t.qte_scenario) + ')</span>' : '';
       h += '<td class="n">' + heures(t.prepa_cms_h) + '</td>';
-      h += '<td class="n">' + heures(t.pose_cms_h) + alerte + estime + autre + '</td>';
+      const infoPose = (t.ref_cms != null ? t.ref_cms + ' réf. CMS (' + (t.feeders != null ? t.feeders : '?') + ' feeders)' : 'réf. CMS inconnues') + ' · ' + (t.decoupe || '');
+      h += '<td class="n" title="' + esc(infoPose) + '">' + heures(t.pose_cms_h) + alerte + estime + autre + '</td>';
       // v1.45 (23/11/2026, decision Olivier) : scenario de l ancien modele Luminovo = amorce comprise dans la pose CMS.
       h += '<td class="n petit">' + (t.amorce_incluse
            ? '<span class="autreq" title="Ancien modèle Luminovo : l amorce est comprise dans la pose CMS">incluse</span>'
@@ -1663,6 +1668,10 @@ function blocChargeCms(d) {
     }
     h += '<td>' + esc(String(x.pcb || '').replace(/\s*\n\s*/g, ' ')) + '</td>';
     h += '<td>' + esc(x.appro || '') + '</td>';
+    // v1.46 : lot fait en plusieurs fois dans la file (entre faces, ou en cours de face quand les feeders tiennent)
+    const cp = x.coupe;
+    h += '<td class="petit">' + (cp ? '<span class="autreq" title="Lot repris ' + cp.nb + ' fois : ' + cp.entre_faces + ' entre faces, ' + cp.feeders + ' en cours de face (feeders communs)">'
+         + (cp.feeders ? (cp.entre_faces ? 'faces + feeders' : 'feeders') : 'entre faces') + '</span>' : '') + '</td>';
     let m = '<span class="petit">—</span>';
     if (x.marge_j !== null && x.marge_j !== undefined) {
       m = '<b class="' + (x.menacee ? 'ch-orange' : '') + '">' + (x.marge_j > 0 ? '+' : '') + x.marge_j + ' j</b>';
