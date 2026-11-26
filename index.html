@@ -605,8 +605,8 @@ section.charge{margin-top:16px}
  * Pas de parametre dans l URL : devis-client efface location.search au demarrage,
  * et les liens « Je m en occupe » portent deja ?so=...&onglet=...
  * ------------------------------------------------------------------ */
-const APP_VERSION = "1.47";
-const APP_DATE    = "23/11/2026";
+const APP_VERSION = "1.48";
+const APP_DATE    = "26/11/2026";
 document.getElementById('vbadge').textContent = "v" + APP_VERSION + " — " + APP_DATE;
 document.title = "Mon tableau de bord v" + APP_VERSION;
 
@@ -967,6 +967,11 @@ function rendre() {
   // Motif : une demande que personne n a prise n apparaissait sur le tableau de personne,
   // faute de responsable — c est ce qui a laissé dormir OCTOPUCES quatre jours et MILLIADES
   // vingt. Elle doit être la première chose qu un commercial voit en ouvrant sa page.
+  // v1.48 (26/11/2026, étape 4 du chantier rapport de fab, décision Olivier) : LES RÉPONSES
+  // CLIENT REÇUES PAR MAIL, en tête. Le client répond dans le fil du mail FabStory au lieu de
+  // cliquer sur sa page ; Claude lit sa réponse et propose point par point. Rien n entre dans
+  // FabStory sans le geste de celui qui a posé la question. Tout le monde peut en avoir.
+  h += '<section id="bloc-repmail" style="display:none"></section>';
   if (voitLesDemandesDePrix()) h += '<section id="bloc-demandes"></section>';
   if (voitLesAffaires()) {
     h += blocAffaires(d);
@@ -1023,6 +1028,7 @@ function rendre() {
   // v1.31 : l équaliseur se branche sur la grille et se remplit à mesure que les blocs
   // répondent. À poser APRÈS l écriture de #app : la grille vient d être recréée.
   suivreLaCharge();
+  chargerRepMail();
   if (voitLesDemandesDePrix()) chargerDemandes();
   if (voitLesAchats()) chargerAR();
   if (voitTousLesBackorders()) chargerArbitrage();
@@ -1123,6 +1129,7 @@ async function rafraichirAffaires() {
       if (replie) n.classList.add('replie');
       z.replaceWith(n);
     }
+    chargerRepMail();
     if (voitLesDemandesDePrix()) chargerDemandes();
     majUrgent();
   } catch (e) {}
@@ -2408,6 +2415,92 @@ async function deciderAR(po, geste) {
  *               au bout de 7 jours. Une mise en attente sans retour serait un oubli déguisé
  *   Odoo        pour envoyer l AR depuis la commande
  * ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+ * v1.48 (26/11/2026) — RÉPONSES CLIENT REÇUES PAR MAIL
+ * Workflow « PP — FabStory : réponses client par mail ». Quand le client répond dans le fil
+ * du mail FabStory, Claude propose une réponse par point du mail. Seul l auteur de la
+ * question la voit, et c est lui qui la fait entrer dans FabStory :
+ *   Valider                  → la réponse est écrite dans FabStory comme si le client avait cliqué
+ *   Corriger dans FabStory   → ouvre la carte ; on y saisit la bonne réponse
+ *   Ce n est pas une réponse → la proposition disparaît, rien n est écrit
+ * Au bout de 2 jours ouvrés sans geste, le filet qualité relance l auteur.
+ * ------------------------------------------------------------------ */
+const REPMAIL_LIRE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-reponses-mail-liste';
+const REPMAIL_GESTE = 'https://protoprocess.app.n8n.cloud/webhook/pp-reponses-mail-geste';
+
+async function chargerRepMail() {
+  const z = document.getElementById('bloc-repmail');
+  if (!z) return;
+  try {
+    const r = await fetch(REPMAIL_LIRE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION, qui: MOI }) });
+    if (!r.ok) throw new Error('réponse ' + r.status);
+    const d = await r.json();
+    const rep = (d && d.reponses) || [];
+    // Rien à valider : le bloc n apparaît pas. Un cadre vide n apprend rien.
+    if (!rep.length) { z.style.display = 'none'; z.innerHTML = ''; return; }
+    z.style.display = '';
+    z.innerHTML = blocRepMail(rep);
+  } catch (e) {
+    z.style.display = '';
+    z.innerHTML = '<div class="msg err">Les réponses client reçues par mail n ont pas pu être lues ('
+                + esc(e.message) + '). Le reste de la page est à jour.</div>';
+  }
+}
+
+function blocRepMail(rep) {
+  const vieux = rep.some(x => Number(x.jours_ouvres) >= 2);
+  let h = entete(vieux ? 't-urg' : 't-crit', '', 'RÉPONSES CLIENT REÇUES PAR MAIL — À VALIDER', rep.length, '');
+  h += capper(rep.map(ligneRepMail), 'réponse');
+  return h;
+}
+
+function ligneRepMail(x) {
+  const age = Number(x.jours_ouvres) || 0;
+  const niv = age >= 2 ? 'orange' : 'bleu';
+  const quoi = x.type === 'question_client' ? 'question' : 'info';
+  let h = '<div class="row ' + niv + '" id="rm-' + Number(x.id) + '">';
+  h += '<div class="l1"><span class="so">' + esc(x.so || x.ref_carte || '') + '</span>';
+  h += '<span class="sep">·</span><span class="cli">' + esc(x.nom_client || '') + ' · ' + esc(x.ref_carte || '') + '</span>';
+  h += '<span class="badge b-' + niv + '">' + (age >= 2 ? 'reçue il y a ' + age + ' j ouvrés' : 'reçue le ' + frDate(x.recu_le)) + '</span></div>';
+
+  h += '<div class="l2">';
+  h += '<span class="pastille p-gris">point ' + esc(x.rang) + ' · ' + quoi + (x.repere ? ' · ' + esc(x.repere) : '') + (x.mpn ? ' · ' + esc(x.mpn) : '') + '</span>';
+  if (x.choix_libelle) h += '<span class="pastille p-bleu">' + esc(x.choix_libelle) + '</span>';
+  if (x.confiance !== 'haute') h += '<span class="pastille p-orange">à vérifier</span>';
+  h += '<span class="quoi">« ' + esc(x.extrait || '') + ' »</span>';
+  h += '<span class="acts">';
+  h += '<button class="btn-p" onclick="gesteRepMail(' + Number(x.id) + ',\'valider\')">Valider</button>';
+  h += '<a class="btn-s" href="commercial/fabstory/?produit=' + encodeURIComponent(x.produit_id) + '" target="_blank">Corriger dans FabStory</a>';
+  h += '<button class="btn-s" onclick="gesteRepMail(' + Number(x.id) + ',\'rejeter\')">Ce n est pas une réponse</button>';
+  h += '<button class="btn-s" onclick="plier(this)">Détail</button>';
+  h += '</span></div>';
+
+  h += '<div class="detail">';
+  if (x.question) h += '<div class="refs"><b>Notre ' + (quoi === 'question' ? 'question' : 'information') + ' :</b> ' + esc(x.question) + '</div>';
+  h += '<div class="refs"><b>Mail du client</b> (' + esc(x.expediteur || '') + ') :</div>';
+  h += '<div class="refs" style="white-space:pre-wrap">' + esc(x.extrait_mail || '') + '</div>';
+  h += '</div></div>';
+  return h;
+}
+
+async function gesteRepMail(id, geste) {
+  const ligne = document.getElementById('rm-' + id);
+  const btns = ligne ? ligne.querySelectorAll('button') : [];
+  btns.forEach(b => b.disabled = true);
+  try {
+    const r = await fetch(REPMAIL_GESTE, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                           body: JSON.stringify({ source: 'ma-gestion-de-projets', version: APP_VERSION, id, geste, qui: MOI }) });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.motif || 'refusé');
+    if (d.deja_resolue) alert('Cette question avait déjà reçu une réponse dans FabStory. La proposition est retirée.');
+    chargerRepMail();
+  } catch (e) {
+    btns.forEach(b => b.disabled = false);
+    alert('Le geste n a pas abouti : ' + e.message);
+  }
+}
+
 const ARCLIENT_LIRE  = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-liste';
 const ARCLIENT_GESTE = 'https://protoprocess.app.n8n.cloud/webhook/pp-arclient-geste';
 
